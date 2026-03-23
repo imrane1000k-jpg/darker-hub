@@ -2016,21 +2016,6 @@ end)
 -- Text is now INSIDE the circle.
 -- Drop Shot on Mobile is now DIRECT (Click = Drop).
 
-local mobileTogglesFrame = Instance.new("Frame")
-mobileTogglesFrame.Name = "MobileToggles"
-mobileTogglesFrame.Size = UDim2.new(0, 60 * guiScale, 0, 180 * guiScale)
-mobileTogglesFrame.Position = UDim2.new(0, 10 * guiScale, 0.5, -90 * guiScale)
-mobileTogglesFrame.BackgroundTransparency = 1
-mobileTogglesFrame.Visible = isMobile
-mobileTogglesFrame.ZIndex = 50
-mobileTogglesFrame.Parent = sg
-
-local listLayoutMobile = Instance.new("UIListLayout")
-listLayoutMobile.Padding = UDim.new(0, 10 * guiScale)
-listLayoutMobile.HorizontalAlignment = Enum.HorizontalAlignment.Center
-listLayoutMobile.SortOrder = Enum.SortOrder.LayoutOrder
-listLayoutMobile.Parent = mobileTogglesFrame
-
 local function createCircularToggle(parent, labelText, featureKey, keybindName)
     local btnContainer = Instance.new("Frame")
     btnContainer.Size = UDim2.new(0, 60 * guiScale, 0, 60 * guiScale)
@@ -2042,10 +2027,11 @@ local function createCircularToggle(parent, labelText, featureKey, keybindName)
     circleBtn.Size = UDim2.new(0, 60 * guiScale, 0, 60 * guiScale)
     circleBtn.Position = UDim2.new(0, 0, 0, 0)
     circleBtn.BackgroundColor3 = COLOR_BG_MAIN
-    circleBtn.Text = labelText -- TEXT IS NOW INSIDE
+    -- TEXT IS NOW INSIDE THE CIRCLE
+    circleBtn.Text = labelText 
     circleBtn.TextColor3 = COLOR_GLOW
     circleBtn.Font = Enum.Font.GothamBlack
-    circleBtn.TextSize = 10 * guiScale -- Adjusted size to fit inside
+    circleBtn.TextSize = 11 * guiScale 
     circleBtn.BorderSizePixel = 0
     circleBtn.ZIndex = 55
     circleBtn.Parent = btnContainer
@@ -2058,44 +2044,49 @@ local function createCircularToggle(parent, labelText, featureKey, keybindName)
     stroke.Thickness = 3 * guiScale
     
     local isActive = false
+    
     circleBtn.MouseButton1Click:Connect(function()
-        isActive = not isActive
-        
-        -- Visual Feedback
-        if isActive then
+        if featureKey == "DropShot" then
+            -- INSTANT DROP LOGIC (NO TOGGLE)
+            -- Flashes the button to show it was pressed
             circleBtn.BackgroundColor3 = COLOR_ACCENT
             circleBtn.TextColor3 = COLOR_TEXT
             stroke.Color = COLOR_GLOW
-            -- Pop effect
-            TweenService:Create(circleBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 65 * guiScale, 0, 65 * guiScale)}):Play()
-            task.wait(0.1)
-            TweenService:Create(circleBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 60 * guiScale, 0, 60 * guiScale)}):Play()
-        else
+            
+            -- Shrink effect
+            TweenService:Create(circleBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, 55 * guiScale, 0, 55 * guiScale)}):Play()
+            
+            -- EXECUTE DROP IMMEDIATELY
+            performDrop() 
+            
+            -- Reset visual after short delay
+            task.wait(0.15)
+            TweenService:Create(circleBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, 60 * guiScale, 0, 60 * guiScale)}):Play()
             circleBtn.BackgroundColor3 = COLOR_BG_MAIN
             circleBtn.TextColor3 = COLOR_GLOW
             stroke.Color = COLOR_ACCENT
-        end
-        
-        -- Logic
-        if featureKey == "AutoRight" then
-            Features.AutoRight = isActive
-            if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](isActive) end
-            if isActive then stopStealPath(); startStealPath(stealPath1) else stopStealPath() end
-        elseif featureKey == "AutoLeft" then
-            Features.AutoLeft = isActive
-            if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](isActive) end
-            if isActive then stopStealPath(); startStealPath(stealPath2) else stopStealPath() end
-        elseif featureKey == "DropShot" then
-            -- MOBILE DIRECT DROP LOGIC
-            Features.DropShot = isActive
-            extraConfig.dropEnabled = isActive
-            if _G["UpdateVisual_DropShot"] then _G["UpdateVisual_DropShot"](isActive) end
-            toggleExtraButtons()
-            SaveConfig()
             
-            -- If turning ON, perform drop immediately on mobile
-            if isActive and isMobile then
-                performDrop()
+        else
+            -- Normal Toggle Logic for Auto Left/Right
+            isActive = not isActive
+            if isActive then
+                circleBtn.BackgroundColor3 = COLOR_ACCENT
+                circleBtn.TextColor3 = COLOR_TEXT
+                stroke.Color = COLOR_GLOW
+            else
+                circleBtn.BackgroundColor3 = COLOR_BG_MAIN
+                circleBtn.TextColor3 = COLOR_GLOW
+                stroke.Color = COLOR_ACCENT
+            end
+            
+            if featureKey == "AutoRight" then
+                Features.AutoRight = isActive
+                if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](isActive) end
+                if isActive then stopStealPath(); startStealPath(stealPath1) else stopStealPath() end
+            elseif featureKey == "AutoLeft" then
+                Features.AutoLeft = isActive
+                if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](isActive) end
+                if isActive then stopStealPath(); startStealPath(stealPath2) else stopStealPath() end
             end
         end
     end)
