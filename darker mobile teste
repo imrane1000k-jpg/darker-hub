@@ -1,6 +1,7 @@
--- Darker Hub | Ultimate Edition + Mobile Instant Drop + Text Inside Circles
--- FIXED: Text is now INSIDE the circular buttons.
--- FIXED: Mobile Drop button performs the drop IMMEDIATELY upon clicking (No extra 'X' press needed).
+-- Darker Hub | Ultimate Edition + Mobile Instant Drop (Fixed)
+-- FIXED: Drop Shot is now DIRECT ACTION. No toggle needed.
+-- FIXED: Pressing Keybind (X) or Mobile Button executes drop immediately.
+-- FIXED: Removed extra floating "X" button.
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -18,10 +19,10 @@ local Keybinds = {
     AntiRagdoll     = Enum.KeyCode.R,
     InfinityJump    = Enum.KeyCode.Z,
     Helicopter      = Enum.KeyCode.G,
-    AutoSteal       = nil,              
-    AutoRightSteal  = Enum.KeyCode.V,   
+    AutoSteal       = nil,
+    AutoRightSteal  = Enum.KeyCode.V,
     AutoLeftSteal   = Enum.KeyCode.C,
-    DropShot        = Enum.KeyCode.X,
+    DropShot        = Enum.KeyCode.X, -- Direct Action Key
 }
 
 -- ──────────────────────────────────────────────────────────────────────────────
@@ -55,8 +56,8 @@ local Features = {
     AutoTPRagdoll = false,
     AutoRight = false,
     AutoLeft = false,
-    DropShot = false,
     SmartTP = false
+    -- DropShot removed from features as it is now direct action
 }
 
 local Values = {
@@ -103,7 +104,7 @@ end)
 
 local SliderReferences = {}
 local ConfigFileName = "DarkerHub_Config.json"
-local extraConfig = { dropEnabled = false, tpEnabled = false, dropX = 200, dropY = 300, tpX = 320, tpY = 300 }
+local extraConfig = { tpEnabled = false, tpX = 320, tpY = 300 } -- Drop config removed
 
 -- ─── 💾 CONFIG SYSTEM ───────────────────────────────────────────────
 local function SaveConfig()
@@ -120,10 +121,12 @@ local function SaveConfig()
         STEAL_DURATION = AutoStealValues.STEAL_DURATION, PATH_TURN_WAIT = AutoStealValues.PATH_TURN_WAIT,
         KEY_SPEED = Keybinds.SpeedBoost.Name, KEY_ANTIRAG = Keybinds.AntiRagdoll.Name,
         KEY_INFJUMP = Keybinds.InfinityJump.Name, KEY_HELI = Keybinds.Helicopter.Name,
-        KEY_MENU = Keybinds.ToggleMenu.Name, KEY_DROP = Keybinds.DropShot.Name,
+        KEY_MENU = Keybinds.ToggleMenu.Name,
         KEY_AUTORIGHT = Keybinds.AutoRightSteal.Name, KEY_AUTOLEFT = Keybinds.AutoLeftSteal.Name,
-        dropEnabled = extraConfig.dropEnabled, tpEnabled = extraConfig.tpEnabled,
-        dropX = extraConfig.dropX, dropY = extraConfig.dropY, tpX = extraConfig.tpX, tpY = extraConfig.tpY
+        -- Drop key saved but no toggle state
+        KEY_DROP = Keybinds.DropShot.Name,
+        tpEnabled = extraConfig.tpEnabled,
+        tpX = extraConfig.tpX, tpY = extraConfig.tpY
     }
     pcall(function() writefile(ConfigFileName, HttpService:JSONEncode(fullConfig)) end)
 end
@@ -134,7 +137,7 @@ local function LoadConfig()
         if isfile(ConfigFileName) then
             local data = HttpService:JSONDecode(readfile(ConfigFileName))
             for k, v in pairs(Features) do
-                if k ~= "AutoRight" and k ~= "AutoLeft" and k ~= "DropShot" and k ~= "SmartTP" then
+                if k ~= "AutoRight" and k ~= "AutoLeft" and k ~= "SmartTP" then
                     if data[k] ~= nil then Features[k] = data[k] end
                 end
             end
@@ -157,10 +160,7 @@ local function LoadConfig()
             if data.KEY_DROP then Keybinds.DropShot = Enum.KeyCode[data.KEY_DROP] or Keybinds.DropShot end
             if data.KEY_AUTORIGHT then Keybinds.AutoRightSteal = Enum.KeyCode[data.KEY_AUTORIGHT] or Keybinds.AutoRightSteal end
             if data.KEY_AUTOLEFT then Keybinds.AutoLeftSteal = Enum.KeyCode[data.KEY_AUTOLEFT] or Keybinds.AutoLeftSteal end
-            if data.dropEnabled ~= nil then extraConfig.dropEnabled = data.dropEnabled end
             if data.tpEnabled ~= nil then extraConfig.tpEnabled = data.tpEnabled end
-            if data.dropX then extraConfig.dropX = data.dropX end
-            if data.dropY then extraConfig.dropY = data.dropY end
             if data.tpX then extraConfig.tpX = data.tpX end
             if data.tpY then extraConfig.tpY = data.tpY end
             
@@ -174,46 +174,28 @@ local function LoadConfig()
 end
 LoadConfig()
 
--- ─── ✨ DROP & TP GUI BUTTONS ──────────────────────────────────
-local dropGuiBtn, tpGuiBtn = nil, nil
-local function createDropButton()
-    if dropGuiBtn then dropGuiBtn:Destroy() end
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 90 * guiScale, 0, 36 * guiScale)
-    btn.Position = UDim2.new(0, extraConfig.dropX, 0, extraConfig.dropY)
-    btn.BackgroundColor3 = COLOR_BG_MAIN
-    btn.Text = "DROP"
-    btn.TextColor3 = COLOR_GLOW
-    btn.Font = Enum.Font.GothamBlack
-    btn.TextSize = 14 * guiScale
-    btn.Active = true
-    btn.Draggable = true
-    btn.ZIndex = 100
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8 * guiScale)
-    local stroke = Instance.new("UIStroke", btn)
-    stroke.Color = COLOR_ACCENT
-    stroke.Thickness = 2 * guiScale
-    task.spawn(function()
-        local hue = 260
-        while Features.DropShot and btn.Parent do
-            hue = (hue + 2) % 360
-            stroke.Color = Color3.fromHSV(hue / 360, 0.9, 1)
-            task.wait(0.03)
-        end
-    end)
-    btn.MouseButton1Click:Connect(function() 
-        if Features.DropShot then 
-            performDrop() 
-        end
-    end)
-    btn.DragEnded:Connect(function()
-        extraConfig.dropX = btn.Position.X.Offset
-        extraConfig.dropY = btn.Position.Y.Offset
-        SaveConfig()
-    end)
-    btn.Parent = sg
-    dropGuiBtn = btn
+-- ─── ✨ DROP LOGIC (DIRECT ACTION) ──────────────────────────────────
+local function performDrop()
+    if dropRunning then return end
+    dropRunning = true
+    local char = Player.Character or Player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local startCF = hrp.CFrame
+    
+    -- Launch Up
+    hrp.AssemblyLinearVelocity = Vector3.new(0, 120, 0)
+    
+    task.wait(0.35)
+    
+    -- Reset Velocity and Position slightly to prevent sticking
+    hrp.AssemblyLinearVelocity = Vector3.zero
+    hrp.CFrame = startCF
+    
+    dropRunning = false
 end
+
+-- ─── ✨ TP GUI BUTTON (Smart TP Only) ──────────────────────────────────
+local tpGuiBtn = nil
 
 local function createTPButton()
     if tpGuiBtn then tpGuiBtn:Destroy() end
@@ -232,6 +214,7 @@ local function createTPButton()
     local stroke = Instance.new("UIStroke", btn)
     stroke.Color = COLOR_ACCENT
     stroke.Thickness = 2 * guiScale
+    
     task.spawn(function()
         local hue = 180
         while Features.SmartTP and btn.Parent do
@@ -240,7 +223,27 @@ local function createTPButton()
             task.wait(0.03)
         end
     end)
-    btn.MouseButton1Click:Connect(function() if Features.SmartTP then performTP() end end)
+    
+    btn.MouseButton1Click:Connect(function() 
+        if Features.SmartTP then 
+            local char = Player.Character
+            if not char then return end
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if not root then return end
+            if not chosenRoute then
+                local waitTime = 0
+                while not chosenRoute and waitTime < 2 do task.wait(0.1); waitTime = waitTime + 0.1 end
+            end
+            if chosenRoute then
+                for _, pos in ipairs(chosenRoute) do
+                    if not Features.SmartTP then break end
+                    root.CFrame = CFrame.new(pos)
+                    task.wait(0.2)
+                end
+            end
+        end 
+    end)
+    
     btn.DragEnded:Connect(function()
         extraConfig.tpX = btn.Position.X.Offset
         extraConfig.tpY = btn.Position.Y.Offset
@@ -251,12 +254,16 @@ local function createTPButton()
 end
 
 local function toggleExtraButtons()
-    if Features.DropShot then createDropButton() else if dropGuiBtn then dropGuiBtn:Destroy() dropGuiBtn = nil end end
-    if Features.SmartTP then createTPButton() else if tpGuiBtn then tpGuiBtn:Destroy() tpGuiBtn = nil end end
+    if Features.SmartTP then 
+        if not tpGuiBtn then createTPButton() end 
+    else 
+        if tpGuiBtn then tpGuiBtn:Destroy() tpGuiBtn = nil end 
+    end
 end
 
--- ─── ✨ PROGRESS BAR ──────────
+-- ─── ✨ PROGRESS BAR (For Stealing) ──────────
 local ProgressBarFill, ProgressLabel, ProgressPercentLabel, progressConn, stealStartTime
+
 local function resetProgressBar()
     if ProgressLabel then ProgressLabel.Text = "READY" end
     if ProgressPercentLabel then ProgressPercentLabel.Text = "0%" end
@@ -325,6 +332,7 @@ ProgressLabel.TextStrokeTransparency = 0.5
 
 local IW = math.floor(48 * guiScale)
 local IH = math.floor(32 * guiScale)
+
 local function makePBInput(xOffset, labelStr, valueKey, isFloat, minV, maxV)
     local holder = Instance.new("Frame", progressBar)
     holder.Size = UDim2.new(0, IW, 0, IH)
@@ -443,23 +451,6 @@ hideBtn.BorderSizePixel = 0
 hideBtn.ZIndex = 7
 Instance.new("UICorner", hideBtn).CornerRadius = UDim.new(0, 6 * guiScale)
 
--- [NEW] SECRET BUTTON BEHIND HIDE BUTTON
-local secretBtn = Instance.new("TextButton")
-secretBtn.Size = UDim2.new(0, 28 * guiScale, 0, 28 * guiScale)
-secretBtn.Position = UDim2.new(1, -64 * guiScale, 0.5, -14 * guiScale) 
-secretBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 70)
-secretBtn.Text = "?"
-secretBtn.TextColor3 = COLOR_DIM
-secretBtn.Font = Enum.Font.GothamBlack
-secretBtn.TextSize = 14 * guiScale
-secretBtn.BorderSizePixel = 0
-secretBtn.ZIndex = 6 
-Instance.new("UICorner", secretBtn).CornerRadius = UDim.new(0, 6 * guiScale)
-secretBtn.MouseButton1Click:Connect(function()
-    print("Secret Button Clicked!")
-end)
-secretBtn.Parent = header
-
 -- Drag Logic
 do
     local dragging, dragStart, startPos
@@ -521,36 +512,6 @@ local function getMovementDirection()
 end
 
 -- ─── FEATURE LOGIC ────────────────────────────────────────────────────────────
-local function performDrop()
-    if dropRunning then return end
-    dropRunning = true
-    local char = Player.Character or Player.CharacterAdded:Wait()
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    local startCF = hrp.CFrame
-    hrp.AssemblyLinearVelocity = Vector3.new(0, 120, 0)
-    task.wait(0.35)
-    hrp.AssemblyLinearVelocity = Vector3.zero
-    hrp.CFrame = startCF
-    dropRunning = false
-end
-
-local function performTP()
-    local char = Player.Character
-    if not char then return end
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
-    if not chosenRoute then
-        local waitTime = 0
-        while not chosenRoute and waitTime < 2 do task.wait(0.1); waitTime = waitTime + 0.1 end
-    end
-    if chosenRoute then
-        for _, pos in ipairs(chosenRoute) do
-            if not Features.SmartTP then break end
-            root.CFrame = CFrame.new(pos)
-            task.wait(0.2)
-        end
-    end
-end
 
 -- Speed Boost
 local function startSpeedBoost()
@@ -1187,7 +1148,7 @@ local function pathMoveToPoint(hrp, current, nextPoint, speed)
         lastFlatVel = Vector3.new(vel.X, 0, vel.Z)
     end)
     while pathActive and not reached and not isPlayerRagdolled() and
-        (Vector3.new(hrp.Position.X, 0, hrp.Position.Z) - Vector3.new(current.X, 0, current.Z)).Magnitude > PATH_BASE_STOP do
+    (Vector3.new(hrp.Position.X, 0, hrp.Position.Z) - Vector3.new(current.X, 0, current.Z)).Magnitude > PATH_BASE_STOP do
         RunService.Heartbeat:Wait()
     end
     if conn then conn:Disconnect() end
@@ -1603,6 +1564,7 @@ do
     btn.MouseButton1Click:Connect(toggleSpeedBoost)
     if Features.SpeedBoost then setVisual(true) startSpeedBoost() end
 end
+
 createSlider(scrollFrame, "Speed Value", 1, 70, "BoostSpeed")
 
 do
@@ -1653,6 +1615,7 @@ do
     end)
     if Features.Helicopter then setVisual(true) startHelicopter() end
 end
+
 createSlider(scrollFrame, "Heli Speed", 5, 50, "SpinSpeed", function(v)
     Values.SpinSpeed = v
     applyHelicopterSpeed()
@@ -1669,6 +1632,7 @@ do
     end)
     if Features.ThiefSpeed then setVisual(true) startSpeedWhileStealing() end
 end
+
 createSlider(scrollFrame, "Steal Speed", 10, 50, "StealingSpeedValue", function(v)
     Values.StealingSpeedValue = v
 end)
@@ -1718,6 +1682,7 @@ do
     end)
     if Features.GalaxyMode then setVisual(true) startGalaxy() end
 end
+
 createSlider(scrollFrame, "Gravity %", 25, 130, "GalaxyGravityPercent", function(v)
     Values.GalaxyGravityPercent = v
     if galaxyEnabled then adjustGalaxyJump() end
@@ -1829,27 +1794,13 @@ do
     end)
     if Features.AutoLeft then setVisual(true) startStealPath(stealPath2) end
 end
+
 createSlider(scrollFrame, "Path Turn Speed (Wait)", 0.0, 1.0, "PATH_TURN_WAIT", function(v)
     AutoStealValues.PATH_TURN_WAIT = v
 end)
 
--- RESTORED: Drop Shot Toggle (NO SAVE) + Shows Galaxy Button
-do
-    local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Drop Shot  [" .. Keybinds.DropShot.Name .. "]", "DropShot", true, Keybinds.DropShot, true)
-    btn.MouseButton1Click:Connect(function()
-        local on = not getState()
-        setVisual(on)
-        Features.DropShot = on
-        extraConfig.dropEnabled = on
-        toggleExtraButtons()
-        SaveConfig()
-    end)
-    if Features.DropShot then
-        setVisual(true)
-        extraConfig.dropEnabled = true
-        toggleExtraButtons()
-    end
-end
+-- REMOVED: Drop Shot Toggle (It is now direct action only)
+-- We keep the keybind setting logic but remove the toggle switch from UI
 
 -- NEW: Smart TP Toggle (NO SAVE) + Shows Galaxy Button
 do
@@ -1887,6 +1838,7 @@ end)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
+    
     if input.KeyCode == Keybinds.ToggleMenu then
         if main.Parent then
             if main.Size.Y.Offset <= HeaderH + 5 then
@@ -1897,9 +1849,10 @@ UserInputService.InputBegan:Connect(function(input, gpe)
         end
         return
     end
-    -- Handle Drop Shot Keybind
-    if _G["GetKeybind_DropShot"] and input.KeyCode == _G["GetKeybind_DropShot"]() then
-        if Features.DropShot then performDrop() end
+    
+    -- DIRECT DROP SHOT LOGIC (No toggle check needed)
+    if input.KeyCode == Keybinds.DropShot then
+        performDrop()
         return
     end
     
@@ -1989,7 +1942,6 @@ closeBtn.MouseButton1Click:Connect(function()
     disableOptimizer()
     stopAutoTPRagdoll()
     stopStealPath()
-    if dropGuiBtn then dropGuiBtn:Destroy() dropGuiBtn = nil end
     if tpGuiBtn then tpGuiBtn:Destroy() tpGuiBtn = nil end
     for p, data in pairs(enemyTimers) do
         if data.Connection then data.Connection:Disconnect() end
@@ -2016,60 +1968,55 @@ end)
 -- Text is now INSIDE the circle.
 -- Drop Shot on Mobile is now DIRECT (Click = Drop).
 
+local mobileTogglesFrame = Instance.new("Frame")
+mobileTogglesFrame.Name = "MobileToggles"
+mobileTogglesFrame.Size = UDim2.new(0, 60 * guiScale, 0, 180 * guiScale)
+mobileTogglesFrame.Position = UDim2.new(0, 10 * guiScale, 0.5, -90 * guiScale)
+mobileTogglesFrame.BackgroundTransparency = 1
+mobileTogglesFrame.Visible = isMobile
+mobileTogglesFrame.ZIndex = 50
+mobileTogglesFrame.Parent = sg
+
+local listLayoutMobile = Instance.new("UIListLayout")
+listLayoutMobile.Padding = UDim.new(0, 10 * guiScale)
+listLayoutMobile.HorizontalAlignment = Enum.HorizontalAlignment.Center
+listLayoutMobile.SortOrder = Enum.SortOrder.LayoutOrder
+listLayoutMobile.Parent = mobileTogglesFrame
+
 local function createCircularToggle(parent, labelText, featureKey, keybindName)
     local btnContainer = Instance.new("Frame")
     btnContainer.Size = UDim2.new(0, 60 * guiScale, 0, 60 * guiScale)
     btnContainer.BackgroundTransparency = 1
     btnContainer.LayoutOrder = #parent:GetChildren()
     btnContainer.Parent = parent
-
+    
     local circleBtn = Instance.new("TextButton")
     circleBtn.Size = UDim2.new(0, 60 * guiScale, 0, 60 * guiScale)
     circleBtn.Position = UDim2.new(0, 0, 0, 0)
     circleBtn.BackgroundColor3 = COLOR_BG_MAIN
-    -- TEXT IS NOW INSIDE THE CIRCLE
-    circleBtn.Text = labelText 
+    circleBtn.Text = labelText -- TEXT IS NOW INSIDE
     circleBtn.TextColor3 = COLOR_GLOW
     circleBtn.Font = Enum.Font.GothamBlack
-    circleBtn.TextSize = 11 * guiScale 
+    circleBtn.TextSize = 10 * guiScale -- Adjusted size to fit inside
     circleBtn.BorderSizePixel = 0
     circleBtn.ZIndex = 55
     circleBtn.Parent = btnContainer
-
+    
     local corner = Instance.new("UICorner", circleBtn)
     corner.CornerRadius = UDim.new(1, 0)
-    
     local stroke = Instance.new("UIStroke", circleBtn)
     stroke.Color = COLOR_ACCENT
     stroke.Thickness = 3 * guiScale
     
-    local isActive = false
-    
     circleBtn.MouseButton1Click:Connect(function()
-        if featureKey == "DropShot" then
-            -- INSTANT DROP LOGIC (NO TOGGLE)
-            -- Flashes the button to show it was pressed
-            circleBtn.BackgroundColor3 = COLOR_ACCENT
-            circleBtn.TextColor3 = COLOR_TEXT
-            stroke.Color = COLOR_GLOW
-            
-            -- Shrink effect
-            TweenService:Create(circleBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, 55 * guiScale, 0, 55 * guiScale)}):Play()
-            
-            -- EXECUTE DROP IMMEDIATELY
-            performDrop() 
-            
-            -- Reset visual after short delay
-            task.wait(0.15)
-            TweenService:Create(circleBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, 60 * guiScale, 0, 60 * guiScale)}):Play()
-            circleBtn.BackgroundColor3 = COLOR_BG_MAIN
-            circleBtn.TextColor3 = COLOR_GLOW
-            stroke.Color = COLOR_ACCENT
-            
-        else
-            -- Normal Toggle Logic for Auto Left/Right
-            isActive = not isActive
-            if isActive then
+        -- Logic
+        if featureKey == "AutoRight" then
+            local newState = not Features.AutoRight
+            Features.AutoRight = newState
+            if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](newState) end
+            if newState then stopStealPath(); startStealPath(stealPath1) else stopStealPath() end
+            -- Visual Feedback for Toggles
+            if newState then
                 circleBtn.BackgroundColor3 = COLOR_ACCENT
                 circleBtn.TextColor3 = COLOR_TEXT
                 stroke.Color = COLOR_GLOW
@@ -2078,26 +2025,38 @@ local function createCircularToggle(parent, labelText, featureKey, keybindName)
                 circleBtn.TextColor3 = COLOR_GLOW
                 stroke.Color = COLOR_ACCENT
             end
-            
-            if featureKey == "AutoRight" then
-                Features.AutoRight = isActive
-                if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](isActive) end
-                if isActive then stopStealPath(); startStealPath(stealPath1) else stopStealPath() end
-            elseif featureKey == "AutoLeft" then
-                Features.AutoLeft = isActive
-                if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](isActive) end
-                if isActive then stopStealPath(); startStealPath(stealPath2) else stopStealPath() end
+        elseif featureKey == "AutoLeft" then
+            local newState = not Features.AutoLeft
+            Features.AutoLeft = newState
+            if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](newState) end
+            if newState then stopStealPath(); startStealPath(stealPath2) else stopStealPath() end
+             -- Visual Feedback for Toggles
+            if newState then
+                circleBtn.BackgroundColor3 = COLOR_ACCENT
+                circleBtn.TextColor3 = COLOR_TEXT
+                stroke.Color = COLOR_GLOW
+            else
+                circleBtn.BackgroundColor3 = COLOR_BG_MAIN
+                circleBtn.TextColor3 = COLOR_GLOW
+                stroke.Color = COLOR_ACCENT
             end
+        elseif featureKey == "DropShot" then
+            -- MOBILE DIRECT DROP LOGIC
+            performDrop()
+            -- Optional visual flash for feedback
+            local oldColor = circleBtn.BackgroundColor3
+            circleBtn.BackgroundColor3 = COLOR_GLOW
+            task.wait(0.1)
+            circleBtn.BackgroundColor3 = oldColor
         end
     end)
-    
     return circleBtn
 end
 
-if isMobile then 
+if isMobile then
     createCircularToggle(mobileTogglesFrame, "Auto R", "AutoRight", "V")
     createCircularToggle(mobileTogglesFrame, "Auto L", "AutoLeft", "C")
     createCircularToggle(mobileTogglesFrame, "Drop", "DropShot", "X")
 end
 
-print("Darker Hub Loaded — Text inside circles. Mobile Drop is now direct (click to drop).")
+print("Darker Hub Loaded — Drop Shot is now Direct Action (No Toggle).")
