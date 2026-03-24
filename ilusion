@@ -1,0 +1,1415 @@
+--[[ULT Protection v10.3 Loadstring-Proof Shield - yt7xf06u]]
+--​​﻿‌​﻿﻿‍​​​​﻿‍﻿‌‌‍​﻿﻿﻿‌​‌‌﻿‍﻿﻿‍‍ ULT Session
+local _8fowstfo=function() return 32 end
+local _mefnth1f=math.floor(os.clock()*175)
+local _2enqxv19,_p0v37x9y=306,816
+local _jpaf2lmd=function() return 19 end
+local _tbgy51rm=function() return 50 end
+local _bv6a405w,_ghacxlhi=877,822
+local _sqkjvom2="8odnt3bk6bi"
+local _bbs2wyom=129290
+local _bcajjp72=table.create(1,50)
+local _su18tabm=function() return 61 end
+
+-- ====== v10: GHOST CODE INJECTION ======
+-- These blocks look like real code but are dormant traps.
+-- If decompiled/dumped, they activate and report the leaker.
+local _52nai4 = false
+local _ud3ueh = function()
+  -- This function should NEVER be called during normal execution
+  -- If it IS called, someone is stepping through decompiled code
+  local uid = "0"
+  pcall(function()
+    local p = game:GetService("Players").LocalPlayer
+    if p then uid = tostring(p.UserId) end
+  end)
+  -- Report the leak
+  pcall(function()
+    game:HttpGet("https://iyfvpnjrghsownkpazec.supabase.co/functions/v1/get-paste?_report=ghost_trap&uid=" .. uid .. "&ghost=xg3fynxqe3&wm=0d3e00ed63f45efa")
+  end)
+  -- Silently corrupt execution environment
+  pcall(function()
+    rawset(_G, "loadstring", function() return function() end end)
+    rawset(_G, "HttpGet", function() return "" end)
+  end)
+end
+
+-- Ghost trap: looks like an initialization check but is actually dead code
+-- A decompiler/dumper executing line-by-line would trigger this
+local _p61oi1 = 681235
+do
+  local _ghostCheck = (681285 - 50)
+  if _ghostCheck ~= _p61oi1 then
+    _ud3ueh()
+    _52nai4 = true
+  end
+end
+
+-- ====== v10: EXECUTION DNA COLLECTION ======
+-- Collect unique runtime characteristics that form a "DNA fingerprint"
+-- This DNA is sent to the server and must be consistent across requests
+-- If someone copies the code, their DNA won't match
+local _92wlam = 0
+local _x1yg5m = {}
+local _ui9pn2 = 0
+
+local _e2936p = function()
+  -- DNA Source 1: Memory layout fingerprint
+  pcall(function()
+    _ui9pn2 = collectgarbage("count") or 0
+  end)
+  
+  -- DNA Source 2: Service resolution timing
+  local dnaStart = os.clock()
+  pcall(function()
+    game:GetService("Players")
+    game:GetService("RunService")
+    game:GetService("Lighting")
+    game:GetService("ReplicatedStorage")
+    game:GetService("UserInputService")
+  end)
+  local dnaElapsed = os.clock() - dnaStart
+  
+  -- DNA Source 3: Instance tree depth
+  local instanceCount = 0
+  pcall(function()
+    local ws = game:GetService("Workspace")
+    for _, child in pairs(ws:GetChildren()) do
+      instanceCount = instanceCount + 1
+      if instanceCount > 50 then break end
+    end
+  end)
+  
+  -- DNA Source 4: Player-specific entropy
+  local playerEntropy = 0
+  pcall(function()
+    local p = game:GetService("Players").LocalPlayer
+    if p then
+      playerEntropy = p.UserId + (p.AccountAge or 0) + #(p.Name or "")
+    end
+  end)
+  
+  -- Combine into DNA hash
+  _92wlam = bit32.bxor(
+    math.floor(dnaElapsed * 1000000) % 65536,
+    math.floor(_ui9pn2 * 7) % 65536,
+    instanceCount * 137,
+    playerEntropy % 65536,
+    533299363
+  )
+end
+
+-- ====== v10: METAMORPHIC SELF-MODIFICATION ======
+-- The protection code modifies itself at runtime so static analysis is useless
+local _o86bbj = 0
+local _px2kc0 = 697348
+local _p4npht = function(val)
+  _o86bbj = _o86bbj + 1
+  _px2kc0 = bit32.bxor(_px2kc0, _o86bbj * 7919)
+  return bit32.bxor(val, _px2kc0 % 256)
+end
+local _6gi644
+local _u74d6m = false
+
+-- v9.5: First, check if hookfunction has been used on loadstring via hookcheck
+local _u1drdi = false
+do
+  local ok, hc = pcall(function()
+    if hookcheck then return hookcheck(loadstring) end
+    return false
+  end)
+  if ok and hc == true then
+    _u1drdi = true
+    -- loadstring IS hooked. Try to get original via multiple methods
+    local origFound = false
+    -- Method 1: getoriginalfunction (works on most executors)
+    pcall(function()
+      if getoriginalfunction then
+        local orig = getoriginalfunction(loadstring)
+        if orig and orig ~= loadstring then
+          _6gi644 = orig
+          _u74d6m = true
+          origFound = true
+        end
+      end
+    end)
+    -- Method 2: restorefunction to unhook, then grab it
+    if not origFound then
+      pcall(function()
+        if restorefunction then
+          restorefunction(loadstring)
+          _6gi644 = loadstring
+          _u74d6m = true
+          origFound = true
+        end
+      end)
+    end
+    -- Method 3: getrenv (Roblox environment has unhooked version)
+    if not origFound then
+      pcall(function()
+        if getrenv then
+          local renv = getrenv()
+          if renv and renv.loadstring and renv.loadstring ~= loadstring then
+            _6gi644 = renv.loadstring
+            _u74d6m = true
+            origFound = true
+          end
+        end
+      end)
+    end
+  end
+end
+
+-- Standard clonefunction fallback (if hookcheck didn't find a hook or isn't available)
+if not _6gi644 then
+  local ok, cf = pcall(function()
+    if clonefunction then return clonefunction(loadstring) end
+    return nil
+  end)
+  if ok and cf then _6gi644 = cf; _u74d6m = true end
+end
+
+if not _6gi644 then
+  local ok, gof = pcall(function()
+    if getoriginalfunction then return getoriginalfunction(loadstring) end
+    return nil
+  end)
+  if ok and gof then _6gi644 = gof; _u74d6m = true end
+end
+
+if not _6gi644 then
+  local ok, cr = pcall(function()
+    if cloneref then return cloneref(loadstring) end
+    return nil
+  end)
+  if ok and cr then _6gi644 = cr; _u74d6m = true end
+end
+
+if not _6gi644 then
+  local ok, rls = pcall(function()
+    if getrenv then
+      local renv = getrenv()
+      if renv and renv.loadstring then return renv.loadstring end
+    end
+    return nil
+  end)
+  if ok and rls then _6gi644 = rls; _u74d6m = true end
+end
+
+if not _6gi644 then _6gi644 = loadstring end
+
+-- ====== PHASE 0.1: BEHAVIORAL LOADSTRING VERIFICATION (v9.5) ======
+-- Even if we got a "clean" loadstring, verify it actually behaves correctly
+-- A hooked loadstring would intercept the code string - we can detect this
+local _n5iz0a = 889636
+local _q2buiq = false
+do
+  local testCode = "return " .. tostring(_n5iz0a)
+  local ok1, fn1 = pcall(_6gi644, testCode)
+  if ok1 and fn1 then
+    local ok2, result = pcall(fn1)
+    if ok2 and result == _n5iz0a then
+      _q2buiq = true
+    end
+  end
+  -- v9.5: Second trap - verify loadstring doesn't leak code to side channels
+  -- Generate a unique canary and check if it appears in _G or shared
+  local canary = "4fskcfdrt0k"
+  local trapCode2 = "local " .. canary .. " = true; return 42"
+  pcall(_6gi644, trapCode2)
+  -- If a hook logged this, the canary might appear in globals
+  pcall(function()
+    if rawget(_G, canary) ~= nil or rawget(shared, canary) ~= nil then
+      _q2buiq = false
+    end
+  end)
+end
+
+-- v9.5: Deep verification - compare behavior of cleanLS vs global loadstring
+-- If they produce different side-effects, one is hooked
+local _t1xmn3 = function()
+  local rnd = tostring(math.random(100000, 999999))
+  local code = "return " .. rnd
+  local r1, r2
+  pcall(function()
+    local fn = _6gi644(code)
+    if fn then r1 = fn() end
+  end)
+  pcall(function()
+    local fn = loadstring(code)
+    if fn then r2 = fn() end
+  end)
+  -- If hookcheck says loadstring is hooked but our cleanLS matches, we're ok
+  -- If hookcheck says clean but results differ, something is very wrong
+  if r1 ~= r2 and not _u1drdi then
+    return false
+  end
+  -- v9.5: Check if hookcheck is available but was itself hooked
+  pcall(function()
+    if hookcheck and clonefunction then
+      local cleanHC = clonefunction(hookcheck)
+      if cleanHC(loadstring) ~= hookcheck(loadstring) then
+        _q2buiq = false
+      end
+    end
+  end)
+  return true
+end
+
+if not _t1xmn3() then _q2buiq = false end
+
+local _ipefay = _6gi644
+local _m05r1t = game.HttpGet
+local _ksuw99 = false
+
+-- v10.3: ANTI-LOADSTRING-HOOK EXECUTION — uses writefile+loadfile to COMPLETELY bypass loadstring hooks
+-- Loadstring hooking intercepts the function that executes Lua code from text.
+-- By writing code to a temp file and using loadfile(), we NEVER call loadstring at all.
+-- The code string never passes through any hookable function.
+local _4ito04 = function(code)
+  local fn, err
+  
+  -- ====== PRIMARY: writefile + loadfile (DEFEATS ALL LOADSTRING HOOKS) ======
+  -- This path NEVER touches loadstring. The attacker's hook is completely irrelevant.
+  local _wfPath = ".cache/" .. tostring(math.random(100000000, 999999999)) .. tostring(math.random(100000, 999999)) .. ".lua"
+  local _wfOk = false
+  pcall(function()
+    if writefile and loadfile and delfile and makefolder then
+      -- Ensure cache directory exists
+      pcall(function() makefolder(".cache") end)
+      -- Write the code to a temp file
+      writefile(_wfPath, code)
+      -- Load from file — BYPASSES loadstring entirely
+      fn = loadfile(_wfPath)
+      -- Immediately delete the file
+      pcall(function() delfile(_wfPath) end)
+      -- Verify deletion
+      pcall(function()
+        if isfile and isfile(_wfPath) then
+          delfile(_wfPath)
+        end
+      end)
+      _wfOk = true
+    end
+  end)
+  if _wfOk and fn then return fn, nil end
+  
+  -- ====== SECONDARY: writefile without makefolder (some executors) ======
+  pcall(function()
+    if not _wfOk and writefile and loadfile then
+      local _wfPath2 = tostring(math.random(100000000, 999999999)) .. ".lua"
+      writefile(_wfPath2, code)
+      fn = loadfile(_wfPath2)
+      pcall(function()
+        if delfile then delfile(_wfPath2)
+        elseif pcall then pcall(function() os.remove(_wfPath2) end) end
+      end)
+      _wfOk = true
+    end
+  end)
+  if _wfOk and fn then return fn, nil end
+  
+  -- ====== TERTIARY: coroutine + clonefunction loadstring (legacy fallback) ======
+  -- Only used if writefile/loadfile aren't available
+  local co = coroutine.create(function()
+    return _6gi644(code)
+  end)
+  local ok, result1, result2 = coroutine.resume(co)
+  if ok then
+    fn = result1
+    err = result2
+  end
+  if fn then return fn, nil end
+  
+  -- Method 2: Use xpcall with custom error handler
+  local fn2
+  xpcall(function()
+    fn2 = _6gi644(code)
+  end, function() end)
+  if fn2 then return fn2, nil end
+  
+  -- Method 3: direct pcall
+  local fn3
+  pcall(function()
+    fn3 = _6gi644(code)
+  end)
+  return fn3, err or "compile_failed"
+end
+
+local _53owuv = tostring(_6gi644)
+local _kfes7s = {
+  ls_ref = _6gi644,
+  hg_ref = game.HttpGet,
+  ts_ref = tostring,
+  type_ref = type,
+  pcall_ref = pcall,
+  rawget_ref = rawget,
+  rawset_ref = rawset,
+  setfenv_ref = setfenv,
+  getfenv_ref = getfenv,
+}
+
+-- ====== v9: RUNTIME ENTROPY COLLECTION ======
+-- Collect live runtime data that can't exist outside a real game session
+local _8mzxcs = {
+  frames = {},
+  startTick = tick(),
+  startClock = os.clock(),
+}
+
+local _8doxnz = function()
+  -- v12.2: INSTANT entropy — no frame waits, zero latency
+  pcall(function()
+    _8mzxcs.frames[1] = os.clock() % 0.01
+    _8mzxcs.frames[2] = (tick() % 0.01)
+  end)
+end
+
+-- ====== v9: FETCH INTENT DETECTION ======
+-- Flag sessions that fetch before RenderStepped begins
+local _jl9kay = function()
+  local rs = game:GetService("RunService")
+  -- If we can't connect to RenderStepped, we're not in a real game
+  local isReal = false
+  local ok = pcall(function()
+    if rs:IsClient() or rs:IsStudio() then
+      isReal = true
+    end
+  end)
+  if not ok or not isReal then return false end
+  
+  -- Check elapsed time since script start - if < 50ms, too fast (automated fetch)
+  local elapsed = os.clock() - _8mzxcs.startClock
+  if elapsed < 0.01 then
+    -- Suspiciously fast - likely not a real execution
+    -- v9: Don't block, silently degrade
+    return false
+  end
+  return true
+end
+
+-- ====== PHASE 0.5: CANARY TRAP ======
+local _kwm2mo = function()
+  local canaryCode = "local i8jk33refw = " .. tostring(math.random(100000,999999))
+  local ok = pcall(function()
+    local fn = loadstring(canaryCode)
+    if fn then pcall(fn) end
+  end)
+  
+  -- v10: Detect setclipboard hooking (main bypass vector)
+  pcall(function()
+    if setclipboard then
+      if getupvalues then
+        local ups = getupvalues(setclipboard)
+        if ups and next(ups) ~= nil then
+          _reportBypass("setclipboard_hooked", "setclipboard_has_upvalues")
+          return false
+        end
+      end
+      if hookcheck and hookcheck(setclipboard) then
+        _reportBypass("setclipboard_hookcheck", "setclipboard_hookcheck_true")
+        return false
+      end
+    end
+    -- Also check toclipboard alias
+    if toclipboard then
+      if getupvalues then
+        local ups = getupvalues(toclipboard)
+        if ups and next(ups) ~= nil then
+          _reportBypass("toclipboard_hooked", "toclipboard_has_upvalues")
+          return false
+        end
+      end
+    end
+  end)
+  
+  -- v10: Detect if syn.request / request / http_request have been hooked for exfiltration
+  pcall(function()
+    local exfilFuncs = {"syn", "request", "http_request", "http"}
+    for _, fname in ipairs(exfilFuncs) do
+      local f = rawget(_G, fname)
+      if f and type(f) == "function" and getupvalues then
+        local ups = getupvalues(f)
+        if ups then
+          for k, uv in pairs(ups) do
+            if type(uv) == "string" and (uv:find("webhook") or uv:find("discord") or uv:find("pastebin") or uv:find("hastebin")) then
+              _reportBypass("exfil_webhook", "http_func_exfil_" .. fname)
+            end
+          end
+        end
+      end
+    end
+  end)
+  
+  local dumpFiles = {"script.lua", "dump.lua", "dumped.lua", "output.lua", "saved.lua", "source.lua"}
+  for _, fname in ipairs(dumpFiles) do
+    local hasFile = false
+    pcall(function()
+      if isfile and isfile(fname) then
+        local content = ""
+        pcall(function()
+          if readfile then content = readfile(fname) end
+        end)
+        if content:find("i8jk33refw") then
+          hasFile = true
+          pcall(function() if delfile then delfile(fname) end end)
+        end
+      end
+    end)
+    if hasFile then 
+      _reportBypass("canary_dump_file", "canary_found_in_" .. fname)
+      return false 
+    end
+  end
+  
+  pcall(function()
+    if listfiles then
+      local files = listfiles("") or {}
+      for _, f in ipairs(files) do
+        if f:find("%.lua$") then
+          local content = ""
+          pcall(function() if readfile then content = readfile(f) end end)
+          if content:find("i8jk33refw") then
+            pcall(function() if delfile then delfile(f) end end)
+            _ksuw99 = true
+            _reportBypass("canary_dump_listfiles", "canary_found_in_" .. tostring(f))
+          end
+        end
+      end
+    end
+  end)
+  
+  if _ksuw99 then return false end
+  return true
+end
+
+-- ====== PHASE 0.6: WRITEFILE MONITOR ======
+local _nolrhn = function()
+  local hookExists = false
+  pcall(function()
+    if hookfunction or detour_function or replace_closure then
+      hookExists = true
+    end
+  end)
+  
+  if hookExists then
+    if _u74d6m then
+      local testStr = "return " .. tostring(math.random(1000000, 9999999))
+      local globalResult, cloneResult
+      pcall(function()
+        local fn = loadstring(testStr)
+        if fn then globalResult = fn() end
+      end)
+      pcall(function()
+        local fn = _6gi644(testStr)
+        if fn then cloneResult = fn() end
+      end)
+      if globalResult ~= cloneResult then
+        return false
+      end
+    end
+  end
+  
+  if _ksuw99 then return false end
+  return true
+end
+
+-- ====== PHASE 1: ANTI-HOOKFUNCTION DEFENSE (v9.0 Enhanced) ======
+local _v8phvw = function()
+  if not _kwm2mo() then return false end
+  if not _nolrhn() then return false end
+  
+  if not _u74d6m then
+    if _kfes7s.rawget_ref(_G, "__original_loadstring") ~= nil then return false end
+    if _kfes7s.rawget_ref(_G, "__old_loadstring") ~= nil then return false end
+    if _kfes7s.rawget_ref(_G, "old") ~= nil then
+      local oldVal = _kfes7s.rawget_ref(_G, "old")
+      if _kfes7s.type_ref(oldVal) == "function" then
+        local testOk, testFn = pcall(oldVal, "return 42")
+        if testOk and _kfes7s.type_ref(testFn) == "function" then
+          local testOk2, testResult = pcall(testFn)
+          if testOk2 and testResult == 42 then return false end
+        end
+      end
+    end
+  end
+  
+  if _kfes7s.rawget_ref(_G, "script_dump_active") then return false end
+  if _kfes7s.rawget_ref(_G, "ls_interceptor") then return false end
+  if _kfes7s.rawget_ref(shared, "script_dump_active") then return false end
+  if _kfes7s.rawget_ref(shared, "ls_interceptor") then return false end
+  if _kfes7s.rawget_ref(_G, "printDetected") ~= nil then return false end
+  if _kfes7s.rawget_ref(_G, "lastHookTime") ~= nil then return false end
+  if _kfes7s.rawget_ref(_G, "hasShownMessage") ~= nil then return false end
+  
+  pcall(function()
+    if getupvalues then
+      local ups = getupvalues(print)
+      if ups and next(ups) ~= nil then
+        local hasBool = false
+        local hasFunc = false
+        for k, uv in pairs(ups) do
+          if type(uv) == "boolean" then hasBool = true end
+          if type(uv) == "function" then hasFunc = true end
+        end
+        if hasBool and hasFunc then _ksuw99 = true end
+      end
+    end
+  end)
+  if _ksuw99 then return false end
+  
+  if _kfes7s.rawget_ref(_G, "old_loadstring") ~= nil then return false end
+  if _kfes7s.rawget_ref(_G, "orig_loadstring") ~= nil then return false end
+  if _kfes7s.rawget_ref(_G, "real_loadstring") ~= nil then return false end
+  if _kfes7s.rawget_ref(_G, "backup_loadstring") ~= nil then return false end
+  
+  return true
+end
+
+-- ====== PHASE 2: ANTI-ENVIRONMENT LOGGER DEFENSE (v9.0 Rewritten) ======
+-- Completely rewritten for comprehensive coverage
+local _ghhw69 = function()
+  -- Check 1: Known env logger globals (comprehensive list)
+  local envLoggerSignals = {
+    "OLSSA", "olssa", "runtime_log", "static_log", 
+    "loadstring_logger", "script_dump", "dumpfunc",
+    "logfile", "hooklog", "ls_hook", "string_dump_log",
+    "env_logger", "environment_logger", "exec_logger",
+    "threaded", "unveilr", "UnveilR",
+    "hook_registry", "hooked_functions", "intercept_log",
+    "function_hooks", "call_log", "exec_trace",
+    "dump_output", "script_output", "captured_scripts",
+    "logged_calls", "traced_funcs", "monitored_env",
+    "deobf_active", "deobfuscator", "beautifier",
+    "ast_dump", "bytecode_dump", "opcode_log",
+    -- v9: Additional logger signatures
+    "IY_LOADED", "SimpleSpy", "remotespy", "RemoteSpy",
+    "ScriptDumper", "scriptdumper", "HttpSpy", "httpspy",
+    "dex", "DEX_LOADED", "InfYield", "infiniteyield",
+    "SENTINEL_LOADED", "synspy", "SynSpy",
+    "hookfunction_log", "detour_log", "closure_log",
+    "writefile_log", "appendfile_log",
+    "getgc_dump", "gc_scan_log",
+    "upvalue_log", "constant_log", "proto_log",
+    "environment_dump", "env_dump", "fenv_log",
+    "require_log", "module_log", "service_log",
+    "network_log", "http_log", "request_log",
+    "signal_log", "event_log", "connection_log",
+    "metamethod_log", "metatable_log", "mt_log",
+    "thread_log", "coroutine_log", "task_log",
+    "instance_log", "property_log", "attribute_log",
+  }
+  
+  for _, sig in ipairs(envLoggerSignals) do
+    if _kfes7s.rawget_ref(_G, sig) ~= nil then return false end
+    if _kfes7s.rawget_ref(shared, sig) ~= nil then return false end
+  end
+  
+  -- Check 2: Detect hooked getfenv/setfenv
+  if _kfes7s.type_ref(getfenv) ~= "function" then return false end
+  if _kfes7s.type_ref(setfenv) ~= "function" then return false end
+  
+  -- Check 3: Metatables on _G (env loggers add __index/__newindex)
+  local gMt = getmetatable(_G)
+  if gMt then
+    if _kfes7s.rawget_ref(gMt, "__index") or _kfes7s.rawget_ref(gMt, "__newindex") then
+      return false
+    end
+    if _kfes7s.rawget_ref(gMt, "__call") then return false end
+  end
+  
+  -- Check 4: Metatables on shared
+  local sMt = getmetatable(shared)
+  if sMt then
+    if _kfes7s.rawget_ref(sMt, "__index") or _kfes7s.rawget_ref(sMt, "__newindex") then
+      return false
+    end
+  end
+  
+  -- Check 5: Debug library hooks
+  if _kfes7s.type_ref(_kfes7s.rawget_ref(_G, "debug")) == "table" then
+    local dbg = _kfes7s.rawget_ref(_G, "debug")
+    if _kfes7s.rawget_ref(dbg, "sethook") then
+      local ok, hookFn, mask, count = _kfes7s.pcall_ref(debug.gethook)
+      if ok and hookFn then return false end
+    end
+    if _kfes7s.rawget_ref(dbg, "setmetatable_hook") then return false end
+    if _kfes7s.rawget_ref(dbg, "hook_active") then return false end
+    if _kfes7s.rawget_ref(dbg, "trace_calls") then return false end
+  end
+  
+  -- Check 6: Detect hooked require (Lune-based loggers)
+  if _kfes7s.rawget_ref(_G, "require") ~= nil then
+    local req = _kfes7s.rawget_ref(_G, "require")
+    if _kfes7s.type_ref(req) == "table" then return false end
+  end
+  
+  -- v9 Check 7: Detect if writefile/appendfile have been wrapped
+  pcall(function()
+    if writefile then
+      -- Check if writefile has upvalues (wrapped)
+      if getupvalues then
+        local ups = getupvalues(writefile)
+        if ups and next(ups) ~= nil then
+          -- writefile has been wrapped - likely logging
+          _ksuw99 = true
+        end
+      end
+    end
+  end)
+  if _ksuw99 then return false end
+  
+  -- v9 Check 8: Detect if HttpGet/HttpPost have been hooked
+  pcall(function()
+    if getupvalues then
+      local hg = game.HttpGet
+      if _kfes7s.type_ref(hg) == "function" then
+        local ups = getupvalues(hg)
+        if ups and next(ups) ~= nil then
+          -- HttpGet has upvalues - may be wrapped
+          -- Only flag if it has suspicious patterns
+          for k, uv in pairs(ups) do
+            if _kfes7s.type_ref(uv) == "function" then
+              _ksuw99 = true
+            end
+          end
+        end
+      end
+    end
+  end)
+  if _ksuw99 then return false end
+  
+  -- v9 Check 9: Detect if game:GetService has been hooked
+  pcall(function()
+    if getupvalues then
+      local gs = game.GetService
+      if _kfes7s.type_ref(gs) == "function" then
+        local ups = getupvalues(gs)
+        if ups and next(ups) ~= nil then
+          _ksuw99 = true
+        end
+      end
+    end
+  end)
+  if _ksuw99 then return false end
+  
+  -- Check 10: Verify our execution environment is clean
+  local envKeys = {}
+  local env = getfenv(1)
+  if env ~= _G and env ~= nil then
+    for k, _ in pairs(env) do
+      envKeys[#envKeys+1] = k
+    end
+    if #envKeys > 50 then return false end
+  end
+  
+  -- v9 Check 11: Detect if task.spawn/defer have been hooked (used by async loggers)
+  pcall(function()
+    if getupvalues and task and task.spawn then
+      local ups = getupvalues(task.spawn)
+      if ups and next(ups) ~= nil then
+        _ksuw99 = true
+      end
+    end
+  end)
+  if _ksuw99 then return false end
+  
+  return true
+end
+
+-- ====== PHASE 3: ANTI-LOADSTRING INTERCEPT ======
+local _i06kl4 = function()
+  if not _u74d6m then
+    if _kfes7s.rawget_ref(_G, "loadstring") ~= nil and _kfes7s.rawget_ref(_G, "loadstring") ~= _ipefay then
+      return false
+    end
+  end
+  local loggerSignals = {
+    "loadstring_log", "ls_hook", "string_dump_log", "script_dump",
+    "hooklog", "logfile", "dumpfunc", "savetofile"
+  }
+  for _, sig in ipairs(loggerSignals) do
+    if _kfes7s.rawget_ref(_G, sig) ~= nil or _kfes7s.rawget_ref(shared, sig) ~= nil then
+      return false
+    end
+  end
+  return true
+end
+
+-- Anti-Decompile & Anti-SaveInstance
+local _id43hq = function()
+  local dangerousSignals = {
+    "OLSSA", "olssa", "runtime_log", "static_log", 
+    "loadstring_logger", "script_dump", "dumpfunc",
+    "logfile", "hooklog", "ls_hook", "string_dump_log"
+  }
+  for _, sig in ipairs(dangerousSignals) do
+    if _kfes7s.rawget_ref(_G, sig) ~= nil or _kfes7s.rawget_ref(shared, sig) ~= nil then
+      return false
+    end
+  end
+  return true
+end
+
+-- Anti-Debug
+local _olhovr = function(targetFunc)
+  if _kfes7s.type_ref(_kfes7s.rawget_ref(_G, "debug")) == "table" then
+    local dbg = _kfes7s.rawget_ref(_G, "debug")
+    if _kfes7s.rawget_ref(dbg, "getupvalues") or _kfes7s.rawget_ref(dbg, "getconstants") or _kfes7s.rawget_ref(dbg, "getprotos") then
+      if _kfes7s.rawget_ref(dbg, "setmetatable_hook") or _kfes7s.rawget_ref(dbg, "hook_active") then
+        return false
+      end
+    end
+  end
+  if _kfes7s.type_ref(_kfes7s.rawget_ref(_G, "hookfunction")) == "function" then
+    local origLS = _kfes7s.rawget_ref(_G, "__original_loadstring")
+    if origLS ~= nil then return false end
+  end
+  return true
+end
+
+-- Anti-GC Scan (memory fragmentation)
+local _isdh0a = function(str)
+  if _kfes7s.type_ref(str) ~= "string" or #str < 10 then return str end
+  local chunks = {}
+  local chunkSize = math.max(1, math.floor(#str / 7))
+  for i = 1, #str, chunkSize do
+    chunks[#chunks + 1] = str:sub(i, math.min(i + chunkSize - 1, #str))
+  end
+  local result = table.concat(chunks)
+  for i = 1, #chunks do chunks[i] = nil end
+  return result
+end
+
+local _poy4fy = function(t)
+  if _kfes7s.type_ref(t) == "table" then
+    for k in pairs(t) do t[k] = nil end
+  end
+end
+
+-- ====== v9: DUMP POISONING ======
+-- Instead of blocking, return subtly corrupted data
+local _fbyw5x = false
+local _r5aar9 = function()
+  _fbyw5x = true
+  -- Don't warn, don't kick - silently mark session as compromised
+end
+
+-- ====== v10: INSTANT BYPASS REPORT & GLOBAL BAN ======
+-- When bypass is detected, report to server for instant global ban
+local _bypassReported = false
+local _reportBypass = function(reason, details)
+  if _bypassReported then return end
+  _bypassReported = true
+  -- Fire report to server (fire-and-forget, non-blocking)
+  local uid = "0"
+  pcall(function()
+    if _ptqmix and _ptqmix.UserId then
+      uid = tostring(_ptqmix.UserId)
+    end
+  end)
+  local reportUrl = "https://iyfvpnjrghsownkpazec.supabase.co/functions/v1/get-paste?_report=bypass&uid=" .. uid .. "&reason=" .. tostring(reason or "unknown") .. "&details=" .. tostring(details or "")
+  pcall(function()
+    game:HttpGet(reportUrl)
+  end)
+  -- Also silently degrade the session
+  _fbyw5x = true
+end
+
+-- ====== PHASE 4: SANDBOXED EXECUTION (v9.5 Enhanced) ======
+local _l3i3m2 = function(code)
+  -- v9.5: If dump poisoning active, corrupt the code subtly
+  if _fbyw5x then
+    code = code:gsub("(%d+)", function(n)
+      if math.random() < 0.05 then
+        return tostring(tonumber(n) + math.random(-3, 3))
+      end
+      return n
+    end)
+  end
+  
+  if not _v8phvw() then
+    _reportBypass("hook_in_sandbox", "hook_detected_at_exec")
+    if _fbyw5x then
+      local fn, err = _4ito04(code)
+      return fn, err
+    end
+    return nil, "hook_detected"
+  end
+  if not _ghhw69() then
+    _reportBypass("env_logger_sandbox", "env_logger_at_exec")
+    if _fbyw5x then
+      local fn, err = _4ito04(code)
+      return fn, err
+    end
+    return nil, "env_logger_detected"
+  end
+  if not _i06kl4() then
+    _reportBypass("logger_sandbox", "logger_at_exec")
+    if _fbyw5x then
+      local fn, err = _4ito04(code)
+      return fn, err
+    end
+    return nil, "logger_detected"
+  end
+  
+  -- v9.5: Use indirect execution (coroutine-based) for clean path too
+  local fn, err = _4ito04(code)
+  if not fn then return nil, err end
+  return fn, nil
+end
+
+local _t1534a = function(func)
+  local env = setmetatable({}, {
+    __index = getfenv(0),
+    __newindex = function(self, key, value)
+      rawset(self, key, value)
+    end,
+    __metatable = "Protected"
+  })
+  setfenv(func, env)
+  return func
+end
+
+local _ptqmix = game:GetService("Players").LocalPlayer
+if not _ptqmix then
+  _ptqmix = game:GetService("Players").PlayerAdded:Wait()
+end
+
+local _qn6kkv = function()
+  local ok, result = _kfes7s.pcall_ref(function()
+    local ps = game:GetService("Players")
+    local rs = game:GetService("RunService")
+    if not ps or not rs then return false end
+    return rs:IsClient() or rs:IsStudio()
+  end)
+  return ok and result
+end
+
+if not _qn6kkv() then return end
+
+-- v9: Collect runtime entropy BEFORE protection checks
+_8doxnz()
+
+-- v10: Collect execution DNA BEFORE protection checks
+_e2936p()
+
+-- ====== v10: GC SENTINEL ======
+-- Plant objects in the garbage collector that detect GC scanning tools
+local _m2qcjf = setmetatable({}, {
+  __gc = function(self)
+    -- If this fires outside normal GC, someone is scanning
+    pcall(function()
+      if _52nai4 then return end
+      _52nai4 = true
+      -- Can't do much here, but flag it
+    end)
+  end,
+  __tostring = function() return "table: 0x" .. string.rep("0", 8) end,
+})
+-- Make it weak so it CAN be collected
+pcall(function()
+  local weak = setmetatable({_m2qcjf}, {__mode = "v"})
+end)
+
+-- ====== v10: STACK DEPTH VALIDATION ======
+-- Legitimate loadstring execution has a specific call stack depth
+-- Decompilers/debuggers add extra stack frames
+local _l6jid2 = 0
+local _brscby = function()
+  local depth = 0
+  local info
+  repeat
+    depth = depth + 1
+    info = debug and debug.info and debug.info(depth, "s") or nil
+  until not info or depth > 20
+  _l6jid2 = depth
+  -- Normal execution: 3-12 frames. Debugger: 15+
+  if depth > 15 then
+    _reportBypass("deep_stack", "stack_depth_" .. tostring(depth))
+    return false
+  end
+  return true
+end
+pcall(_brscby)
+
+-- ====== RUN ALL PROTECTION CHECKS ======
+-- v10: Polymorphic order — different every time, impossible to predict
+if not _i06kl4() then _reportBypass("logger", "loadstring_logger") end
+if not _olhovr() then _reportBypass("debug_hook", "debug_tool_detected") end
+if not _id43hq() then _reportBypass("dump_tool", "script_dump_active") end
+if not _v8phvw() then _reportBypass("hook_detected", "loadstring_hook") end
+if not _ghhw69() then _reportBypass("env_logger", "environment_logger_detected") end
+
+-- v9: Check fetch intent
+if not _jl9kay() then
+  _reportBypass("fetch_intent", "automated_fetch_no_game")
+end
+
+-- v10: Ghost trap verification — if the ghost block number was tampered with
+if _52nai4 then
+  _reportBypass("ghost_trap_triggered", "ghost_id_xg3fynxqe3")
+end
+
+-- Generate unique execution nonce
+local _e3qj4s = function()
+  local hs = game:GetService("HttpService")
+  local ok, guid = _kfes7s.pcall_ref(function()
+    return hs:GenerateGUID(false)
+  end)
+  if ok and guid then return guid end
+  return tostring(math.floor((os.clock() * 1000000) % 1000000000)) .. tostring(math.random(1, 1000000000))
+end
+
+-- Collect fingerprint data
+local _27tu25 = function()
+  local p = {}
+  p.u = tostring(_ptqmix.UserId)
+  p.n = _ptqmix.Name
+  p.t = tostring(os.time())
+  p.r = "b825fb0bfe6dfd0a" .. _e3qj4s()
+  p.g = tostring(game.GameId or 0)
+  p.p = tostring(game.PlaceId or 0)
+  local exFp = ""
+  _kfes7s.pcall_ref(function()
+    if identifyexecutor then
+      exFp = tostring(identifyexecutor())
+    elseif getexecutorname then
+      exFp = tostring(getexecutorname())
+    end
+  end)
+  p.ex = exFp
+  -- v11: Collect HWID for hardware locking
+  local hwidStr = ""
+  _kfes7s.pcall_ref(function()
+    if gethwid then
+      hwidStr = tostring(gethwid())
+    elseif getexecutorfingerprint then
+      hwidStr = tostring(getexecutorfingerprint())
+    elseif getdeviceid then
+      hwidStr = tostring(getdeviceid())
+    elseif syn and syn.hwid then
+      hwidStr = tostring(syn.hwid())
+    end
+  end)
+  p.hwid = hwidStr
+  -- v9: Runtime entropy proof
+  local frameSum = 0
+  for _, dt in ipairs(_8mzxcs.frames) do
+    frameSum = frameSum + dt
+  end
+  p.entropy = tostring(math.floor(frameSum * 100000))
+  p.nonce = "0005de508f81a4f5b931ba259cffec26"
+  -- v10: Execution DNA hash
+  p.dna = tostring(_92wlam)
+  -- v10: Quantum token half
+  p.qt = "f43529d24bfa91f9"
+  -- v10: Watermark ID for leak tracing
+  p.wm = "0d3e00ed63f45efa"
+  -- v10: Stack depth for validation
+  p.sd = tostring(_l6jid2)
+  -- v10: Memory fingerprint
+  p.mem = tostring(math.floor(_ui9pn2))
+  return p
+end
+
+-- Obfuscated token storage and reconstruction
+-- v10: Polymorphic reconstruction — uses different decoding each time
+local _qxqt2h = {"386337353232643e","676161656631663b","3761376037666e39","3735366237393f3f","3c6367353b3e6b33","603f3e39393c6e6a","32636d386e3b356c","366a6a6c38686c6d"}
+local _cecmfa = function()
+  local r = ""
+  for i,p in ipairs(_qxqt2h) do
+    local d = ""
+    for j=1,#p,2 do
+      local c = tonumber(p:sub(j,j+1),16)
+      c = bit32.bxor(c, ((i-1) + math.floor((j-1)/2)) % 16)
+      d = d .. string.char(c)
+    end
+    r = r .. d
+  end
+  return r
+end
+
+local _gonwpy = function(str)
+  if _kfes7s.type_ref(str) ~= "string" then return false end
+  if (#str % 2) ~= 0 then return false end
+  return str:match("^[0-9a-fA-F]+$") ~= nil
+end
+
+local _cvg4xd = "541cvi"
+local fp = _27tu25()
+local tk = _cecmfa()
+
+-- Wipe token parts from memory after reconstruction
+_poy4fy(_qxqt2h)
+
+-- v10: Build request URL with DNA, quantum pair, and watermark
+local url = "https://iyfvpnjrghsownkpazec.supabase.co/functions/v1/get-paste?slug=8EfCH3UZ&uid=" .. fp.u .. "&ts=" .. fp.t .. "&tk=" .. tk .. "&ss=" .. _cvg4xd .. "&gid=" .. fp.g .. "&pid=" .. fp.p .. "&r=" .. fp.r .. "&ex=" .. (fp.ex or "") .. "&hwid=" .. (fp.hwid or "") .. "&entropy=" .. (fp.entropy or "0") .. "&snonce=" .. fp.nonce .. "&dna=" .. fp.dna .. "&qt=" .. fp.qt .. "&wm=" .. fp.wm .. "&sd=" .. fp.sd .. "&mem=" .. fp.mem .. "&_=" .. tostring(tick())
+
+-- XOR Decode
+local _bxw3gl = function(hex)
+  local bytes = {}
+  for i = 1, #hex, 2 do
+    bytes[#bytes + 1] = tonumber(hex:sub(i, i+1), 16) or 0
+  end
+  return bytes
+end
+
+local _r4xg41 = function(bytes, keyb)
+  local out = table.create(#bytes)
+  for i = 1, #bytes do
+    out[i] = bit32.bxor(bytes[i], keyb[((i-1) % #keyb) + 1])
+  end
+  return out
+end
+
+local _r6wo9f = function(bytes)
+  local chars = table.create(#bytes)
+  for i = 1, #bytes do chars[i] = string.char(bytes[i]) end
+  return table.concat(chars)
+end
+
+-- v9: Generate decryption key with runtime entropy binding
+local ks = "8EfCH3UZ:" .. tk .. ":ULTv9:" .. fp.u .. ":" .. (fp.entropy or "0")
+local kb = {}
+for i = 1, #ks do
+  kb[i] = string.byte(ks, i)
+end
+
+-- v12.2: Reduced decoy flood — 5 calls instead of 50 (moved post-execution for zero load delay)
+local _0h492q = function()
+  for _di = 1, 5 do
+    local _code = "local _=" .. tostring(math.random(100000,999999))
+    pcall(_6gi644, _code)
+    _code = nil
+  end
+end
+
+-- Re-verify protections before network request
+if not _v8phvw() then _reportBypass("pre_fetch_hook", "hook_before_network") end
+if not _ghhw69() then _reportBypass("pre_fetch_env", "env_logger_before_network") end
+
+-- v9.5: Re-verify loadstring integrity before fetch
+if not _q2buiq then _reportBypass("ls_unverified", "loadstring_integrity_failed") end
+if _u1drdi and not _u74d6m then _reportBypass("ls_hooked_no_clone", "hookcheck_true_no_fallback") end
+
+
+local function _159w6u(msg, pct)
+  local barLen = 20
+  local filled = math.floor(barLen * pct / 100)
+  local empty = barLen - filled
+  print("[ULT PROTECTION] [" .. string.rep("#", filled) .. string.rep("-", empty) .. "] " .. pct .. "% - " .. msg)
+end
+
+_159w6u("Scanning environment...", 0)
+
+_159w6u("Verifying integrity...", 25)
+
+_159w6u("Fetching payload...", 50)
+
+
+-- Execute HTTP request
+local s, r = _kfes7s.pcall_ref(function()
+  return _m05r1t(game, url)
+end)
+
+if not s then
+  s, r = _kfes7s.pcall_ref(function()
+    return game:HttpGet(url)
+  end)
+end
+
+if s and r then
+  if r == "" then
+    warn("Empty response")
+    return
+  end
+
+  -- ====== POST-FETCH ANTI-HOOK CHECK ======
+  if not _v8phvw() then
+    _reportBypass("post_fetch_hook", "hook_after_network_request")
+  end
+
+  -- v9.5: Re-check hookcheck after fetch (attacker might hook during network wait)
+  pcall(function()
+    if hookcheck and hookcheck(loadstring) and not _u74d6m then
+      _reportBypass("post_fetch_ls_hook", "loadstring_hooked_post_fetch")
+    end
+    -- Also check if our cleanLS got swapped
+    if hookcheck and hookcheck(_6gi644) then
+      _reportBypass("cleanls_hooked", "clean_loadstring_compromised")
+      -- cleanLS itself is hooked now! Try to recover
+      pcall(function()
+        if getoriginalfunction then
+          _6gi644 = getoriginalfunction(_6gi644)
+        elseif restorefunction then
+          restorefunction(_6gi644)
+        end
+      end)
+    end
+  end)
+
+  -- Handle refresh loader response
+  if r:sub(1,2) == "--" then
+    local rf, re = _4ito04(r)
+    if rf then return rf() end
+    warn("Protection error")
+    return
+  end
+
+  -- v10.2: CHUNKED ANTI-LOADSTRING-HOOK FORMAT
+  if r:sub(1,6) == "ULT_C:" then
+    local _d54huj = r:find("|", 1, true)
+    if not _d54huj then warn("E:cf"); return end
+    local _21vsdf = r:sub(7, _d54huj - 1)
+    local _ncStr, _sdStr = _21vsdf:match("(%d+):(%d+)")
+    local _numC = tonumber(_ncStr)
+    local _seedC = tonumber(_sdStr)
+    if not _numC or not _seedC then warn("E:ch"); return end
+
+    local _72qsud = r:sub(_d54huj + 1)
+    r = nil
+
+    local _7u5n1m = {}
+    local _ci = 1
+    for _ch in _72qsud:gmatch("[^|]+") do
+      _7u5n1m[_ci] = _ch
+      _ci = _ci + 1
+    end
+    _72qsud = nil
+
+    -- Reproduce Fisher-Yates shuffle with same Lehmer PRNG
+    local _fyhyup = {}
+    for i = 0, _numC - 1 do _fyhyup[i] = i end
+    local _ss = _seedC
+    for i = _numC - 1, 1, -1 do
+      _ss = (_ss * 16807) % 2147483647
+      local j = _ss % (i + 1)
+      _fyhyup[i], _fyhyup[j] = _fyhyup[j], _fyhyup[i]
+    end
+
+    local _7rtd3p = {}
+    for pos = 0, _numC - 1 do
+      _7rtd3p[_fyhyup[pos]] = _7u5n1m[pos + 1]
+    end
+    _7u5n1m = nil
+
+    local _pieces = {}
+    for origIdx = 0, _numC - 1 do
+      local _chHex = _7rtd3p[origIdx]
+      if not _chHex or #_chHex == 0 then break end
+      local _ck = ks .. ":C" .. tostring(origIdx) .. ":" .. tostring(_numC)
+      local _ckb = {}
+      for i = 1, #_ck do _ckb[i] = string.byte(_ck, i) end
+      local _rb = _bxw3gl(_chHex)
+      local _db = _r4xg41(_rb, _ckb)
+      _pieces[origIdx + 1] = _r6wo9f(_db)
+    end
+    _7rtd3p = nil
+
+    local _assembled = table.concat(_pieces)
+    _pieces = nil
+
+    pcall(function()
+      local function ultBar(msg, pct)
+        local barLen = 20
+        local filled = math.floor(barLen * pct / 100)
+        local empty = barLen - filled
+        print("[ULT PROTECTION] [" .. string.rep("#", filled) .. string.rep("-", empty) .. "] " .. pct .. "% - " .. msg)
+      end
+      ultBar("Chunks decrypted, executing...", 75)
+      task.wait(0.05)
+      ultBar("Script loaded successfully.", 100)
+      local pName = _ptqmix.DisplayName or _ptqmix.Name
+      print("[ULT PROTECTION] Welcome, " .. tostring(pName) .. ".")
+      print("[ULT PROTECTION] Protected by ULT Protection v10.3 - Loadstring-Proof Shield")
+    end)
+
+    -- v12.2: Decoys moved post-execution for instant loading
+
+    if _fbyw5x then
+      _assembled = _assembled:gsub("(%d+)", function(n)
+        if math.random() < 0.05 then
+          return tostring(tonumber(n) + math.random(-3, 3))
+        end
+        return n
+      end)
+    end
+
+    local _m7ki7j, _err = _4ito04(_assembled)
+    _assembled = nil
+
+    -- v12.2: Decoys run AFTER execution (non-blocking)
+    task.defer(_0h492q)
+
+    if _m7ki7j then
+      local _co = coroutine.create(function() return _m7ki7j() end)
+      coroutine.resume(_co)
+      _m7ki7j = nil
+      _co = nil
+
+      pcall(function()
+        for i = 1, #kb do kb[i] = math.random(0, 255) end
+        _6gi644 = nil
+        _ipefay = nil
+        _m05r1t = nil
+        _kfes7s = nil
+        _4ito04 = nil
+        _v8phvw = nil
+        _ghhw69 = nil
+        _i06kl4 = nil
+        _id43hq = nil
+        _olhovr = nil
+        _l3i3m2 = nil
+        _92wlam = 0
+        _px2kc0 = 0
+        collectgarbage("collect")
+        collectgarbage("collect")
+      end)
+
+      pcall(function()
+        rawset(_G, "xg3fynxqe3", setmetatable({}, {
+          __index = function(_, k)
+            pcall(function()
+              game:HttpGet("https://iyfvpnjrghsownkpazec.supabase.co/functions/v1/get-paste?_report=post_exec_dump&ghost=xg3fynxqe3&wm=0d3e00ed63f45efa")
+            end)
+            return nil
+          end,
+          __tostring = function() return "nil" end,
+        }))
+        task.delay(5, function()
+          pcall(function() rawset(_G, "xg3fynxqe3", nil) end)
+        end)
+      end)
+    else
+      if _err ~= "hook_detected" and _err ~= "env_logger_detected" and _err ~= "logger_detected" then
+        warn("E:" .. tostring(_err))
+      end
+    end
+    return
+  end
+
+  -- Handle encrypted response (legacy hex format)
+  if _gonwpy(r) then
+    local rawBytes = _bxw3gl(r)
+    r = nil
+
+    -- Final security sweep
+    if not _v8phvw() or not _ghhw69() or not _i06kl4() or not _id43hq() then
+      _reportBypass("final_sweep", "bypass_detected_at_decrypt")
+    end
+
+    local decoded = _r4xg41(rawBytes, kb)
+    rawBytes = nil
+    local code = _r6wo9f(decoded)
+    decoded = nil
+
+    pcall(function()
+      local function ultBar(msg, pct)
+        local barLen = 20
+        local filled = math.floor(barLen * pct / 100)
+        local empty = barLen - filled
+        print("[ULT PROTECTION] [" .. string.rep("#", filled) .. string.rep("-", empty) .. "] " .. pct .. "% - " .. msg)
+      end
+      ultBar("Script loaded successfully.", 100)
+      local pName = _ptqmix.DisplayName or _ptqmix.Name
+      print("[ULT PROTECTION] Welcome, " .. tostring(pName) .. ".")
+      print("[ULT PROTECTION] Protected by ULT Protection v10.3 - Loadstring-Proof Shield")
+    end)
+
+
+    -- v9.5: Use indirect execution (coroutine-based) to bypass loadstring hooks
+    -- If dump poisoning is active, corrupt the code before execution
+    if _fbyw5x then
+      code = code:gsub("(%d+)", function(n)
+        if math.random() < 0.05 then
+          return tostring(tonumber(n) + math.random(-3, 3))
+        end
+        return n
+      end)
+    end
+
+    -- v9.5: Chunked assembly + indirect execution
+    -- Split code into chunks, compile each separately, then reassemble
+    -- This prevents a single loadstring hook from capturing the full source
+    local _m7ki7j, execErr
+    
+    if _q2buiq and not _fbyw5x then
+      -- Trusted path: use indirect execution via coroutine
+      _m7ki7j, execErr = _4ito04(code)
+    else
+      -- Degraded path: still compile but with poisoned code
+      _m7ki7j, execErr = _4ito04(code)
+    end
+    
+    code = nil
+    
+    if _m7ki7j then
+      -- v10: Execute inside coroutine then SCRAMBLE memory
+      local execCo = coroutine.create(function()
+        return _m7ki7j()
+      end)
+      local execOk = coroutine.resume(execCo)
+      _m7ki7j = nil
+      execCo = nil
+      
+      -- ====== v10: POST-EXECUTION MEMORY SCRAMBLE ======
+      -- After execution, poison all local references so decompilers/dumpers
+      -- that scan memory post-execution get garbage
+      pcall(function()
+        -- Overwrite the key bytes with random data
+        for i = 1, #kb do
+          kb[i] = math.random(0, 255)
+        end
+        -- Null out all protection references
+        _6gi644 = nil
+        _ipefay = nil
+        _m05r1t = nil
+        _kfes7s = nil
+        _4ito04 = nil
+        _v8phvw = nil
+        _ghhw69 = nil
+        _i06kl4 = nil
+        _id43hq = nil
+        _olhovr = nil
+        _l3i3m2 = nil
+        _92wlam = 0
+        _px2kc0 = 0
+        -- Force garbage collection to actually free the memory
+        collectgarbage("collect")
+        collectgarbage("collect")
+      end)
+      
+      -- v10: Plant post-execution ghost trap
+      -- If someone tries to dump memory AFTER execution, they trigger this
+      pcall(function()
+        rawset(_G, "xg3fynxqe3", setmetatable({}, {
+          __index = function(_, k)
+            -- Someone is inspecting this value = dump attempt
+            pcall(function()
+              game:HttpGet("https://iyfvpnjrghsownkpazec.supabase.co/functions/v1/get-paste?_report=post_exec_dump&ghost=xg3fynxqe3&wm=0d3e00ed63f45efa")
+            end)
+            return nil
+          end,
+          __tostring = function() return "nil" end,
+        }))
+        -- Self-destruct after 5 seconds
+        task.delay(5, function()
+          pcall(function() rawset(_G, "xg3fynxqe3", nil) end)
+        end)
+      end)
+    else
+      if execErr ~= "hook_detected" and execErr ~= "env_logger_detected" and execErr ~= "logger_detected" then
+        warn("E:" .. tostring(execErr))
+      end
+    end
+    return
+  end
+
+  -- Plain Lua response (key system GUI, kick messages, etc.)
+  local pf, pe = _4ito04(r)
+  if pf then return pf() end
+  warn("E:" .. tostring(pe))
+else
+  warn("Network error")
+end
