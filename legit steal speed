@@ -1,0 +1,312 @@
+-- 🔥 Thief Speed Hub | Modified for Speed 20
+-- Features: Draggable GUI, Toggle Keybinds, Modern Galaxy Theme, Close Button
+task.wait(0.1)
+repeat task.wait() until game:IsLoaded()
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local Player = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+
+-- ─── 🎨 VISUAL SETTINGS (Galaxy Theme) ────────────────────────────────
+local COLOR_BG_MAIN = Color3.fromRGB(5, 5, 20)
+local COLOR_BG_ROW  = Color3.fromRGB(15, 15, 40)
+local COLOR_ACCENT  = Color3.fromRGB(148, 50, 255)
+local COLOR_GLOW    = Color3.fromRGB(0, 255, 255)
+local COLOR_TEXT    = Color3.fromRGB(255, 255, 255)
+local COLOR_DIM     = Color3.fromRGB(180, 180, 240)
+local COLOR_OFF     = Color3.fromRGB(30, 30, 50)
+
+-- ─── ⚙️ CONFIGURATION ───────────────────────────────────────────────
+local guiScale = 1
+local W, H = 300 * guiScale, 150 * guiScale -- Compact size for single feature
+local HeaderH = 45 * guiScale
+
+-- DEFAULT SPEED SET TO 20 AS REQUESTED
+local Values = {
+    StealingSpeedValue = 20 
+}
+
+local Features = {
+    ThiefSpeed = false
+}
+
+local scriptActive = true
+local speedWhileStealingConn = nil
+
+-- ─── 🖥️ GUI CREATION ──────────────────────────────────────────────
+local sg = Instance.new("ScreenGui")
+sg.Name = "ThiefSpeedHub"
+sg.ResetOnSpawn = false
+sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+sg.Parent = Player.PlayerGui
+
+-- Main Frame
+local main = Instance.new("Frame", sg)
+main.Name = "Main"
+main.Size = UDim2.new(0, W, 0, H)
+main.Position = UDim2.new(1, -W - 10, 0, 10) -- Top Right
+main.BackgroundColor3 = COLOR_BG_MAIN
+main.BackgroundTransparency = 0.1
+main.BorderSizePixel = 0
+main.Active = true
+main.Draggable = true -- Draggable for PC
+main.ClipsDescendants = true
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10 * guiScale)
+
+local mainStroke = Instance.new("UIStroke", main)
+mainStroke.Color = COLOR_ACCENT
+mainStroke.Thickness = 2 * guiScale
+mainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+-- Header
+local header = Instance.new("Frame", main)
+header.Size = UDim2.new(1, 0, 0, HeaderH)
+header.BackgroundColor3 = COLOR_BG_ROW
+header.BackgroundTransparency = 0.3
+header.BorderSizePixel = 0
+header.ZIndex = 4
+header.Active = true
+Instance.new("UICorner", header).CornerRadius = UDim.new(0, 10 * guiScale)
+
+local title = Instance.new("TextLabel", header)
+title.Size = UDim2.new(1, 0, 1, 0)
+title.BackgroundTransparency = 1
+title.Text = "Thief Speed Control"
+title.Font = Enum.Font.GothamBlack
+title.TextSize = 16 * guiScale
+title.ZIndex = 6
+title.TextColor3 = COLOR_GLOW
+title.TextXAlignment = Enum.TextXAlignment.Center
+
+-- CLOSE BUTTON (Fully disables interface)
+local closeBtn = Instance.new("TextButton", header)
+closeBtn.Size = UDim2.new(0, 28 * guiScale, 0, 28 * guiScale)
+closeBtn.Position = UDim2.new(1, -32 * guiScale, 0.5, -14 * guiScale)
+closeBtn.BackgroundColor3 = Color3.fromRGB(80, 20, 20)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
+closeBtn.Font = Enum.Font.GothamBlack
+closeBtn.TextSize = 14 * guiScale
+closeBtn.BorderSizePixel = 0
+closeBtn.ZIndex = 7
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6 * guiScale)
+local closeStroke = Instance.new("UIStroke", closeBtn)
+closeStroke.Color = Color3.fromRGB(255, 50, 50)
+closeStroke.Thickness = 1.5
+
+-- Content Area
+local contentArea = Instance.new("Frame", main)
+contentArea.Size = UDim2.new(1, 0, 1, -HeaderH)
+contentArea.Position = UDim2.new(0, 0, 0, HeaderH)
+contentArea.BackgroundTransparency = 1
+contentArea.BorderSizePixel = 0
+
+-- ─── 🔧 FEATURE LOGIC: THIEF SPEED ────────────────────────────────
+local function startSpeedWhileStealing()
+    if speedWhileStealingConn then return end
+    speedWhileStealingConn = RunService.Heartbeat:Connect(function()
+        if not scriptActive or not Features.ThiefSpeed or not Player:GetAttribute("Stealing") then return end
+        local c = Player.Character
+        if not c then return end
+        local h = c:FindFirstChild("HumanoidRootPart")
+        if not h then return end
+        local hum = c:FindFirstChildOfClass("Humanoid")
+        local md = hum and hum.MoveDirection or Vector3.zero
+        if md.Magnitude > 0.1 then
+            -- Apply the specific speed value
+            h.AssemblyLinearVelocity = Vector3.new(md.X * Values.StealingSpeedValue, h.AssemblyLinearVelocity.Y, md.Z * Values.StealingSpeedValue)
+        end
+    end)
+end
+
+local function stopSpeedWhileStealing()
+    if speedWhileStealingConn then 
+        speedWhileStealingConn:Disconnect() 
+        speedWhileStealingConn = nil 
+    end
+end
+
+-- ─── 🎛️ UI ELEMENTS (Toggle + Slider) ─────────────────────────────
+local toggleSliderOrder = 0
+
+-- Helper to create a styled Toggle
+local function makeToggle(parent, labelText, featureName)
+    local frame = Instance.new("Frame", parent)
+    frame.Size = UDim2.new(1, -16 * guiScale, 0, 40 * guiScale)
+    frame.Position = UDim2.new(0, 8 * guiScale, 0, 10 * guiScale)
+    frame.BackgroundColor3 = COLOR_BG_ROW
+    frame.BackgroundTransparency = 0.4
+    frame.BorderSizePixel = 0
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6 * guiScale)
+    
+    local fStroke = Instance.new("UIStroke", frame)
+    fStroke.Thickness = 1.5 * guiScale
+    fStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    fStroke.Color = COLOR_ACCENT
+
+    local lbl = Instance.new("TextLabel", frame)
+    lbl.Size = UDim2.new(0.6, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = labelText
+    lbl.TextColor3 = COLOR_DIM
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 12 * guiScale
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Position = UDim2.new(0, 10, 0, 0)
+
+    -- Toggle Switch BG
+    local bg = Instance.new("Frame", frame)
+    bg.Size = UDim2.new(0, 40 * guiScale, 0, 20 * guiScale)
+    bg.Position = UDim2.new(1, -50 * guiScale, 0.5, -10 * guiScale)
+    bg.BackgroundColor3 = COLOR_OFF
+    bg.ZIndex = 4
+    Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
+
+    -- Toggle Circle
+    local circle = Instance.new("Frame", bg)
+    circle.Size = UDim2.new(0, 16 * guiScale, 0, 16 * guiScale)
+    circle.Position = UDim2.new(0, 2 * guiScale, 0.5, -8 * guiScale)
+    circle.BackgroundColor3 = Color3.new(0.8, 0.8, 0.9)
+    circle.ZIndex = 5
+    Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
+
+    local isOn = false
+    
+    local function updateVisual(state)
+        isOn = state
+        if isOn then
+            TweenService:Create(bg, TweenInfo.new(0.2), {BackgroundColor3 = COLOR_ACCENT}):Play()
+            TweenService:Create(circle, TweenInfo.new(0.2), {Position = UDim2.new(1,-18*guiScale,0.5,-8*guiScale)}):Play()
+            lbl.TextColor3 = COLOR_GLOW
+        else
+            TweenService:Create(bg, TweenInfo.new(0.2), {BackgroundColor3 = COLOR_OFF}):Play()
+            TweenService:Create(circle, TweenInfo.new(0.2), {Position = UDim2.new(0,2*guiScale,0.5,-8*guiScale)}):Play()
+            lbl.TextColor3 = COLOR_DIM
+        end
+    end
+
+    local btn = Instance.new("TextButton", frame)
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+    btn.ZIndex = 6
+    
+    btn.MouseButton1Click:Connect(function()
+        local newState = not isOn
+        Features[featureName] = newState
+        updateVisual(newState)
+        
+        if featureName == "ThiefSpeed" then
+            if newState then startSpeedWhileStealing() else stopSpeedWhileStealing() end
+        end
+    end)
+
+    return updateVisual
+end
+
+-- Helper to create a styled Slider
+local function createSlider(parent, labelText, minVal, maxVal, defaultValue, onChange)
+    local container = Instance.new("Frame", parent)
+    container.Size = UDim2.new(1, -16 * guiScale, 0, 50 * guiScale)
+    container.Position = UDim2.new(0, 8 * guiScale, 0, 60 * guiScale)
+    container.BackgroundColor3 = COLOR_BG_ROW
+    container.BackgroundTransparency = 0.4
+    container.BorderSizePixel = 0
+    Instance.new("UICorner", container).CornerRadius = UDim.new(0, 6 * guiScale)
+    
+    local cStroke = Instance.new("UIStroke", container)
+    cStroke.Thickness = 1.5 * guiScale
+    cStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    cStroke.Color = COLOR_ACCENT
+
+    local label = Instance.new("TextLabel", container)
+    label.Size = UDim2.new(1, 0, 0, 14 * guiScale)
+    label.BackgroundTransparency = 1
+    label.Text = labelText .. " [" .. defaultValue .. "]"
+    label.TextColor3 = COLOR_DIM
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 11 * guiScale
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Position = UDim2.new(0, 10, 0, 5)
+
+    local sliderBg = Instance.new("Frame", container)
+    sliderBg.Size = UDim2.new(1, -20, 0, 6 * guiScale)
+    sliderBg.Position = UDim2.new(0, 10, 0, 25)
+    sliderBg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    Instance.new("UICorner", sliderBg).CornerRadius = UDim.new(1, 0)
+
+    local sliderFill = Instance.new("Frame", sliderBg)
+    sliderFill.Size = UDim2.new(0.5, 0, 1, 0)
+    sliderFill.BackgroundColor3 = COLOR_ACCENT
+    Instance.new("UICorner", sliderFill).CornerRadius = UDim.new(1, 0)
+
+    local thumb = Instance.new("Frame", sliderBg)
+    thumb.Size = UDim2.new(0, 12 * guiScale, 0, 12 * guiScale)
+    thumb.Position = UDim2.new(0.5, -6 * guiScale, 0.5, -6 * guiScale)
+    thumb.BackgroundColor3 = COLOR_GLOW
+    Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
+
+    local currentValue = defaultValue
+    local dragging = false
+
+    local function updateSliderVisual(val)
+        currentValue = val
+        local relative = (val - minVal) / (maxVal - minVal)
+        relative = math.clamp(relative, 0, 1)
+        label.Text = labelText .. " [" .. math.floor(val) .. "]"
+        sliderFill.Size = UDim2.new(relative, 0, 1, 0)
+        thumb.Position = UDim2.new(relative, -6 * guiScale, 0.5, -6 * guiScale)
+        if onChange then onChange(val) end
+    end
+
+    sliderBg.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then 
+            dragging = true 
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then 
+            dragging = false 
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local relative = (input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X
+            local val = math.floor(minVal + (maxVal - minVal) * math.clamp(relative, 0, 1))
+            updateSliderVisual(val)
+        end
+    end)
+
+    updateSliderVisual(defaultValue)
+    return container
+end
+
+-- ─── IMPLEMENTATION ───────────────────────────────────────────────
+local setToggleVisual = makeToggle(contentArea, "Thief Speed (Toggle)", "ThiefSpeed")
+
+-- Slider specifically tuned around 20 (Range 5 to 40 for precision, can go higher if needed)
+createSlider(contentArea, "Steal Speed Value", 5, 40, Values.StealingSpeedValue, function(v)
+    Values.StealingSpeedValue = v
+end)
+
+-- ─── CLOSE BUTTON LOGIC ───────────────────────────────────────────
+closeBtn.MouseButton1Click:Connect(function()
+    scriptActive = false
+    stopSpeedWhileStealing()
+    sg:Destroy()
+    print("Interface Closed.")
+end)
+
+-- Optional: Rainbow Border Effect
+task.spawn(function()
+    local hue = 260
+    while scriptActive and main.Parent do
+        hue = (hue + 0.8) % 360
+        local col = Color3.fromHSV(hue / 360, 0.8, 1)
+        mainStroke.Color = col
+        task.wait(0.04)
+    end
+end)
