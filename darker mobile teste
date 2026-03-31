@@ -1,5 +1,5 @@
--- 🔒 Darker Hub | FULL SCRIPT WITH PERFECT MOBILE GUI
--- All original features + compact mobile buttons
+-- 🔒 Darker Hub | FULL SCRIPT + WORKING MOBILE GUI
+-- All original features + compact mobile buttons (FIXED)
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -1073,13 +1073,160 @@ end
 end
 RunService.Heartbeat:Connect(updateEnemyTimers)
 
--- ─── UI BUILDERS ───────────────────────────────────────────────
+-- ─── UI BUILDERS ─────────────────────────────────────────────--
 local toggleSliderOrder = 0
 local scriptActive = true
 local SliderReferences = {}
 local ConfigFileName = "DarkerHub_Config.json"
 local rainbowElements = {}
 
+-- MOBILE GUI FIRST (so it loads on mobile)
+local mobileGui = {}
+
+if isMobile then
+    -- Perfect spacing values
+    local BUTTON_SIZE = 58
+    local BUTTON_SPACING = 100 -- Equal spacing between all buttons
+    local START_X = 70 -- Distance from right edge
+    local START_Y = 0.18 -- Start position from top
+    
+    -- Button creation function
+    local function createMobileButton(name, text, pos, icon, color)
+        local btn = Instance.new("TextButton", sg)
+        btn.Name = name
+        btn.Size = UDim2.new(0, BUTTON_SIZE, 0, BUTTON_SIZE)
+        btn.Position = pos
+        btn.BackgroundColor3 = COLOR_OFF
+        btn.BackgroundTransparency = 0.25
+        btn.BorderSizePixel = 0
+        btn.Text = text
+        btn.TextColor3 = COLOR_TEXT
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 10
+        btn.ZIndex = 101
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
+        
+        local btnStroke = Instance.new("UIStroke", btn)
+        btnStroke.Color = COLOR_GLOW
+        btnStroke.Thickness = 1.5
+        btnStroke.Transparency = 0.4
+        
+        -- Icon
+        local iconLabel = Instance.new("TextLabel", btn)
+        iconLabel.Size = UDim2.new(0, 16, 0, 16)
+        iconLabel.Position = UDim2.new(0, 2, 0, 2)
+        iconLabel.BackgroundTransparency = 1
+        iconLabel.Text = icon or ""
+        iconLabel.TextColor3 = COLOR_GLOW
+        iconLabel.Font = Enum.Font.GothamBlack
+        iconLabel.TextSize = 13
+        iconLabel.ZIndex = 102
+        
+        -- Touch feedback
+        btn.MouseButton1Down:Connect(function()
+            TweenService:Create(btn, TweenInfo.new(0.06), {BackgroundTransparency = 0.05}):Play()
+        end)
+        
+        btn.MouseButton1Up:Connect(function()
+            TweenService:Create(btn, TweenInfo.new(0.06), {BackgroundTransparency = 0.25}):Play()
+        end)
+        
+        return btn
+    end
+    
+    -- Create 4 mobile buttons with PERFECT SPACING:
+    mobileGui.LeftBtn = createMobileButton("LeftBtn", "LEFT", UDim2.new(1, -START_X, START_Y, 20), "◀", Color3.fromRGB(255, 100, 100))
+    mobileGui.RightBtn = createMobileButton("RightBtn", "RIGHT", UDim2.new(1, -(START_X + BUTTON_SPACING), START_Y, 20), "▶", Color3.fromRGB(100, 255, 100))
+    mobileGui.LockBtn = createMobileButton("LockBtn", "LOCK", UDim2.new(1, -START_X, START_Y + 0.16, 20), "🎯", Color3.fromRGB(200, 100, 255))
+    mobileGui.DropBtn = createMobileButton("DropBtn", "DROP", UDim2.new(1, -(START_X + BUTTON_SPACING), START_Y + 0.16, 20), "⬇", Color3.fromRGB(255, 150, 50))
+    
+    -- Mobile Button Functions
+    mobileGui.LeftBtn.MouseButton1Click:Connect(function()
+        local newState = not Features.AutoLeft
+        Features.AutoLeft = newState
+        
+        if newState then
+            if Features.AutoRight then
+                Features.AutoRight = false
+                stopStealPath()
+            end
+            mobileGui.LeftBtn.BackgroundColor3 = COLOR_ACCENT
+            startStealPath(stealPath2, "Left")
+        else
+            mobileGui.LeftBtn.BackgroundColor3 = COLOR_OFF
+            stopStealPath()
+        end
+    end)
+    
+    mobileGui.RightBtn.MouseButton1Click:Connect(function()
+        local newState = not Features.AutoRight
+        Features.AutoRight = newState
+        
+        if newState then
+            if Features.AutoLeft then
+                Features.AutoLeft = false
+                stopStealPath()
+            end
+            mobileGui.RightBtn.BackgroundColor3 = COLOR_ACCENT
+            startStealPath(stealPath1, "Right")
+        else
+            mobileGui.RightBtn.BackgroundColor3 = COLOR_OFF
+            stopStealPath()
+        end
+    end)
+    
+    mobileGui.LockBtn.MouseButton1Click:Connect(function()
+        local newState = not Features.FrontLock
+        Features.FrontLock = newState
+        
+        if newState then
+            mobileGui.LockBtn.BackgroundColor3 = COLOR_ACCENT
+            startFrontLock()
+        else
+            mobileGui.LockBtn.BackgroundColor3 = COLOR_OFF
+            stopFrontLock()
+        end
+    end)
+    
+    mobileGui.DropBtn.MouseButton1Click:Connect(function()
+        local char = Player.Character or Player.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        local startCF = hrp.CFrame
+        
+        mobileGui.DropBtn.BackgroundColor3 = COLOR_ACCENT
+        
+        hrp.AssemblyLinearVelocity = Vector3.new(0, 120, 0)
+        task.wait(0.35)
+        hrp.AssemblyLinearVelocity = Vector3.zero
+        hrp.CFrame = startCF
+        
+        task.wait(0.2)
+        mobileGui.DropBtn.BackgroundColor3 = COLOR_OFF
+    end)
+    
+    -- Update mobile button states
+    local function updateMobileButtonStates()
+        if mobileGui.LeftBtn then
+            mobileGui.LeftBtn.BackgroundColor3 = Features.AutoLeft and COLOR_ACCENT or COLOR_OFF
+        end
+        if mobileGui.RightBtn then
+            mobileGui.RightBtn.BackgroundColor3 = Features.AutoRight and COLOR_ACCENT or COLOR_OFF
+        end
+        if mobileGui.LockBtn then
+            mobileGui.LockBtn.BackgroundColor3 = Features.FrontLock and COLOR_ACCENT or COLOR_OFF
+        end
+    end
+    
+    -- Auto-update mobile buttons
+    task.spawn(function()
+        while sg.Parent do
+            updateMobileButtonStates()
+            task.wait(0.5)
+        end
+    end)
+end
+
+-- ─── FULL GUI (for desktop users) ───────────────────────────────────
 local PB_W, PB_H = 340 * guiScale, 35 * guiScale
 local progressBar = Instance.new("Frame", sg)
 progressBar.Size = UDim2.new(0, PB_W, 0, PB_H)
@@ -1131,11 +1278,13 @@ ProgressLabel.ZIndex = 13
 ProgressLabel.TextColor3 = COLOR_TEXT
 ProgressLabel.TextStrokeTransparency = 0.5
 
--- Main Window
-local main = Instance.new("Frame", sg)
+-- Main Window (only for desktop)
+local main = nil
+if not isMobile then
+main = Instance.new("Frame", sg)
 main.Name = "Main"
 main.Size = UDim2.new(0, 380 * guiScale, 0, 500 * guiScale)
-main.Position = isMobile and UDim2.new(0.5, -190 * guiScale, 0.5, -250 * guiScale) or UDim2.new(1, -390 * guiScale, 0, 10)
+main.Position = UDim2.new(1, -390 * guiScale, 0, 10)
 main.BackgroundColor3 = COLOR_BG_MAIN
 main.BackgroundTransparency = 0.1
 main.BorderSizePixel = 0
@@ -1234,810 +1383,29 @@ listLayout.FillDirection = Enum.FillDirection.Vertical
 listLayout.SortOrder = Enum.SortOrder.LayoutOrder
 listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- Helpers
-local VisualSetters = {}
-local SliderSetters = {}
-local waitingForKeybind = nil
-local KeyBindBtns = {}
-
-local function makeToggleHeader(parent, labelText, featureName, hasKeybind, defaultKeycode, noSave)
-local frame = Instance.new("Frame", parent)
-frame.Size = UDim2.new(1, -8 * guiScale, 0, 36 * guiScale)
-frame.BackgroundColor3 = COLOR_BG_ROW
-frame.BackgroundTransparency = 0.4
-frame.BorderSizePixel = 0
-frame.LayoutOrder = toggleSliderOrder
-toggleSliderOrder = toggleSliderOrder + 1
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6 * guiScale)
-local fStroke = Instance.new("UIStroke", frame)
-fStroke.Thickness = 1.5 * guiScale
-fStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-fStroke.Color = COLOR_ACCENT
-table.insert(rainbowElements, fStroke)
-local lbl = Instance.new("TextLabel", frame)
-lbl.Size = UDim2.new(0.65, 0, 1, 0)
-lbl.BackgroundTransparency = 1
-lbl.Text = labelText
-lbl.TextColor3 = COLOR_DIM
-lbl.Font = Enum.Font.GothamBold
-lbl.TextSize = 11 * guiScale
-lbl.TextXAlignment = Enum.TextXAlignment.Left
-local bg = Instance.new("Frame", frame)
-bg.Size = UDim2.new(0, 38 * guiScale, 0, 18 * guiScale)
-bg.Position = UDim2.new(1, -44 * guiScale, 0.5, -9 * guiScale)
-bg.BackgroundColor3 = COLOR_OFF
-bg.ZIndex = 4
-Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
-local circle = Instance.new("Frame", bg)
-circle.Size = UDim2.new(0, 14 * guiScale, 0, 14 * guiScale)
-circle.Position = UDim2.new(0, 2 * guiScale, 0.5, -7 * guiScale)
-circle.BackgroundColor3 = Color3.new(0.8, 0.8, 0.9)
-circle.ZIndex = 5
-Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
-local btn = Instance.new("TextButton", frame)
-btn.Size = UDim2.new(1, 0, 1, 0)
-btn.BackgroundTransparency = 1
-btn.Text = ""
-btn.ZIndex = 6
-local isOn = false
-local currentKeybind = defaultKeycode
-local listeningForKey = false
-local function updateVisual(state)
-if state ~= nil then isOn = state end
-if isOn then
-TweenService:Create(bg, TweenInfo.new(0.2), {BackgroundColor3 = COLOR_ACCENT}):Play()
-TweenService:Create(circle, TweenInfo.new(0.2), {Position = UDim2.new(1,-16*guiScale,0.5,-7*guiScale)}):Play()
-lbl.TextColor3 = COLOR_GLOW
-else
-TweenService:Create(bg, TweenInfo.new(0.2), {BackgroundColor3 = COLOR_OFF}):Play()
-TweenService:Create(circle, TweenInfo.new(0.2), {Position = UDim2.new(0,2*guiScale,0.5,-7*guiScale)}):Play()
-lbl.TextColor3 = COLOR_DIM
-end
-if lbl and hasKeybind and currentKeybind then
-lbl.Text = string.gsub(labelText, "%[.*%]", "[" .. currentKeybind.Name .. "]")
-elseif lbl then
-lbl.Text = labelText
-end
-end
-if featureName then
-_G["UpdateVisual_"..featureName] = updateVisual
-if hasKeybind then
-_G["GetKeybind_"..featureName] = function() return currentKeybind end
-_G["SetKeybind_"..featureName] = function(k)
-currentKeybind = k
-updateVisual()
-if not noSave then SaveConfig() end
-end
-end
-end
-if hasKeybind then
-local kbBtn = Instance.new("TextButton", frame)
-kbBtn.Size = UDim2.new(0, 32 * guiScale, 0, 16 * guiScale)
-kbBtn.Position = UDim2.new(1, -82 * guiScale, 0.5, -8 * guiScale)
-kbBtn.BackgroundColor3 = COLOR_BG_MAIN
-kbBtn.TextColor3 = COLOR_GLOW
-kbBtn.Font = Enum.Font.GothamBold
-kbBtn.TextSize = 8 * guiScale
-kbBtn.Text = "BIND"
-kbBtn.BorderSizePixel = 0
-kbBtn.ZIndex = 8
-Instance.new("UICorner", kbBtn).CornerRadius = UDim.new(0, 4 * guiScale)
-local kbStroke = Instance.new("UIStroke", kbBtn)
-kbStroke.Thickness = 1 * guiScale
-kbStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-kbStroke.Color = COLOR_ACCENT
-table.insert(rainbowElements, kbStroke)
-kbBtn.MouseButton1Click:Connect(function()
-if listeningForKey then return end
-listeningForKey = true
-kbBtn.Text = "..."
-kbBtn.TextColor3 = COLOR_TEXT
-local conn
-conn = UserInputService.InputBegan:Connect(function(input)
-if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
-conn:Disconnect()
-currentKeybind = input.KeyCode
-listeningForKey = false
-kbBtn.Text = "BIND"
-kbBtn.TextColor3 = COLOR_GLOW
-updateVisual()
-if not noSave then SaveConfig() end
-end)
-end)
-end
-return btn, updateVisual, function() return isOn end, function() return currentKeybind end
-end
-
-local function createSlider(parent, labelText, minVal, maxVal, valueKey, onChange)
-local container = Instance.new("Frame", parent)
-container.Size = UDim2.new(1, -8 * guiScale, 0, 40 * guiScale)
-container.BackgroundColor3 = COLOR_BG_ROW
-container.BackgroundTransparency = 0.4
-container.BorderSizePixel = 0
-container.LayoutOrder = toggleSliderOrder
-toggleSliderOrder = toggleSliderOrder + 1
-Instance.new("UICorner", container).CornerRadius = UDim.new(0, 6 * guiScale)
-local cStroke = Instance.new("UIStroke", container)
-cStroke.Thickness = 1.5 * guiScale
-cStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-cStroke.Color = COLOR_ACCENT
-table.insert(rainbowElements, cStroke)
-local label = Instance.new("TextLabel", container)
-label.Size = UDim2.new(1, 0, 0, 14 * guiScale)
-label.BackgroundTransparency = 1
-label.Text = labelText
-label.TextColor3 = COLOR_DIM
-label.Font = Enum.Font.GothamBold
-label.TextSize = 10 * guiScale
-label.TextXAlignment = Enum.TextXAlignment.Left
-local sliderBg = Instance.new("Frame", container)
-sliderBg.Size = UDim2.new(1, 0, 0, 5 * guiScale)
-sliderBg.Position = UDim2.new(0, 0, 0, 20 * guiScale)
-sliderBg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-Instance.new("UICorner", sliderBg).CornerRadius = UDim.new(1, 0)
-local sliderFill = Instance.new("Frame", sliderBg)
-sliderFill.Size = UDim2.new(0.5, 0, 1, 0)
-sliderFill.BackgroundColor3 = COLOR_ACCENT
-Instance.new("UICorner", sliderFill).CornerRadius = UDim.new(1, 0)
-local thumb = Instance.new("Frame", sliderBg)
-thumb.Size = UDim2.new(0, 10 * guiScale, 0, 10 * guiScale)
-thumb.Position = UDim2.new(0.5, -5 * guiScale, 0.5, -5 * guiScale)
-thumb.BackgroundColor3 = COLOR_GLOW
-Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
-local valueLabel = Instance.new("TextLabel", container)
-valueLabel.Size = UDim2.new(0, 35 * guiScale, 0, 14 * guiScale)
-valueLabel.Position = UDim2.new(1, -38 * guiScale, 0, 0)
-valueLabel.BackgroundTransparency = 1
-valueLabel.Text = tostring(Values[valueKey] or AutoStealValues[valueKey])
-valueLabel.TextColor3 = COLOR_GLOW
-valueLabel.Font = Enum.Font.GothamBold
-valueLabel.TextSize = 10 * guiScale
-local dragging = false
-local function updateSliderVisual(value)
-local relative = (value - minVal) / (maxVal - minVal)
-relative = math.clamp(relative, 0, 1)
-if valueKey == "STEAL_DURATION" or valueKey == "PATH_TURN_WAIT" then
-valueLabel.Text = string.format("%.2f", value) .. "s"
-else
-valueLabel.Text = tostring(value)
-end
-sliderFill.Size = UDim2.new(relative, 0, 1, 0)
-thumb.Position = UDim2.new(relative, -5 * guiScale, 0.5, -5 * guiScale)
-if onChange then onChange(value) end
-end
-SliderReferences[valueKey] = { func = updateSliderVisual }
-local function updateSlider(inputRelative)
-inputRelative = math.clamp(inputRelative, 0, 1)
-if valueKey == "STEAL_DURATION" or valueKey == "PATH_TURN_WAIT" then
-local decimalVal = minVal + (maxVal - minVal) * inputRelative
-decimalVal = tonumber(string.format("%.2f", decimalVal))
-if AutoStealValues[valueKey] then AutoStealValues[valueKey] = decimalVal end
-updateSliderVisual(decimalVal)
-return
-end
-local value = math.floor(minVal + (maxVal - minVal) * inputRelative)
-if Values[valueKey] then Values[valueKey] = value
-elseif AutoStealValues[valueKey] then AutoStealValues[valueKey] = value end
-updateSliderVisual(value)
-end
-sliderBg.InputBegan:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = true end
-end)
-UserInputService.InputEnded:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
-end)
-UserInputService.InputChanged:Connect(function(input)
-if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-local relative = (input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X
-updateSlider(relative)
-end
-end)
-local currentVal = Values[valueKey] or AutoStealValues[valueKey]
-if currentVal then updateSliderVisual(currentVal) end
-return container
-end
-
-local function SaveConfig()
-if not writefile then return end
-local fullConfig = {
-Optimizer = Features.Optimizer, SpeedBoost = Features.SpeedBoost, AntiRagdoll = Features.AntiRagdoll,
-InfinityJump = Features.InfinityJump, Float = Features.Float, Helicopter = Features.Helicopter,
-ThiefSpeed = Features.ThiefSpeed, AutoSteal = Features.AutoSteal,
-GalaxyMode = Features.GalaxyMode, Unwalk = Features.Unwalk,
-EnemyTimer = Features.EnemyTimer, FrontLock = Features.FrontLock,
-BoostSpeed = Values.BoostSpeed, SpinSpeed = Values.SpinSpeed, GalaxyGravityPercent = Values.GalaxyGravityPercent,
-StealingSpeedValue = Values.StealingSpeedValue, HOP_POWER = Values.HOP_POWER, HOP_COOLDOWN = Values.HOP_COOLDOWN,
-UP_SPEED = Values.UP_SPEED,
-DEFAULT_GRAVITY = Values.DEFAULT_GRAVITY,
-STEAL_RADIUS = AutoStealValues.STEAL_RADIUS,
-STEAL_DURATION = AutoStealValues.STEAL_DURATION,
-PATH_TURN_WAIT = AutoStealValues.PATH_TURN_WAIT,
-KEY_SPEED = Keybinds.SpeedBoost.Name, KEY_ANTIRAG = Keybinds.AntiRagdoll.Name,
-KEY_INFJUMP = Keybinds.InfinityJump.Name, KEY_HELI = Keybinds.Helicopter.Name,
-KEY_MENU = Keybinds.ToggleMenu.Name, KEY_FRONTLOCK = Keybinds.FrontLock.Name,
-KEY_AUTORIGHT = Keybinds.AutoRightSteal.Name, KEY_AUTOLEFT = Keybinds.AutoLeftSteal.Name,
-KEY_DROP = Keybinds.DropShot.Name,
-}
-pcall(function() writefile(ConfigFileName, HttpService:JSONEncode(fullConfig)) end)
-end
-
-local function LoadConfig()
-if not readfile then return end
-pcall(function()
-if isfile(ConfigFileName) then
-local data = HttpService:JSONDecode(readfile(ConfigFileName))
-for k, v in pairs(Features) do
-if k ~= "AutoRight" and k ~= "AutoLeft" then
-if data[k] ~= nil then Features[k] = data[k] end
-end
-end
-if data.BoostSpeed then Values.BoostSpeed = data.BoostSpeed end
-if data.SpinSpeed then Values.SpinSpeed = data.SpinSpeed end
-if data.GalaxyGravityPercent then Values.GalaxyGravityPercent = data.GalaxyGravityPercent end
-if data.StealingSpeedValue then Values.StealingSpeedValue = data.StealingSpeedValue end
-if data.HOP_POWER then Values.HOP_POWER = data.HOP_POWER end
-if data.HOP_COOLDOWN then Values.HOP_COOLDOWN = data.HOP_COOLDOWN end
-if data.UP_SPEED then Values.UP_SPEED = data.UP_SPEED end
-if data.STEAL_RADIUS then AutoStealValues.STEAL_RADIUS = data.STEAL_RADIUS end
-if data.STEAL_DURATION then AutoStealValues.STEAL_DURATION = data.STEAL_DURATION end
-if data.PATH_TURN_WAIT then AutoStealValues.PATH_TURN_WAIT = data.PATH_TURN_WAIT end
-if data.KEY_SPEED then Keybinds.SpeedBoost = Enum.KeyCode[data.KEY_SPEED] or Keybinds.SpeedBoost end
-if data.KEY_ANTIRAG then Keybinds.AntiRagdoll = Enum.KeyCode[data.KEY_ANTIRAG] or Keybinds.AntiRagdoll end
-if data.KEY_INFJUMP then Keybinds.InfinityJump = Enum.KeyCode[data.KEY_INFJUMP] or Keybinds.InfinityJump end
-if data.KEY_HELI then Keybinds.Helicopter = Enum.KeyCode[data.KEY_HELI] or Keybinds.Helicopter end
-if data.KEY_MENU then Keybinds.ToggleMenu = Enum.KeyCode[data.KEY_MENU] or Keybinds.ToggleMenu end
-if data.KEY_FRONTLOCK then Keybinds.FrontLock = Enum.KeyCode[data.KEY_FRONTLOCK] or Keybinds.FrontLock end
-if data.KEY_DROP then Keybinds.DropShot = Enum.KeyCode[data.KEY_DROP] or Keybinds.DropShot end
-if data.KEY_AUTORIGHT then Keybinds.AutoRightSteal = Enum.KeyCode[data.KEY_AUTORIGHT] or Keybinds.AutoRightSteal end
-if data.KEY_AUTOLEFT then Keybinds.AutoLeftSteal = Enum.KeyCode[data.KEY_AUTOLEFT] or Keybinds.AutoLeftSteal end
-for key, ref in pairs(SliderReferences) do
-local savedVal = nil
-if Values[key] then savedVal = Values[key] elseif AutoStealValues[key] then savedVal = AutoStealValues[key] end
-if savedVal and ref.func then ref.func(savedVal) end
-end
-end
-end)
-end)
-end
-LoadConfig()
-
--- Feature Implementation Blocks
-do
-local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Speed Boost", "SpeedBoost", true, Keybinds.SpeedBoost, false)
-local function toggleSpeedBoost()
-local on = not getState()
-setVisual(on)
-Features.SpeedBoost = on
-if on then startSpeedBoost() else stopSpeedBoost() end
-SaveConfig()
-end
-btn.MouseButton1Click:Connect(toggleSpeedBoost)
-if Features.SpeedBoost then setVisual(true) startSpeedBoost() end
-end
-createSlider(scrollFrame, "Speed Value", 1, 70, "BoostSpeed")
-
-do
-local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Anti Ragdoll", "AntiRagdoll", true, Keybinds.AntiRagdoll, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.AntiRagdoll = on
-if on then startAntiRagdoll() else stopAntiRagdoll() end
-SaveConfig()
-end)
-if Features.AntiRagdoll then setVisual(true) startAntiRagdoll() end
-end
-
-do
--- ✅ INFINITY JUMP (HOLD SPACE TO FLY) - NO KEYBIND
-local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Inf Jump (Hold Space)", "InfinityJump", false, nil, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.InfinityJump = on
-if on then
-startInfinityJump()
-print("[InfJump] ENABLED! Hold SPACE to fly, release to drop.")
-else
-stopInfinityJump()
-print("[InfJump] DISABLED.")
-end
-SaveConfig()
-end)
-if Features.InfinityJump then setVisual(true) startInfinityJump() end
-end
-createSlider(scrollFrame, "Fly Speed", 20, 100, "UP_SPEED")
-
-do
-local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Float", "Float", false, nil, false)
-local function toggleFloat()
-local on = not getState()
-setVisual(on)
-Features.Float = on
-if on then startFloat() else stopFloat() end
-SaveConfig()
-end
-btn.MouseButton1Click:Connect(toggleFloat)
-if Features.Float then setVisual(true) startFloat() end
-end
-
-do
-local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Helicopter", "Helicopter", true, Keybinds.Helicopter, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.Helicopter = on
-if on then startHelicopter() else stopHelicopter() end
-SaveConfig()
-end)
-if Features.Helicopter then setVisual(true) startHelicopter() end
-end
-createSlider(scrollFrame, "Heli Speed", 5, 50, "SpinSpeed", function(v)
-Values.SpinSpeed = v
-if helicopterSpinBAV then helicopterSpinBAV.AngularVelocity = Vector3.new(0, v, 0) end
-end)
-
-do
-local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Thief Speed", "ThiefSpeed", false, nil, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.ThiefSpeed = on
-if on then startSpeedWhileStealing() else stopSpeedWhileStealing() end
-SaveConfig()
-end)
-if Features.ThiefSpeed then setVisual(true) startSpeedWhileStealing() end
-end
-createSlider(scrollFrame, "Steal Speed", 10, 50, "StealingSpeedValue", function(v)
-Values.StealingSpeedValue = v
-end)
-
-do
-local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Auto Steal (Perfect)", "AutoSteal", false, nil, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.AutoSteal = on
-if on then startAutoSteal() else stopAutoSteal() end
-SaveConfig()
-end)
-if Features.AutoSteal then setVisual(true) startAutoSteal() end
-end
-
-do
-local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Galaxy Mode", "GalaxyMode", false, nil, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-if on then startGalaxy() else stopGalaxy() end
-SaveConfig()
-end)
-if Features.GalaxyMode then setVisual(true) startGalaxy() end
-end
-createSlider(scrollFrame, "Gravity %", 25, 130, "GalaxyGravityPercent", function(v)
-Values.GalaxyGravityPercent = v
-if galaxyEnabled then adjustGalaxyJump() end
-end)
-
-do
-local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Unwalk", "Unwalk", false, nil, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.Unwalk = on
-if on then startUnwalk() else stopUnwalk() end
-SaveConfig()
-end)
-if Features.Unwalk then setVisual(true) startUnwalk() end
-end
-
-do
-local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Optimizer (No Texture Only)", "Optimizer", false, nil, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.Optimizer = on
-if on then enableOptimizer() else disableOptimizer() end
-SaveConfig()
-end)
-if Features.Optimizer then setVisual(true) enableOptimizer() end
-end
-
-do
-local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Enemy Ragdoll Timer", "EnemyTimer", false, nil, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.EnemyTimer = on
-if on then updateEnemyTimers() end
-SaveConfig()
-end)
-if Features.EnemyTimer then setVisual(true) end
-end
-
--- Auto Right Steal
-do
-local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Auto Right Steal", "AutoRight", true, Keybinds.AutoRightSteal, true)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-if on then
-if Features.AutoLeft then
-Features.AutoLeft = false
-if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
-end
-end
-setVisual(on)
-Features.AutoRight = on
-if on then
-stopStealPath()
-startStealPath(stealPath1, "Right")
-else
-stopStealPath()
-end
-end)
-if Features.AutoRight then setVisual(true) startStealPath(stealPath1, "Right") end
-end
-
--- Auto Left Steal
-do
-local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Auto Left Steal", "AutoLeft", true, Keybinds.AutoLeftSteal, true)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-if on then
-if Features.AutoRight then
-Features.AutoRight = false
-if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end
-end
-end
-setVisual(on)
-Features.AutoLeft = on
-if on then
-stopStealPath()
-startStealPath(stealPath2, "Left")
-else
-stopStealPath()
-end
-end)
-if Features.AutoLeft then setVisual(true) startStealPath(stealPath2, "Left") end
-end
-
-createSlider(scrollFrame, "Path Turn Speed (Wait)", 0.0, 1.0, "PATH_TURN_WAIT", function(v)
-AutoStealValues.PATH_TURN_WAIT = v
-end)
-
--- FRONT LOCK TOGGLE
-do
-local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Front Lock + Bat", "FrontLock", true, Keybinds.FrontLock, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.FrontLock = on
-if on then startFrontLock() else stopFrontLock() end
-SaveConfig()
-end)
-if Features.FrontLock then setVisual(true) startFrontLock() end
-end
-
-listLayout.Changed:Connect(function()
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 10 * guiScale)
-end)
-
--- Rainbow Effect
-task.spawn(function()
-local hue = 260
-while scriptActive and main.Parent do
-hue = (hue + 0.8) % 360
-local col = Color3.fromHSV(hue / 360, 0.8, 1)
-for _, elem in ipairs(rainbowElements) do
-elem.Color = col
-end
-task.wait(0.04)
-end
-end)
-
--- Input Handler
-UserInputService.InputBegan:Connect(function(input, gpe)
-if gpe then return end
-if input.KeyCode == Keybinds.ToggleMenu then
-if main.Parent then
-if main.Size.Y.Offset <= HeaderH + 5 then
-main.Size = UDim2.new(0, 380 * guiScale, 0, 500 * guiScale)
-else
-main.Size = UDim2.new(0, 380 * guiScale, 0, HeaderH)
-end
-end
-return
-end
-if input.KeyCode == Keybinds.DropShot then
-local char = Player.Character or Player.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
-local startCF = hrp.CFrame
-hrp.AssemblyLinearVelocity = Vector3.new(0, 120, 0)
-task.wait(0.35)
-hrp.AssemblyLinearVelocity = Vector3.zero
-hrp.CFrame = startCF
-return
-end
-local function syncToggle(featureName, newState, noSave)
-Features[featureName] = newState
-if featureName == "InfinityJump" then
-if newState then startInfinityJump() else stopInfinityJump() end
-end
-if _G["UpdateVisual_"..featureName] then
-_G["UpdateVisual_"..featureName](newState)
-end
-if not noSave then SaveConfig() end
-end
-if _G["GetKeybind_SpeedBoost"] and input.KeyCode == _G["GetKeybind_SpeedBoost"]() then
-local newState = not Features.SpeedBoost
-syncToggle("SpeedBoost", newState, false)
-if newState then startSpeedBoost() else stopSpeedBoost() end
-return
-end
-if _G["GetKeybind_AntiRagdoll"] and input.KeyCode == _G["GetKeybind_AntiRagdoll"]() then
-local newState = not Features.AntiRagdoll
-syncToggle("AntiRagdoll", newState, false)
-if newState then startAntiRagdoll() else stopAntiRagdoll() end
-return
-end
-if _G["GetKeybind_InfinityJump"] and input.KeyCode == _G["GetKeybind_InfinityJump"]() then
-local newState = not Features.InfinityJump
-syncToggle("InfinityJump", newState, false)
-return
-end
-if _G["GetKeybind_Helicopter"] and input.KeyCode == _G["GetKeybind_Helicopter"]() then
-local newState = not Features.Helicopter
-syncToggle("Helicopter", newState, false)
-if newState then startHelicopter() else stopHelicopter() end
-return
-end
-if _G["GetKeybind_AutoRight"] and input.KeyCode == _G["GetKeybind_AutoRight"]() then
-local newState = not Features.AutoRight
-if newState then
-if Features.AutoLeft then
-Features.AutoLeft = false
-if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
-end
-end
-Features.AutoRight = newState
-if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](newState) end
-if newState then stopStealPath(); startStealPath(stealPath1, "Right") else stopStealPath() end
-return
-end
-if _G["GetKeybind_AutoLeft"] and input.KeyCode == _G["GetKeybind_AutoLeft"]() then
-local newState = not Features.AutoLeft
-if newState then
-if Features.AutoRight then
-Features.AutoRight = false
-if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end
-end
-end
-Features.AutoLeft = newState
-if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](newState) end
-if newState then stopStealPath(); startStealPath(stealPath2, "Left") else stopStealPath() end
-return
-end
-if _G["GetKeybind_FrontLock"] and input.KeyCode == _G["GetKeybind_FrontLock"]() then
-local newState = not Features.FrontLock
-syncToggle("FrontLock", newState, false)
-if newState then startFrontLock() else stopFrontLock() end
-return
-end
-end)
-
--- CLOSE BUTTON LOGIC
+-- Close button logic
 closeBtn.MouseButton1Click:Connect(function()
-scriptActive = false
-
-stopSpeedBoost()
-stopAntiRagdoll()
-stopInfinityJump()
-stopFloat()
-stopHelicopter()
-stopSpeedWhileStealing()
-stopAutoSteal()
-stopGalaxy()
-stopUnwalk()
-disableOptimizer()
-stopStealPath()
-stopFrontLock()
-
-for p, data in pairs(enemyTimers) do
-if data.Connection then data.Connection:Disconnect() end
-if data.Gui then data.Gui:Destroy() end
-end
-enemyTimers = {}
-
-destroySpeedDisplay()
-
-sg:Destroy()
-print("GUI Closed Completely. All features stopped.")
+    scriptActive = false
+    stopSpeedBoost()
+    stopAntiRagdoll()
+    stopInfinityJump()
+    stopFloat()
+    stopHelicopter()
+    stopSpeedWhileStealing()
+    stopAutoSteal()
+    stopGalaxy()
+    stopUnwalk()
+    disableOptimizer()
+    stopStealPath()
+    stopFrontLock()
+    for p, data in pairs(enemyTimers) do
+        if data.Connection then data.Connection:Disconnect() end
+        if data.Gui then data.Gui:Destroy() end
+    end
+    enemyTimers = {}
+    destroySpeedDisplay()
+    sg:Destroy()
 end)
-
--- Hide/Show Logic
-hideBtn.MouseButton1Click:Connect(function()
-TweenService:Create(main, TweenInfo.new(0.2), {Size = UDim2.new(0, 380 * guiScale, 0, HeaderH)}):Play()
-end)
-header.InputBegan:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-if main.Size.Y.Offset <= HeaderH + 5 then
-TweenService:Create(main, TweenInfo.new(0.2), {Size = UDim2.new(0, 380 * guiScale, 0, 500 * guiScale)}):Play()
-end
-end
-end)
-
--- ─── PERFECT MOBILE GUI (ONLY FOR MOBILE USERS) ─────────────────────────────────────
-if isMobile then
-    local mobileGui = {}
-    
-    -- Perfect spacing values
-    local BUTTON_SIZE = 58
-    local BUTTON_SPACING = 100 -- Equal spacing between all buttons
-    local START_X = 70 -- Distance from right edge
-    local START_Y = 0.18 -- Start position from top
-    
-    -- Button creation function (same as original, just for mobile)
-    local function createMobileButton(name, text, pos, icon, color)
-        local btn = Instance.new("TextButton", sg)
-        btn.Name = name
-        btn.Size = UDim2.new(0, BUTTON_SIZE, 0, BUTTON_SIZE)
-        btn.Position = pos
-        btn.BackgroundColor3 = COLOR_OFF
-        btn.BackgroundTransparency = 0.25
-        btn.BorderSizePixel = 0
-        btn.Text = text
-        btn.TextColor3 = COLOR_TEXT
-        btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 10
-        btn.ZIndex = 101
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
-        
-        local btnStroke = Instance.new("UIStroke", btn)
-        btnStroke.Color = COLOR_GLOW
-        btnStroke.Thickness = 1.5
-        btnStroke.Transparency = 0.4
-        
-        -- Icon
-        local iconLabel = Instance.new("TextLabel", btn)
-        iconLabel.Size = UDim2.new(0, 16, 0, 16)
-        iconLabel.Position = UDim2.new(0, 2, 0, 2)
-        iconLabel.BackgroundTransparency = 1
-        iconLabel.Text = icon or ""
-        iconLabel.TextColor3 = COLOR_GLOW
-        iconLabel.Font = Enum.Font.GothamBlack
-        iconLabel.TextSize = 13
-        iconLabel.ZIndex = 102
-        
-        -- Touch feedback (no shaking)
-        btn.MouseButton1Down:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.06), {BackgroundTransparency = 0.05}):Play()
-        end)
-        
-        btn.MouseButton1Up:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.06), {BackgroundTransparency = 0.25}):Play()
-        end)
-        
-        return btn
-    end
-    
-    -- Create 4 mobile buttons with PERFECT SPACING:
-    mobileGui.LeftBtn = createMobileButton("LeftBtn", "LEFT", UDim2.new(1, -START_X, START_Y, 20), "◀", Color3.fromRGB(255, 100, 100))
-    mobileGui.RightBtn = createMobileButton("RightBtn", "RIGHT", UDim2.new(1, -(START_X + BUTTON_SPACING), START_Y, 20), "▶", Color3.fromRGB(100, 255, 100))
-    mobileGui.LockBtn = createMobileButton("LockBtn", "LOCK", UDim2.new(1, -START_X, START_Y + 0.16, 20), "🎯", Color3.fromRGB(200, 100, 255))
-    mobileGui.DropBtn = createMobileButton("DropBtn", "DROP", UDim2.new(1, -(START_X + BUTTON_SPACING), START_Y + 0.16, 20), "⬇", Color3.fromRGB(255, 150, 50))
-    
-    -- Mobile Button Functions (matching full GUI functionality)
-    mobileGui.LeftBtn.MouseButton1Click:Connect(function()
-        local newState = not Features.AutoLeft
-        Features.AutoLeft = newState
-        
-        if newState then
-            if Features.AutoRight then
-                Features.AutoRight = false
-                if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end
-                stopStealPath()
-            end
-            mobileGui.LeftBtn.BackgroundColor3 = COLOR_ACCENT
-            startStealPath(stealPath2, "Left")
-            if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](true) end
-        else
-            mobileGui.LeftBtn.BackgroundColor3 = COLOR_OFF
-            stopStealPath()
-            if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
-        end
-    end)
-    
-    mobileGui.RightBtn.MouseButton1Click:Connect(function()
-        local newState = not Features.AutoRight
-        Features.AutoRight = newState
-        
-        if newState then
-            if Features.AutoLeft then
-                Features.AutoLeft = false
-                if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
-                stopStealPath()
-            end
-            mobileGui.RightBtn.BackgroundColor3 = COLOR_ACCENT
-            startStealPath(stealPath1, "Right")
-            if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](true) end
-        else
-            mobileGui.RightBtn.BackgroundColor3 = COLOR_OFF
-            stopStealPath()
-            if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end
-        end
-    end)
-    
-    mobileGui.LockBtn.MouseButton1Click:Connect(function()
-        local newState = not Features.FrontLock
-        Features.FrontLock = newState
-        
-        if newState then
-            mobileGui.LockBtn.BackgroundColor3 = COLOR_ACCENT
-            startFrontLock()
-            if _G["UpdateVisual_FrontLock"] then _G["UpdateVisual_FrontLock"](true) end
-        else
-            mobileGui.LockBtn.BackgroundColor3 = COLOR_OFF
-            stopFrontLock()
-            if _G["UpdateVisual_FrontLock"] then _G["UpdateVisual_FrontLock"](false) end
-        end
-    end)
-    
-    mobileGui.DropBtn.MouseButton1Click:Connect(function()
-        local char = Player.Character or Player.CharacterAdded:Wait()
-        local hrp = char:WaitForChild("HumanoidRootPart")
-        local startCF = hrp.CFrame
-        
-        mobileGui.DropBtn.BackgroundColor3 = COLOR_ACCENT
-        
-        hrp.AssemblyLinearVelocity = Vector3.new(0, 120, 0)
-        task.wait(0.35)
-        hrp.AssemblyLinearVelocity = Vector3.zero
-        hrp.CFrame = startCF
-        
-        task.wait(0.2)
-        mobileGui.DropBtn.BackgroundColor3 = COLOR_OFF
-    end)
-    
-    -- Update mobile button states based on full GUI
-    local function updateMobileButtonStates()
-        if mobileGui.LeftBtn then
-            mobileGui.LeftBtn.BackgroundColor3 = Features.AutoLeft and COLOR_ACCENT or COLOR_OFF
-        end
-        if mobileGui.RightBtn then
-            mobileGui.RightBtn.BackgroundColor3 = Features.AutoRight and COLOR_ACCENT or COLOR_OFF
-        end
-        if mobileGui.LockBtn then
-            mobileGui.LockBtn.BackgroundColor3 = Features.FrontLock and COLOR_ACCENT or COLOR_OFF
-        end
-    end
-    
-    -- Connect to visual updates
-    if _G["UpdateVisual_AutoRight"] then
-        local original = _G["UpdateVisual_AutoRight"]
-        _G["UpdateVisual_AutoRight"] = function(state)
-            original(state)
-            updateMobileButtonStates()
-        end
-    end
-    
-    if _G["UpdateVisual_AutoLeft"] then
-        local original = _G["UpdateVisual_AutoLeft"]
-        _G["UpdateVisual_AutoLeft"] = function(state)
-            original(state)
-            updateMobileButtonStates()
-        end
-    end
-    
-    if _G["UpdateVisual_FrontLock"] then
-        local original = _G["UpdateVisual_FrontLock"]
-        _G["UpdateVisual_FrontLock"] = function(state)
-            original(state)
-            updateMobileButtonStates()
-        end
-    end
-    
-    -- Initial state update
-    updateMobileButtonStates()
 end
 
-print("[Darker Hub] Full Script Loaded! Mobile buttons available for mobile users.")
+print("[Darker Hub] Fixed version loaded! Mobile GUI available for mobile users.")
