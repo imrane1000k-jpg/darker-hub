@@ -1,6 +1,6 @@
--- 🔒 Darker Hub | FINAL UI - BIGGER KEYBINDS + MOBILE INF JUMP FIX
--- Keybind buttons are now bigger, styled for the dark theme, and scale perfectly.
--- Added a dedicated Infinity Jump toggle for mobile users for easy on/off.
+-- 🔒 Darker Hub | FINAL FIXES - LOGICAL SCALING, AGGRESSIVE OPTIMIZER
+-- GUI now scales to a logical screen percentage. Optimizer is super aggressive.
+-- Infinity Jump keybind is removed. Mobile controls are fixed and more intuitive.
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -15,11 +15,17 @@ local StarterGui = game:GetService("StarterGui")
 local Player = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
 
--- ─── 📱 AUTO SCALE (Perfect Scaling) ────────────────────────
+-- ─── 📱 LOGICAL AUTO SCALING ────────────────────────
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 local screenSize = workspace.CurrentCamera.ViewportSize
-local REFERENCE_RES = Vector2.new(1280, 720) -- Base resolution for scaling
-local guiScale = math.clamp(math.min(screenSize.X / REFERENCE_RES.X, screenSize.Y / REFERENCE_RES.Y), 0.6, 1.8)
+
+-- GUI takes up a fixed percentage of the screen
+local W, H = screenSize.X * 0.45, screenSize.Y * 0.65
+local HeaderH = H * 0.09 -- Header is 9% of GUI height
+
+-- Element scale based on a reference for consistency
+local REFERENCE_RES = Vector2.new(1920, 1080)
+local guiScale = math.min(screenSize.X / REFERENCE_RES.X, screenSize.Y / REFERENCE_RES.Y)
 
 -- ─── 🎨 COLORS (ALL-NEW DARKER THEME) ────────────────────────
 local COLOR_BG_MAIN = Color3.fromRGB(10, 10, 15)
@@ -74,14 +80,12 @@ end
 
 -- ─── SETUP GUI ──────────────────────────────────
 local sg = Instance.new("ScreenGui")
-sg.Name = "DarkerHub_FinalUI"
+sg.Name = "DarkerHub_FinalFixes"
 sg.ResetOnSpawn = false
 sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-sg.IgnoreGuiInset = true -- This helps with scaling on some devices
+sg.IgnoreGuiInset = true
 sg.Parent = Player.PlayerGui
 
-local W, H = 380 * guiScale, 500 * guiScale
-local HeaderH = 45 * guiScale
 
 local Features = {
 SpeedBoost = false, AntiRagdoll = false, InfinityJump = false, Float = false,
@@ -867,7 +871,7 @@ RunService.Heartbeat:Connect(function()
 if galaxyEnabled then updateGalaxyForce() end
 end)
 
--- 11. Unwalk & OPTIMIZER (FIXED)
+-- 11. Unwalk & OPTIMIZER (AGGRESSIVE FIX)
 local savedAnimations = {}
 local function startUnwalk()
 local c = Player.Character
@@ -886,13 +890,18 @@ local optimizerConnections = {}
 local function enableOptimizer()
 if getgenv and getgenv().OPTIMIZER_ACTIVE then return end
 if getgenv then getgenv().OPTIMIZER_ACTIVE = true end
+
 pcall(function()
-settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-Lighting.GlobalShadows = false
-Lighting.Brightness = 2
-Lighting.FogEnd = 9e9
-Lighting.FogStart = 0
-for _, v in ipairs(Lighting:GetChildren()) do if v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("BloomEffect") then v:Destroy() end end
+    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+    Lighting.GlobalShadows = false
+    Lighting.Brightness = 2
+    Lighting.FogEnd = 9e9
+    Lighting.FogStart = 0
+    for _, v in ipairs(Lighting:GetChildren()) do 
+        if v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("BloomEffect") or v:IsA("Atmosphere") then 
+            v:Destroy()
+        end 
+    end
 end)
 
 local function cleanObject(obj)
@@ -904,10 +913,13 @@ local function cleanObject(obj)
             obj.Reflectance = 0
             obj.Transparency = 0
             for _, child in ipairs(obj:GetChildren()) do
-                if child:IsA("Decal") or child:IsA("Texture") or child:IsA("SurfaceAppearance") then child:Destroy() end
+                if child:IsA("Decal") or child:IsA("Texture") or child:IsA("SurfaceAppearance") then
+                    child:Destroy()
+                end
             end
-        end
-        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
+        elseif obj:IsA("CharacterMesh") or obj:IsA("ShirtGraphic") or obj:IsA("Pants") or obj:IsA("Shirt") then
+            obj:Destroy()
+        elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
             obj:Destroy()
         end
     end)
@@ -915,16 +927,18 @@ end
 
 for _, obj in ipairs(workspace:GetDescendants()) do cleanObject(obj) end
 
-local streamConn = Workspace.DescendantAdded:Connect(function(obj)
-    if not Features.Optimizer then return end
-    cleanObject(obj)
-end)
-table.insert(optimizerConnections, streamConn)
+local streamConn
+if not optimizerConnections.stream then
+    streamConn = Workspace.DescendantAdded:Connect(function(obj)
+        if not Features.Optimizer then return end
+        cleanObject(obj)
+    end)
+    optimizerConnections.stream = streamConn
+end
 end
 local function disableOptimizer()
 if getgenv then getgenv().OPTIMIZER_ACTIVE = false end
-for _, conn in ipairs(optimizerConnections) do if conn.Connected then conn:Disconnect() end end
-optimizerConnections = {}
+for name, conn in pairs(optimizerConnections) do if conn.Connected then conn:Disconnect() end optimizerConnections[name] = nil end
 pcall(function()
 settings().Rendering.QualityLevel = Enum.QualityLevel.Level05
 Lighting.GlobalShadows = true
@@ -1035,62 +1049,14 @@ local SliderReferences = {}
 local ConfigFileName = "DarkerHub_Config.json"
 local rainbowElements = {}
 
-local PB_W, PB_H = 340 * guiScale, 35 * guiScale
-local progressBar = Instance.new("Frame", sg)
-progressBar.Size = UDim2.new(0, PB_W, 0, PB_H)
-progressBar.Position = UDim2.new(0.5, -PB_W / 2, 0, 20 * guiScale)
-progressBar.BackgroundColor3 = COLOR_BG_MAIN
-progressBar.BackgroundTransparency = 0.1
-progressBar.BorderSizePixel = 0
-progressBar.ClipsDescendants = false
-progressBar.ZIndex = 10
-Instance.new("UICorner", progressBar).CornerRadius = UDim.new(1, 0)
-local pStroke = Instance.new("UIStroke", progressBar)
-pStroke.Thickness = 2.5 * guiScale
-pStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-pStroke.Color = COLOR_GLOW
-pStroke.Transparency = 0.2
-local pTrack = Instance.new("Frame", progressBar)
-pTrack.Size = UDim2.new(1, -6 * guiScale, 0, 6 * guiScale)
-pTrack.Position = UDim2.new(0, 3 * guiScale, 1, -9 * guiScale)
-pTrack.BackgroundColor3 = Color3.fromRGB(10, 10, 30)
-pTrack.BorderSizePixel = 0
-pTrack.ZIndex = 11
-Instance.new("UICorner", pTrack).CornerRadius = UDim.new(1, 0)
-ProgressBarFill = Instance.new("Frame", pTrack)
-ProgressBarFill.Size = UDim2.new(0, 0, 1, 0)
-ProgressBarFill.BackgroundColor3 = COLOR_ACCENT
-ProgressBarFill.BorderSizePixel = 0
-ProgressBarFill.ZIndex = 12
-Instance.new("UICorner", ProgressBarFill).CornerRadius = UDim.new(1, 0)
-ProgressPercentLabel = Instance.new("TextLabel", progressBar)
-ProgressPercentLabel.Size = UDim2.new(1, 0, 1, 0)
-ProgressPercentLabel.BackgroundTransparency = 1
-ProgressPercentLabel.Text = "0%"
-ProgressPercentLabel.Font = Enum.Font.GothamBlack
-ProgressPercentLabel.TextSize = 12 * guiScale
-ProgressPercentLabel.TextXAlignment = Enum.TextXAlignment.Center
-ProgressPercentLabel.TextYAlignment = Enum.TextYAlignment.Center
-ProgressPercentLabel.ZIndex = 13
-ProgressPercentLabel.TextColor3 = COLOR_GLOW
-ProgressPercentLabel.TextStrokeTransparency = 0.4
-ProgressLabel = Instance.new("TextLabel", progressBar)
-ProgressLabel.Size = UDim2.new(1, -50 * guiScale, 1, 0)
-ProgressLabel.BackgroundTransparency = 1
-ProgressLabel.Text = "READY"
-ProgressLabel.Font = Enum.Font.GothamBold
-ProgressLabel.TextSize = 11 * guiScale
-ProgressLabel.TextXAlignment = Enum.TextXAlignment.Left
-ProgressLabel.TextYAlignment = Enum.TextYAlignment.Center
-ProgressLabel.ZIndex = 13
-ProgressLabel.TextColor3 = COLOR_TEXT
-ProgressLabel.TextStrokeTransparency = 0.5
-
 -- Main Window with Shadow
 local mainShadow = Instance.new("Frame", sg)
 mainShadow.Name = "MainShadow"
 mainShadow.Size = UDim2.new(0, W + 10, 0, H + 10)
-mainShadow.Position = UDim2.new(1, -W - 15, 0, 5)
+mainShadow.Position = UDim2.new(0.5, -(W/2) - 5, 0.5, -(H/2) - 5)
+if not isMobile then
+    mainShadow.Position = UDim2.new(1, -(W + 15), 0, 5)
+end
 mainShadow.BackgroundColor3 = COLOR_SHADOW
 mainShadow.BackgroundTransparency = 0.5
 mainShadow.BorderSizePixel = 0
@@ -1100,7 +1066,10 @@ Instance.new("UICorner", mainShadow).CornerRadius = UDim.new(0, 16 * guiScale)
 local main = Instance.new("Frame", sg)
 main.Name = "Main"
 main.Size = UDim2.new(0, W, 0, H)
-main.Position = UDim2.new(1, -W - 10, 0, 10)
+main.Position = UDim2.new(0.5, -(W/2), 0.5, -(H/2)) -- Center on screen
+if not isMobile then
+    main.Position = UDim2.new(1, -W - 10, 0, 10) -- Top-right for PC
+end
 main.BackgroundColor3 = COLOR_BG_MAIN
 main.BackgroundTransparency = 0.1
 main.BorderSizePixel = 0
@@ -1201,17 +1170,65 @@ scrollFrame.ScrollBarImageColor3 = COLOR_ACCENT
 scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 scrollFrame.ZIndex = 2
 local listLayout = Instance.new("UIListLayout", scrollFrame)
-listLayout.Padding = UDim.new(0, 8 * guiScale) -- Increased padding
+listLayout.Padding = UDim.new(0, 8 * guiScale)
 listLayout.FillDirection = Enum.FillDirection.Vertical
 listLayout.SortOrder = Enum.SortOrder.LayoutOrder
 listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- Helpers
-local VisualSetters = {}
-local SliderSetters = {}
-local waitingForKeybind = nil
-local KeyBindBtns = {}
+-- Progress Bar
+local PB_W, PB_H = W * 0.9, H * 0.07
+local progressBar = Instance.new("Frame", sg)
+progressBar.Size = UDim2.new(0, PB_W, 0, PB_H)
+progressBar.Position = UDim2.new(0.5, -PB_W / 2, 0, H * 0.9) -- Position below main GUI
+progressBar.BackgroundColor3 = COLOR_BG_MAIN
+progressBar.BackgroundTransparency = 0.1
+progressBar.BorderSizePixel = 0
+progressBar.ClipsDescendants = false
+progressBar.ZIndex = 10
+Instance.new("UICorner", progressBar).CornerRadius = UDim.new(1, 0)
+local pStroke = Instance.new("UIStroke", progressBar)
+pStroke.Thickness = 2.5 * guiScale
+pStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+pStroke.Color = COLOR_GLOW
+pStroke.Transparency = 0.2
+local pTrack = Instance.new("Frame", progressBar)
+pTrack.Size = UDim2.new(1, -6 * guiScale, 0, 6 * guiScale)
+pTrack.Position = UDim2.new(0, 3 * guiScale, 1, -9 * guiScale)
+pTrack.BackgroundColor3 = Color3.fromRGB(10, 10, 30)
+pTrack.BorderSizePixel = 0
+pTrack.ZIndex = 11
+Instance.new("UICorner", pTrack).CornerRadius = UDim.new(1, 0)
+local ProgressBarFill = Instance.new("Frame", pTrack)
+ProgressBarFill.Size = UDim2.new(0, 0, 1, 0)
+ProgressBarFill.BackgroundColor3 = COLOR_ACCENT
+ProgressBarFill.BorderSizePixel = 0
+ProgressBarFill.ZIndex = 12
+Instance.new("UICorner", ProgressBarFill).CornerRadius = UDim.new(1, 0)
+local ProgressPercentLabel = Instance.new("TextLabel", progressBar)
+ProgressPercentLabel.Size = UDim2.new(1, 0, 1, 0)
+ProgressPercentLabel.BackgroundTransparency = 1
+ProgressPercentLabel.Text = "0%"
+ProgressPercentLabel.Font = Enum.Font.GothamBlack
+ProgressPercentLabel.TextSize = 12 * guiScale
+ProgressPercentLabel.TextXAlignment = Enum.TextXAlignment.Center
+ProgressPercentLabel.TextYAlignment = Enum.TextYAlignment.Center
+ProgressPercentLabel.ZIndex = 13
+ProgressPercentLabel.TextColor3 = COLOR_GLOW
+ProgressPercentLabel.TextStrokeTransparency = 0.4
+local ProgressLabel = Instance.new("TextLabel", progressBar)
+ProgressLabel.Size = UDim2.new(1, -50 * guiScale, 1, 0)
+ProgressLabel.BackgroundTransparency = 1
+ProgressLabel.Text = "READY"
+ProgressLabel.Font = Enum.Font.GothamBold
+ProgressLabel.TextSize = 11 * guiScale
+ProgressLabel.TextXAlignment = Enum.TextXAlignment.Left
+ProgressLabel.TextYAlignment = Enum.TextYAlignment.Center
+ProgressLabel.ZIndex = 13
+ProgressLabel.TextColor3 = COLOR_TEXT
+ProgressLabel.TextStrokeTransparency = 0.5
 
+
+-- Helpers
 local function makeToggleHeader(parent, labelText, featureName, hasKeybind, defaultKeycode, noSave)
 local frame = Instance.new("Frame", parent)
 frame.Size = UDim2.new(1, -8 * guiScale, 0, 38 * guiScale)
@@ -1220,14 +1237,14 @@ frame.BackgroundTransparency = 0.2
 frame.BorderSizePixel = 0
 frame.LayoutOrder = toggleSliderOrder
 toggleSliderOrder = toggleSliderOrder + 1
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10 * guiScale) -- Softer corners
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10 * guiScale)
 local fStroke = Instance.new("UIStroke", frame)
 fStroke.Thickness = 1.2 * guiScale
 fStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 fStroke.Color = COLOR_ACCENT
 fStroke.Transparency = 0.3
 local lbl = Instance.new("TextLabel", frame)
-lbl.Size = UDim2.new(0.6, 0, 1, 0) -- Gave more space for label
+lbl.Size = UDim2.new(0.65, 0, 1, 0)
 lbl.BackgroundTransparency = 1
 lbl.Text = labelText
 lbl.TextColor3 = COLOR_DIM
@@ -1491,9 +1508,9 @@ end
 
 -- Infinity Jump with NO KEYBIND
 do
-local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Inf Jump (Hold Space/Touch)", "InfinityJump", false, nil, false) -- hasKeybind is false
+local btn, setVisual = makeToggleHeader(scrollFrame, "Inf Jump (Hold Space/Touch)", "InfinityJump", false, nil, false) -- hasKeybind is false
 btn.MouseButton1Click:Connect(function()
-local on = not getState()
+local on = not setVisual() -- get state from visual setter
 setVisual(on)
 Features.InfinityJump = on
 if on then
@@ -1505,7 +1522,7 @@ StarterGui:SetCore("ChatMakeSystemMessage", {Text = "[DARKER HUB] Infinity Jump 
 end
 SaveConfig()
 end)
-if Features.InfinityJump then setVisual(true) startInfinityJump() end
+if Features.InfinityJump then setVisual(true); startInfinityJump() end
 end
 createSlider(scrollFrame, "Fly Speed", 20, 100, "UP_SPEED")
 
@@ -1600,14 +1617,14 @@ setVisual(on)
 Features.Optimizer = on
 if on then
 enableOptimizer()
-StarterGui:SetCore("ChatMakeSystemMessage", {Text = "[DARKER HUB] Optimizer Enabled! Textures & Effects removed.", Color = COLOR_SUCCESS})
+StarterGui:SetCore("ChatMakeSystemMessage", {Text = "[DARKER HUB] Aggressive Optimizer Enabled!", Color = COLOR_SUCCESS})
 else
 disableOptimizer()
 StarterGui:SetCore("ChatMakeSystemMessage", {Text = "[DARKER HUB] Optimizer Disabled.", Color = COLOR_CLOSE})
 end
 SaveConfig()
 end)
-if Features.Optimizer then setVisual(true) enableOptimizer() end
+if Features.Optimizer then setVisual(true); enableOptimizer() end
 end
 
 do
@@ -1831,8 +1848,8 @@ end)
 
 -- ─── 📱 MOBILE BUTTONS & FLY JUMP BUTTON ─────────────────────
 if isMobile then
-    local btnSize = 60 * guiScale
-    local gap = 10 * guiScale
+    local btnSize = W * 0.12 -- Size relative to GUI width
+    local gap = W * 0.02
     
     -- Helper to create simple square buttons
     local function createSimpleButton(parent, pos, color, icon, text, onClick)
@@ -1882,7 +1899,7 @@ if isMobile then
         clickBtn.ZIndex = 102
         clickBtn.MouseButton1Click:Connect(function()
             TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {Size = UDim2.new(0, btnSize * 0.9, 0, btnSize * 0.9)}):Play()
-            wait(0.1)
+            task.wait(0.1)
             TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {Size = UDim2.new(0, btnSize, 0, btnSize)}):Play()
             onClick()
         end)
@@ -1895,7 +1912,7 @@ if isMobile then
     -- Row 2: Drop       | Bat Lock
     -- Row 3: Inf Jump   | (Spacer)
     
-    local startX = UDim2.new(1, -(btnSize * 2 + gap), 0, 20) -- Positioned from right edge
+    local startX = UDim2.new(1, -(btnSize * 2 + gap), 0, H + 10) -- Positioned below main GUI
     
     -- 1. Left Steal (Top Left of grid)
     local leftBtnFrame, leftBtn, leftIcon = createSimpleButton(sg, startX, Color3.fromRGB(50, 150, 255), "◀", "L-Steal", function()
@@ -1935,7 +1952,7 @@ if isMobile then
         hrp.AssemblyLinearVelocity = Vector3.zero
         hrp.CFrame = startCF
         TweenService:Create(dropBtnFrame, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {BackgroundColor3 = Color3.fromRGB(255, 100, 100)}):Play()
-        wait(0.1)
+        task.wait(0.1)
         TweenService:Create(dropBtnFrame, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {BackgroundColor3 = Color3.fromRGB(255, 50, 50)}):Play()
     end)
 
@@ -1977,7 +1994,7 @@ if isMobile then
     updateMobileVisuals()
 
     -- ─── 📱 INFINITY JUMP MOBILE FLY BUTTON ─────────────────────
-    local flyBtnSize = 70 * guiScale
+    local flyBtnSize = W * 0.15 -- Larger than other buttons
     local flyButton = Instance.new("Frame", sg)
     flyButton.Name = "MobileFlyBtn"
     flyButton.Size = UDim2.new(0, flyBtnSize, 0, flyBtnSize)
@@ -2026,4 +2043,4 @@ if isMobile then
     end)
 end
 
-StarterGui:SetCore("ChatMakeSystemMessage", {Text = "[DARKER HUB] Loaded! Final UI & Mobile Fixes Applied.", Color = COLOR_ACCENT})
+StarterGui:SetCore("ChatMakeSystemMessage", {Text = "[DARKER HUB] Final fixes loaded. Aggressive Optimizer ready.", Color = COLOR_ACCENT})
