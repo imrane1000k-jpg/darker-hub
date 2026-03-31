@@ -1,6 +1,6 @@
--- 🔒 Darker Hub | MOBILE COMPACT GUI
--- 4 Buttons: Left Right | Lock Drop
--- Positioned on right side, slightly up from bottom
+-- 🔒 Darker Hub | COMPACT MOBILE GUI
+-- Smaller buttons, positioned higher on screen
+-- Full path logic for Left/Right auto steal
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -16,7 +16,7 @@ local Workspace = game:GetService("Workspace")
 
 -- ─── 📱 MOBILE DETECTION ────────────────────────────────
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-local guiScale = isMobile and 0.8 or 1.0
+local guiScale = isMobile and 0.7 or 1.0
 
 -- ─── 🎨 COLORS ─────────────────────────────────────────────
 local COLOR_BG_MAIN = Color3.fromRGB(15, 15, 25)
@@ -42,18 +42,22 @@ local Features = {
     DropShot = false
 }
 
--- ─── PATHS FOR AUTO STEAL ─────────────────────────────────
-local stealPath1 = {
+-- ─── AUTO STEAL PATHS ─────────────────────────────────────
+local stealPath1 = { -- Right path
     {pos = Vector3.new(-475, -6, 26)},
     {pos = Vector3.new(-484, -4, 26)},
     {pos = Vector3.new(-475, -6, 26)},
     {pos = Vector3.new(-476, -6, 107)},
+    {pos = Vector3.new(-475, -6, 107)},
+    {pos = Vector3.new(-475, -6, 26)},
 }
-local stealPath2 = {
+local stealPath2 = { -- Left path
     {pos = Vector3.new(-476, -6, 93)},
     {pos = Vector3.new(-484, -4, 94)},
     {pos = Vector3.new(-476, -6, 93)},
     {pos = Vector3.new(-475, -6, 22)},
+    {pos = Vector3.new(-476, -6, 22)},
+    {pos = Vector3.new(-476, -6, 93)},
 }
 
 -- ─── PATH STEAL LOGIC ─────────────────────────────────────
@@ -65,6 +69,7 @@ local PATH_VELOCITY_SPEED, PATH_SECOND_SPEED = 57, 29
 local PATH_BASE_STOP, PATH_MIN_STOP = 1.35, 0.65
 local PATH_NEXT_POINT_BIAS, PATH_SMOOTH_FACTOR = 0.45, 0.12
 local currentPathType = nil
+local AutoStealValues = { PATH_TURN_WAIT = 0.5 }
 
 local function isPlayerRagdolled()
     local char = Player.Character
@@ -158,7 +163,7 @@ local function runStealPath(path)
         local nextP = path[i + 1] and path[i + 1].pos
         local success = pathMoveToPoint(hrp, path[i].pos, nextP, speed)
         if not success then return false end
-        if i == 2 then task.wait(0.5) else task.wait(0.01) end
+        if i == 2 then task.wait(AutoStealValues.PATH_TURN_WAIT) else task.wait(0.01) end
         if not pathActive then return false end
     end
     return true
@@ -316,79 +321,79 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ─── MOBILE GUI CREATION ─────────────────────────────────────
+-- ─── COMPACT MOBILE GUI ─────────────────────────────────────
 local mobileGui = {}
 
--- Main Panel (Right side of screen)
+-- Main Panel (Smaller, positioned higher)
 local mainPanel = Instance.new("Frame", sg)
 mainPanel.Name = "ButtonPanel"
-mainPanel.Size = UDim2.new(0, 90, 0, 180)
-mainPanel.Position = UDim2.new(1, -100, 1, -200) -- Right side, slightly up from bottom
+mainPanel.Size = UDim2.new(0, 70, 0, 140) -- Smaller: 70x140 pixels
+mainPanel.Position = UDim2.new(1, -75, 0.3, 0) -- Higher up: 30% from top
 mainPanel.BackgroundColor3 = COLOR_BG_MAIN
-mainPanel.BackgroundTransparency = 0.3
+mainPanel.BackgroundTransparency = 0.25
 mainPanel.BorderSizePixel = 0
 mainPanel.ZIndex = 100
-Instance.new("UICorner", mainPanel).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", mainPanel).CornerRadius = UDim.new(0, 8)
 
 local panelStroke = Instance.new("UIStroke", mainPanel)
 panelStroke.Color = COLOR_ACCENT
-panelStroke.Thickness = 2
+panelStroke.Thickness = 1.5
 panelStroke.Transparency = 0.3
 
--- Button creation function
+-- Button creation function (smaller buttons)
 local function createButton(name, text, pos, icon, color)
     local btn = Instance.new("TextButton", mainPanel)
     btn.Name = name
-    btn.Size = UDim2.new(0, 75, 0, 75)
+    btn.Size = UDim2.new(0, 60, 0, 60) -- Smaller: 60x60 pixels
     btn.Position = pos
     btn.BackgroundColor3 = COLOR_INACTIVE
-    btn.BackgroundTransparency = 0.2
+    btn.BackgroundTransparency = 0.25
     btn.BorderSizePixel = 0
     btn.Text = text
     btn.TextColor3 = COLOR_TEXT
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 14
+    btn.TextSize = 12 -- Smaller text
     btn.ZIndex = 101
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
     
     local btnStroke = Instance.new("UIStroke", btn)
     btnStroke.Color = COLOR_GLOW
-    btnStroke.Thickness = 1.5
+    btnStroke.Thickness = 1
     btnStroke.Transparency = 0.5
     
-    -- Icon label
+    -- Smaller icon
     local iconLabel = Instance.new("TextLabel", btn)
-    iconLabel.Size = UDim2.new(0, 20, 0, 20)
-    iconLabel.Position = UDim2.new(0, 5, 0, 5)
+    iconLabel.Size = UDim2.new(0, 18, 0, 18)
+    iconLabel.Position = UDim2.new(0, 3, 0, 3)
     iconLabel.BackgroundTransparency = 1
     iconLabel.Text = icon or ""
     iconLabel.TextColor3 = COLOR_GLOW
     iconLabel.Font = Enum.Font.GothamBlack
-    iconLabel.TextSize = 16
+    iconLabel.TextSize = 14
     iconLabel.ZIndex = 102
     
     -- Touch feedback
     btn.MouseButton1Down:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundTransparency = 0}):Play()
+        TweenService:Create(btn, TweenInfo.new(0.08), {BackgroundTransparency = 0.1}):Play()
     end)
     
     btn.MouseButton1Up:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundTransparency = 0.2}):Play()
+        TweenService:Create(btn, TweenInfo.new(0.08), {BackgroundTransparency = 0.25}):Play()
     end)
     
     return btn
 end
 
--- Create 4 buttons in 2x2 grid
+-- Create 4 smaller buttons in 2x2 grid
 -- Top row: LEFT | RIGHT
-mobileGui.LeftBtn = createButton("LeftBtn", "LEFT", UDim2.new(0, 5, 0, 5), "◀", Color3.fromRGB(255, 100, 100))
-mobileGui.RightBtn = createButton("RightBtn", "RIGHT", UDim2.new(0, 45, 0, 5), "▶", Color3.fromRGB(100, 255, 100))
+mobileGui.LeftBtn = createButton("LeftBtn", "L", UDim2.new(0, 5, 0, 5), "◀", Color3.fromRGB(255, 100, 100))
+mobileGui.RightBtn = createButton("RightBtn", "R", UDim2.new(0, 32, 0, 5), "▶", Color3.fromRGB(100, 255, 100))
 
 -- Bottom row: LOCK | DROP
-mobileGui.LockBtn = createButton("LockBtn", "LOCK", UDim2.new(0, 5, 0, 90), "🎯", Color3.fromRGB(200, 100, 255))
-mobileGui.DropBtn = createButton("DropBtn", "DROP", UDim2.new(0, 45, 0, 90), "⬇", Color3.fromRGB(255, 150, 50))
+mobileGui.LockBtn = createButton("LockBtn", "K", UDim2.new(0, 5, 0, 70), "🎯", Color3.fromRGB(200, 100, 255))
+mobileGui.DropBtn = createButton("DropBtn", "D", UDim2.new(0, 32, 0, 70), "⬇", Color3.fromRGB(255, 150, 50))
 
--- ─── BUTTON FUNCTIONALITY ───────────────────────────────────
+-- ─── BUTTON FUNCTIONALITY ─────────────────────────────────--
 
 -- LEFT Button
 mobileGui.LeftBtn.MouseButton1Click:Connect(function()
@@ -404,9 +409,11 @@ mobileGui.LeftBtn.MouseButton1Click:Connect(function()
         end
         mobileGui.LeftBtn.BackgroundColor3 = COLOR_ACTIVE
         startStealPath(stealPath2, "Left")
+        print("[Auto Steal] LEFT path activated")
     else
         mobileGui.LeftBtn.BackgroundColor3 = COLOR_INACTIVE
         stopStealPath()
+        print("[Auto Steal] LEFT path deactivated")
     end
 end)
 
@@ -424,9 +431,11 @@ mobileGui.RightBtn.MouseButton1Click:Connect(function()
         end
         mobileGui.RightBtn.BackgroundColor3 = COLOR_ACTIVE
         startStealPath(stealPath1, "Right")
+        print("[Auto Steal] RIGHT path activated")
     else
         mobileGui.RightBtn.BackgroundColor3 = COLOR_INACTIVE
         stopStealPath()
+        print("[Auto Steal] RIGHT path deactivated")
     end
 end)
 
@@ -438,9 +447,11 @@ mobileGui.LockBtn.MouseButton1Click:Connect(function()
     if newState then
         mobileGui.LockBtn.BackgroundColor3 = COLOR_ACTIVE
         startFrontLock()
+        print("[Front Lock] Activated")
     else
         mobileGui.LockBtn.BackgroundColor3 = COLOR_INACTIVE
         stopFrontLock()
+        print("[Front Lock] Deactivated")
     end
 end)
 
@@ -462,21 +473,22 @@ mobileGui.DropBtn.MouseButton1Click:Connect(function()
     -- Reset button color
     task.wait(0.2)
     mobileGui.DropBtn.BackgroundColor3 = COLOR_INACTIVE
+    print("[Drop Shot] Executed")
 end)
 
 -- ─── ANIMATIONS ─────────────────────────────────────────────
 
--- Floating animation for the panel
-local floatAnim = TweenService:Create(mainPanel, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
-    Position = UDim2.new(1, -100, 1, -195)
+-- Subtle floating animation
+local floatAnim = TweenService:Create(mainPanel, TweenInfo.new(4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
+    Position = UDim2.new(1, -75, 0.3, 5)
 })
 floatAnim:Play()
 
--- Pulse animation for active buttons
+-- Pulse animation for active buttons (subtler)
 local function pulseButton(btn)
     if btn.BackgroundColor3 == COLOR_ACTIVE then
-        local pulse = TweenService:Create(btn, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
-            BackgroundTransparency = 0.1
+        local pulse = TweenService:Create(btn, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
+            BackgroundTransparency = 0.15
         })
         pulse:Play()
     end
@@ -488,12 +500,13 @@ task.spawn(function()
         if Features.AutoLeft then pulseButton(mobileGui.LeftBtn) end
         if Features.AutoRight then pulseButton(mobileGui.RightBtn) end
         if Features.FrontLock then pulseButton(mobileGui.LockBtn) end
-        task.wait(2)
+        task.wait(2.5)
     end
 end)
 
 -- ─── CLEANUP ON RESPAWN ─────────────────────────────────────
 Player.CharacterAdded:Connect(function()
+    task.wait(0.5)
     -- Reset all features on respawn
     Features.AutoLeft = false
     Features.AutoRight = false
@@ -510,4 +523,4 @@ Player.CharacterAdded:Connect(function()
     end
 end)
 
-print("[Mobile Hub] 4-Button GUI Loaded! Position: Right side of screen")
+print("[Mobile Hub] Compact GUI Loaded! Size: 70x140px | Position: Right side, 30% from top")
