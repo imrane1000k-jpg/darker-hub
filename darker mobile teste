@@ -1,7 +1,6 @@
--- 🔒 Darker Hub | ALL-NEW DARK UI + OPTIMIZED + MOBILE READY
--- Completely redesigned dark theme with better shadows, spacing, and modern UI corners.
--- Keybind buttons are repositioned and restyled. Infinity Jump keybind removed.
--- Optimizer, Mobile Fly, and Auto-Scaling are all included and improved.
+-- 🔒 Darker Hub | FINAL UI - BIGGER KEYBINDS + MOBILE INF JUMP FIX
+-- Keybind buttons are now bigger, styled for the dark theme, and scale perfectly.
+-- Added a dedicated Infinity Jump toggle for mobile users for easy on/off.
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -75,7 +74,7 @@ end
 
 -- ─── SETUP GUI ──────────────────────────────────
 local sg = Instance.new("ScreenGui")
-sg.Name = "DarkerHub_NewUI"
+sg.Name = "DarkerHub_FinalUI"
 sg.ResetOnSpawn = false
 sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 sg.IgnoreGuiInset = true -- This helps with scaling on some devices
@@ -1284,19 +1283,20 @@ end
 end
 end
 if hasKeybind then
+-- BIGGER AND STYLIZED KEYBIND BUTTON
 local kbBtn = Instance.new("TextButton", frame)
-kbBtn.Size = UDim2.new(0, 38 * guiScale, 0, 18 * guiScale) -- Bigger button
-kbBtn.Position = UDim2.new(1, -92 * guiScale, 0.5, -9 * guiScale) -- Lower position
-kbBtn.BackgroundColor3 = COLOR_BG_MAIN
+kbBtn.Size = UDim2.new(0, 45 * guiScale, 0, 22 * guiScale) -- Bigger size
+kbBtn.Position = UDim2.new(1, -96 * guiScale, 0.5, -11 * guiScale) -- Lower position
+kbBtn.BackgroundColor3 = COLOR_BG_ROW -- Matches dark theme
 kbBtn.BackgroundTransparency = 0.2
 kbBtn.TextColor3 = COLOR_GLOW
 kbBtn.Font = Enum.Font.GothamBold
-kbBtn.TextSize = 8 * guiScale
+kbBtn.TextSize = 10 * guiScale -- Bigger text
 kbBtn.Text = "BIND"
 kbBtn.BorderSizePixel = 0
 kbBtn.ZIndex = 3
 local kbCorner = Instance.new("UICorner", kbBtn)
-kbCorner.CornerRadius = UDim.new(0, 4 * guiScale)
+kbCorner.CornerRadius = UDim.new(0, 6 * guiScale) -- Softer corners
 local kbStroke = Instance.new("UIStroke", kbBtn)
 kbStroke.Thickness = 1 * guiScale
 kbStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -1893,6 +1893,7 @@ if isMobile then
     -- LAYOUT GRID (Top Right Corner)
     -- Row 1: Left Steal | Right Steal
     -- Row 2: Drop       | Bat Lock
+    -- Row 3: Inf Jump   | (Spacer)
     
     local startX = UDim2.new(1, -(btnSize * 2 + gap), 0, 20) -- Positioned from right edge
     
@@ -1948,16 +1949,30 @@ if isMobile then
         lockIcon.Text = newState and "🎯✓" or "🎯"
     end)
 
-    -- Sync visuals
+    -- 5. Infinity Jump TOGGLE (New Button Below Grid)
+    local infJumpBtnFrame, infJumpBtn, infJumpIcon = createSimpleButton(sg, startX + UDim2.new(0, 0, 0, (btnSize + gap) * 2), Color3.fromRGB(255, 100, 0), "🚀", "Inf Jump", function()
+        local newState = not Features.InfinityJump
+        Features.InfinityJump = newState
+        if newState then startInfinityJump() else stopInfinityJump() end
+        if _G["UpdateVisual_InfinityJump"] then _G["UpdateVisual_InfinityJump"](newState) end -- Sync GUI
+        SaveConfig()
+        infJumpBtnFrame.BackgroundColor3 = newState and Color3.fromRGB(255, 150, 50) or Color3.fromRGB(255, 100, 0)
+        infJumpIcon.Text = newState and "🚀✓" or "🚀"
+    end)
+
+
+    -- Sync visuals for existing buttons
     local function updateMobileVisuals()
         if Features.AutoLeft then leftBtnFrame.BackgroundColor3 = Color3.fromRGB(100, 200, 255); leftIcon.Text = "◀✓" else leftBtnFrame.BackgroundColor3 = Color3.fromRGB(50, 150, 255); leftIcon.Text = "◀" end
         if Features.AutoRight then rightBtnFrame.BackgroundColor3 = Color3.fromRGB(100, 255, 100); rightIcon.Text = "▶✓" else rightBtnFrame.BackgroundColor3 = Color3.fromRGB(50, 255, 50); rightIcon.Text = "▶" end
         if Features.FrontLock then lockBtnFrame.BackgroundColor3 = Color3.fromRGB(230, 100, 255); lockIcon.Text = "🎯✓" else lockBtnFrame.BackgroundColor3 = Color3.fromRGB(200, 50, 255); lockIcon.Text = "🎯" end
+        if Features.InfinityJump then infJumpBtnFrame.BackgroundColor3 = Color3.fromRGB(255, 150, 50); infJumpIcon.Text = "🚀✓" else infJumpBtnFrame.BackgroundColor3 = Color3.fromRGB(255, 100, 0); infJumpIcon.Text = "🚀" end
     end
     
     if _G["UpdateVisual_AutoLeft"] then local orig = _G["UpdateVisual_AutoLeft"]; _G["UpdateVisual_AutoLeft"] = function(s) orig(s); updateMobileVisuals() end end
     if _G["UpdateVisual_AutoRight"] then local orig = _G["UpdateVisual_AutoRight"]; _G["UpdateVisual_AutoRight"] = function(s) orig(s); updateMobileVisuals() end end
     if _G["UpdateVisual_FrontLock"] then local orig = _G["UpdateVisual_FrontLock"]; _G["UpdateVisual_FrontLock"] = function(s) orig(s); updateMobileVisuals() end end
+    if _G["UpdateVisual_InfinityJump"] then local orig = _G["UpdateVisual_InfinityJump"]; _G["UpdateVisual_InfinityJump"] = function(s) orig(s); updateMobileVisuals() end end
     
     updateMobileVisuals()
 
@@ -1997,18 +2012,18 @@ if isMobile then
     flyClickBtn.ZIndex = 102
 
     flyClickBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.Touch and Features.InfinityJump then -- Only works if enabled
             _G.StartTouchJump()
             TweenService:Create(flyButton, TweenInfo.new(0.1), {BackgroundTransparency = 0}):Play()
         end
     end)
 
     flyClickBtn.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.Touch and Features.InfinityJump then
             _G.StopTouchJump()
             TweenService:Create(flyButton, TweenInfo.new(0.2), {BackgroundTransparency = 0.3}):Play()
         end
     end)
 end
 
-StarterGui:SetCore("ChatMakeSystemMessage", {Text = "[DARKER HUB] Loaded! New Dark UI Applied.", Color = COLOR_ACCENT})
+StarterGui:SetCore("ChatMakeSystemMessage", {Text = "[DARKER HUB] Loaded! Final UI & Mobile Fixes Applied.", Color = COLOR_ACCENT})
