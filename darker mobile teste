@@ -1,5 +1,5 @@
 -- 🔒 Darker Hub | COMPACT MOBILE GUI WITH FULL LOGIC
--- Small buttons on right side, higher up - but complete functionality
+-- Fixed button layout: LEFT/RIGHT top row, LOCK/DROP bottom row
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -753,12 +753,11 @@ end)
 return btn
 end
 
--- Create 4 buttons with full names
--- Top row: LEFT | RIGHT
+-- Create 4 buttons in correct layout:
+-- LEFT  RIGHT (top row)
+-- LOCK  DROP (bottom row)
 mobileGui.LeftBtn = createButton("LeftBtn", "LEFT", UDim2.new(0, 5, 0, 5), "◀", Color3.fromRGB(255, 100, 100))
 mobileGui.RightBtn = createButton("RightBtn", "RIGHT", UDim2.new(0, 32, 0, 5), "▶", Color3.fromRGB(100, 255, 100))
-
--- Bottom row: LOCK | DROP
 mobileGui.LockBtn = createButton("LockBtn", "LOCK", UDim2.new(0, 5, 0, 70), "🎯", Color3.fromRGB(200, 100, 255))
 mobileGui.DropBtn = createButton("DropBtn", "DROP", UDim2.new(0, 32, 0, 70), "⬇", Color3.fromRGB(255, 150, 50))
 
@@ -944,4 +943,4 @@ mobileGui.DropBtn.BackgroundColor3 = COLOR_OFF
 end
 end)
 
-print("[Darker Hub] Compact GUI with FULL logic loaded! 4 buttons: LEFT RIGHT LOCK DROP")
+print("[Darker Hub] Compact GUI with FULL logic loaded! Button layout: LEFT RIGHT / LOCK DROP")
