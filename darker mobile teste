@@ -1,6 +1,5 @@
--- 🔒 Darker Hub | COMPACT MOBILE GUI
--- Smaller buttons, positioned higher on screen
--- Full path logic for Left/Right auto steal
+-- 🔒 Darker Hub | COMPACT MOBILE GUI WITH FULL LOGIC
+-- Small buttons on right side, higher up - but complete functionality
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -14,53 +13,558 @@ local Lighting = game:GetService("Lighting")
 local Player = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
 
--- ─── 📱 MOBILE DETECTION ────────────────────────────────
+-- ─── 📱 SETUP ──────────────────────────────────
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 local guiScale = isMobile and 0.7 or 1.0
 
--- ─── 🎨 COLORS ─────────────────────────────────────────────
-local COLOR_BG_MAIN = Color3.fromRGB(15, 15, 25)
-local COLOR_ACCENT = Color3.fromRGB(120, 80, 255)
-local COLOR_GLOW = Color3.fromRGB(100, 200, 255)
+local COLOR_BG_MAIN = Color3.fromRGB(10, 10, 20)
+local COLOR_BG_ROW = Color3.fromRGB(20, 20, 45)
+local COLOR_ACCENT = Color3.fromRGB(138, 43, 226)
+local COLOR_GLOW = Color3.fromRGB(0, 255, 255)
 local COLOR_TEXT = Color3.fromRGB(255, 255, 255)
-local COLOR_ACTIVE = Color3.fromRGB(80, 255, 120)
-local COLOR_INACTIVE = Color3.fromRGB(60, 60, 80)
+local COLOR_DIM = Color3.fromRGB(180, 180, 240)
+local COLOR_OFF = Color3.fromRGB(40, 40, 60)
 
--- ─── SCREEN GUI ───────────────────────────────────────────
 local sg = Instance.new("ScreenGui")
-sg.Name = "MobileHub_Buttons"
+sg.Name = "DarkerHub_Compact"
 sg.ResetOnSpawn = false
 sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-sg.IgnoreGuiInset = true
 sg.Parent = Player.PlayerGui
 
--- ─── FEATURES ─────────────────────────────────────────────
+-- ─── FEATURES ───────────────────────────────────────
 local Features = {
-    AutoLeft = false,
-    AutoRight = false,
-    FrontLock = false,
-    DropShot = false
+    SpeedBoost = false, AntiRagdoll = false, InfinityJump = false, Float = false,
+    Helicopter = false, ThiefSpeed = false, AutoSteal = false,
+    GalaxyMode = false, Unwalk = false, Optimizer = false,
+    EnemyTimer = false, AutoRight = false, AutoLeft = false, FrontLock = false
 }
 
--- ─── AUTO STEAL PATHS ─────────────────────────────────────
-local stealPath1 = { -- Right path
-    {pos = Vector3.new(-475, -6, 26)},
-    {pos = Vector3.new(-484, -4, 26)},
-    {pos = Vector3.new(-475, -6, 26)},
-    {pos = Vector3.new(-476, -6, 107)},
-    {pos = Vector3.new(-475, -6, 107)},
-    {pos = Vector3.new(-475, -6, 26)},
-}
-local stealPath2 = { -- Left path
-    {pos = Vector3.new(-476, -6, 93)},
-    {pos = Vector3.new(-484, -4, 94)},
-    {pos = Vector3.new(-476, -6, 93)},
-    {pos = Vector3.new(-475, -6, 22)},
-    {pos = Vector3.new(-476, -6, 22)},
-    {pos = Vector3.new(-476, -6, 93)},
+local Values = {
+    BoostSpeed = 30, SpinSpeed = 50, DEFAULT_GRAVITY = 196.2,
+    GalaxyGravityPercent = 70, StealingSpeedValue = 29,
+    HOP_POWER = 50, HOP_COOLDOWN = 0.08, FloatHeight = 8,
+    UP_SPEED = 60,
 }
 
--- ─── PATH STEAL LOGIC ─────────────────────────────────────
+local AutoStealValues = { STEAL_RADIUS = 8, STEAL_DURATION = 0.2, PATH_TURN_WAIT = 1.0 }
+local FrontLockConfig = { SPEED = 59, FRONT_DISTANCE = 3.5, STOP_DISTANCE = 1.5, DETECTION_RADIUS = 400 }
+
+-- ─── STEAL PATHS ───────────────────────────────────────
+local stealPath1 = {
+{pos = Vector3.new(-475, -6, 26)},
+{pos = Vector3.new(-484, -4, 26)},
+{pos = Vector3.new(-475, -6, 26)},
+{pos = Vector3.new(-476, -6, 107)},
+}
+local stealPath2 = {
+{pos = Vector3.new(-476, -6, 93)},
+{pos = Vector3.new(-484, -4, 94)},
+{pos = Vector3.new(-476, -6, 93)},
+{pos = Vector3.new(-475, -6, 22)},
+}
+
+-- ─── SPEED DISPLAY ─────────────────────────────────────────
+local speedLabelBillboard = nil
+local speedTextLabel = nil
+
+local function createSpeedDisplay()
+if speedLabelBillboard then return end
+local char = Player.Character
+if not char then return end
+local hrp = char:FindFirstChild("HumanoidRootPart")
+if not hrp then return end
+
+speedLabelBillboard = Instance.new("BillboardGui")
+speedLabelBillboard.Name = "SpeedDisplay"
+speedLabelBillboard.Adornee = hrp
+speedLabelBillboard.Size = UDim2.new(0, 100, 0, 40)
+speedLabelBillboard.StudsOffset = Vector3.new(0, 3.5, 0)
+speedLabelBillboard.AlwaysOnTop = true
+
+speedTextLabel = Instance.new("TextLabel", speedLabelBillboard)
+speedTextLabel.Size = UDim2.new(1, 0, 1, 0)
+speedTextLabel.BackgroundTransparency = 1
+speedTextLabel.Text = "0"
+speedTextLabel.Font = Enum.Font.GothamBlack
+speedTextLabel.TextSize = 14
+speedTextLabel.TextColor3 = COLOR_GLOW
+speedTextLabel.TextStrokeTransparency = 0
+speedTextLabel.TextStrokeColor3 = Color3.new(0,0,0)
+
+speedLabelBillboard.Parent = hrp
+end
+
+local function destroySpeedDisplay()
+if speedLabelBillboard then
+speedLabelBillboard:Destroy()
+speedLabelBillboard = nil
+speedTextLabel = nil
+end
+end
+
+local function updateSpeedDisplay()
+if not (Features.SpeedBoost or Features.ThiefSpeed or Features.GalaxyMode) then
+destroySpeedDisplay()
+return
+end
+
+if not speedLabelBillboard then createSpeedDisplay() end
+
+local char = Player.Character
+if char and char:FindFirstChild("HumanoidRootPart") then
+local vel = char.HumanoidRootPart.AssemblyLinearVelocity
+local speed = math.floor(math.sqrt(vel.X^2 + vel.Z^2))
+if speedTextLabel then speedTextLabel.Text = tostring(speed) end
+end
+end
+
+RunService.Heartbeat:Connect(updateSpeedDisplay)
+Player.CharacterAdded:Connect(function()
+destroySpeedDisplay()
+task.wait(0.5)
+if (Features.SpeedBoost or Features.ThiefSpeed or Features.GalaxyMode) then
+createSpeedDisplay()
+end
+end)
+
+-- ─── FEATURE LOGIC ─────────────────────────────────────────────
+
+-- 1. Speed Boost
+local Connections = {}
+local function getMovementDirection()
+local c = Player.Character
+if not c then return Vector3.zero end
+local hum = c:FindFirstChildOfClass("Humanoid")
+return hum and hum.MoveDirection or Vector3.zero
+end
+
+local function startSpeedBoost()
+if Connections.speed then return end
+Connections.speed = RunService.Heartbeat:Connect(function()
+if not Features.SpeedBoost then return end
+pcall(function()
+local c = Player.Character
+if not c then return end
+local h = c:FindFirstChild("HumanoidRootPart")
+if not h then return end
+local md = getMovementDirection()
+if md.Magnitude > 0.1 then
+h.AssemblyLinearVelocity = Vector3.new(md.X * Values.BoostSpeed, h.AssemblyLinearVelocity.Y, md.Z * Values.BoostSpeed)
+end
+end)
+end)
+end
+local function stopSpeedBoost()
+if Connections.speed then Connections.speed:Disconnect(); Connections.speed = nil end
+end
+
+-- 2. Anti Ragdoll
+local antiRagdollMode, ragdollConnections, cachedCharData, isBoosting = nil, {}, {}, false
+local BOOST_SPEED, AR_DEFAULT_SPEED = 400, 16
+
+local function arCacheCharacterData()
+local char = Player.Character
+if not char then return false end
+local hum, root = char:FindFirstChildOfClass("Humanoid"), char:FindFirstChild("HumanoidRootPart")
+if not hum or not root then return false end
+cachedCharData = { character = char, humanoid = hum, root = root }
+return true
+end
+
+local function arDisconnectAll()
+for _, conn in ipairs(ragdollConnections) do pcall(function() conn:Disconnect() end) end
+ragdollConnections = {}
+end
+
+local function arIsRagdolled()
+if not cachedCharData.humanoid then return false end
+local state = cachedCharData.humanoid:GetState()
+local ragdollStates = {[Enum.HumanoidStateType.Physics] = true, [Enum.HumanoidStateType.Ragdoll] = true, [Enum.HumanoidStateType.FallingDown] = true}
+if ragdollStates[state] then return true end
+local endTime = Player:GetAttribute("RagdollEndTime")
+if endTime and (endTime - workspace:GetServerTimeNow()) > 0 then return true end
+return false
+end
+
+local function arForceExitRagdoll()
+if not cachedCharData.humanoid or not cachedCharData.root then return end
+pcall(function() Player:SetAttribute("RagdollEndTime", workspace:GetServerTimeNow()) end)
+for _, descendant in ipairs(cachedCharData.character:GetDescendants()) do
+if descendant:IsA("BallSocketConstraint") or (descendant:IsA("Attachment") and descendant.Name:find("RagdollAttachment")) then
+descendant:Destroy()
+end
+end
+if not isBoosting then
+isBoosting = true
+cachedCharData.humanoid.WalkSpeed = BOOST_SPEED
+end
+if cachedCharData.humanoid.Health > 0 then
+cachedCharData.humanoid:ChangeState(Enum.HumanoidStateType.Running)
+end
+cachedCharData.root.Anchored = false
+end
+
+local function startAntiRagdoll()
+if antiRagdollMode == "v1" then return end
+if not arCacheCharacterData() then return end
+antiRagdollMode = "v1"
+local camConn = RunService.RenderStepped:Connect(function()
+if not Player.Character then return end
+local cam = workspace.CurrentCamera
+if cam and cachedCharData.humanoid then cam.CameraSubject = cachedCharData.humanoid end
+end)
+table.insert(ragdollConnections, camConn)
+local respawnConn = Player.CharacterAdded:Connect(function()
+isBoosting = false; task.wait(0.5); arCacheCharacterData()
+end)
+table.insert(ragdollConnections, respawnConn)
+task.spawn(function()
+while antiRagdollMode == "v1" do
+task.wait()
+if arIsRagdolled() then arForceExitRagdoll()
+elseif isBoosting and not arIsRagdolled() then
+isBoosting = false
+if cachedCharData.humanoid then cachedCharData.humanoid.WalkSpeed = AR_DEFAULT_SPEED end
+end
+end
+end)
+end
+
+local function stopAntiRagdoll()
+antiRagdollMode = nil
+if isBoosting and cachedCharData.humanoid then cachedCharData.humanoid.WalkSpeed = AR_DEFAULT_SPEED end
+isBoosting = false
+arDisconnectAll()
+cachedCharData = {}
+end
+
+-- 3. INFINITY JUMP (HOLD SPACE TO FLY)
+local infinityJumpEnabled = false
+local jumpLoopConnection = nil
+
+local function startInfinityJump()
+infinityJumpEnabled = true
+if jumpLoopConnection then jumpLoopConnection:Disconnect() end
+
+jumpLoopConnection = RunService.Heartbeat:Connect(function()
+if not infinityJumpEnabled then return end
+
+local char = Player.Character
+if not char then return end
+
+local hrp = char:FindFirstChild("HumanoidRootPart")
+local hum = char:FindFirstChildOfClass("Humanoid")
+
+if not hrp or not hum then return end
+
+-- Only work when in air
+if hum.FloorMaterial == Enum.Material.Air then
+
+-- HOLD SPACE to fly up
+if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+local currentVel = hrp.AssemblyLinearVelocity
+hrp.AssemblyLinearVelocity = Vector3.new(currentVel.X, Values.UP_SPEED, currentVel.Z)
+end
+-- Release space = normal gravity (drop)
+
+else
+-- On ground: zero Y velocity to prevent bounces
+local currentVel = hrp.AssemblyLinearVelocity
+if math.abs(currentVel.Y) < 1 then
+hrp.AssemblyLinearVelocity = Vector3.new(currentVel.X, 0, currentVel.Z)
+end
+end
+end)
+end
+
+local function stopInfinityJump()
+infinityJumpEnabled = false
+if jumpLoopConnection then
+jumpLoopConnection:Disconnect()
+jumpLoopConnection = nil
+end
+end
+
+-- Respawn Handler
+Player.CharacterAdded:Connect(function(char)
+if Features.InfinityJump and infinityJumpEnabled then
+task.wait(0.5)
+startInfinityJump()
+end
+end)
+
+-- 4. Helicopter
+local helicopterSpinBAV = nil
+local function startHelicopter()
+local c = Player.Character
+if not c then return end
+local hrp = c:FindFirstChild("HumanoidRootPart")
+if not hrp then return end
+if helicopterSpinBAV then helicopterSpinBAV:Destroy() end
+for _, v in pairs(hrp:GetChildren()) do if v.Name == "HelicopterBAV" then v:Destroy() end end
+
+helicopterSpinBAV = Instance.new("BodyAngularVelocity")
+helicopterSpinBAV.Name = "HelicopterBAV"
+helicopterSpinBAV.MaxTorque = Vector3.new(0, math.huge, 0)
+helicopterSpinBAV.AngularVelocity = Vector3.new(0, Values.SpinSpeed, 0)
+helicopterSpinBAV.Parent = hrp
+end
+local function stopHelicopter()
+if helicopterSpinBAV then helicopterSpinBAV:Destroy(); helicopterSpinBAV = nil end
+local c = Player.Character
+if c then
+local hrp = c:FindFirstChild("HumanoidRootPart")
+if hrp then for _, v in pairs(hrp:GetChildren()) do if v.Name == "HelicopterBAV" then v:Destroy() end end end
+end
+end
+
+-- 5. Auto Steal System
+local isStealing = false
+local StealData = {}
+local progressConn, stealStartTime
+local ProgressBarFill, ProgressLabel, ProgressPercentLabel
+
+local function resetProgressBar()
+if ProgressLabel then ProgressLabel.Text = "READY" end
+if ProgressPercentLabel then ProgressPercentLabel.Text = "0%" end
+if ProgressBarFill then ProgressBarFill.Size = UDim2.new(0, 0, 1, 0) end
+end
+
+local function isMyPlotByName(plotName)
+local plots = workspace:FindFirstChild("Plots")
+if not plots then return false end
+local plot = plots:FindFirstChild(plotName)
+if not plot then return false end
+local sign = plot:FindFirstChild("PlotSign")
+if sign then
+local yb = sign:FindFirstChild("YourBase")
+if yb and yb:IsA("BillboardGui") then return yb.Enabled == true end
+end
+return false
+end
+
+local function findNearestPrompt()
+local h = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+if not h then return nil, nil, nil end
+local plots = workspace:FindFirstChild("Plots")
+if not plots then return nil, nil, nil end
+local np, nd, nn = nil, math.huge, nil
+for _, plot in ipairs(plots:GetChildren()) do
+if isMyPlotByName(plot.Name) then continue end
+local podiums = plot:FindFirstChild("AnimalPodiums")
+if not podiums then continue end
+for _, pod in ipairs(podiums:GetChildren()) do
+pcall(function()
+local base = pod:FindFirstChild("Base")
+local spawn = base and base:FindFirstChild("Spawn")
+if spawn then
+local dist = (spawn.Position - h.Position).Magnitude
+if dist < nd and dist <= AutoStealValues.STEAL_RADIUS then
+local att = spawn:FindFirstChild("PromptAttachment")
+if att then
+for _, ch in ipairs(att:GetChildren()) do
+if ch:IsA("ProximityPrompt") then
+np, nd, nn = ch, dist, pod.Name
+break
+end
+end
+end
+end
+end
+end)
+end
+end
+return np, nd, nn
+end
+
+local function executeSteal(prompt, name)
+if isStealing then return end
+if not StealData[prompt] then
+StealData[prompt] = {hold = {}, trigger = {}, ready = true}
+pcall(function()
+if getconnections then
+for _, c in ipairs(getconnections(prompt.PromptButtonHoldBegan)) do
+if c.Function then table.insert(StealData[prompt].hold, c.Function) end
+end
+for _, c in ipairs(getconnections(prompt.Triggered)) do
+if c.Function then table.insert(StealData[prompt].trigger, c.Function) end
+end
+end
+end)
+end
+local data = StealData[prompt]
+if not data.ready then return end
+data.ready = false
+isStealing = true
+stealStartTime = tick()
+if ProgressLabel then ProgressLabel.Text = name or "STEALING..." end
+if progressConn then progressConn:Disconnect() end
+progressConn = RunService.Heartbeat:Connect(function()
+if not isStealing then if progressConn then progressConn:Disconnect() end return end
+local elapsed = tick() - stealStartTime
+local duration = AutoStealValues.STEAL_DURATION
+local prog = math.clamp(elapsed / duration, 0, 1)
+if ProgressBarFill then ProgressBarFill.Size = UDim2.new(prog, 0, 1, 0) end
+if ProgressPercentLabel then ProgressPercentLabel.Text = math.floor(prog * 100) .. "%" end
+if prog >= 1 then
+if prompt.Parent and prompt:IsA("ProximityPrompt") then
+prompt.HoldDuration = 0.01
+pcall(function() prompt:InputHoldBegin() end)
+for _, f in ipairs(data.trigger) do pcall(f) end
+pcall(function() prompt:InputHoldEnd() end)
+end
+if progressConn then progressConn:Disconnect() end
+resetProgressBar()
+data.ready = true
+isStealing = false
+task.wait(0.01)
+if Features.AutoSteal then
+local p, _, n = findNearestPrompt()
+if p then executeSteal(p, n) end
+end
+return
+end
+if not prompt.Parent or not prompt:IsA("ProximityPrompt") then
+if progressConn then progressConn:Disconnect() end
+resetProgressBar()
+data.ready = true
+isStealing = false
+return
+end
+pcall(function() prompt:InputHoldBegin() end)
+end)
+end
+
+-- 8. Front Lock + Bat
+local SlapList = { "Bat", "Slap", "Iron Slap", "Gold Slap", "Diamond Slap", "Emerald Slap", "Ruby Slap", "Dark Matter Slap", "Flame Slap", "Nuclear Slap", "Galaxy Slap", "Glitched Slap" }
+local frontLockTarget = nil
+local frontLockOriginalSpeed = 16
+local batActivatedInLock = false
+
+local function findBat()
+local c = Player.Character
+if not c then return nil end
+local bp = Player:FindFirstChildOfClass("Backpack")
+for _, ch in ipairs(c:GetChildren()) do if ch:IsA("Tool") and (ch.Name:lower():find("bat") or table.find(SlapList, ch.Name)) then return ch end end
+if bp then for _, ch in ipairs(bp:GetChildren()) do if ch:IsA("Tool") and (ch.Name:lower():find("bat") or table.find(SlapList, ch.Name)) then return ch end end end
+return nil
+end
+
+local function findNearestPlayerForFrontLock()
+local nearestDist = math.huge
+local nearestPlayer = nil
+local char = Player.Character
+if not char then return nil end
+local root = char:FindFirstChild("HumanoidRootPart")
+if not root then return nil end
+local myPos = root.Position
+for _, otherPlayer in ipairs(Players:GetPlayers()) do
+if otherPlayer ~= Player and otherPlayer.Character then
+local targetRoot = otherPlayer.Character:FindFirstChild("HumanoidRootPart")
+if targetRoot then
+local distance = (myPos - targetRoot.Position).Magnitude
+if distance < nearestDist and distance <= FrontLockConfig.DETECTION_RADIUS then
+nearestDist = distance
+nearestPlayer = otherPlayer
+end
+end
+end
+end
+return nearestPlayer
+end
+
+local function activateBatOnce()
+if batActivatedInLock then return end
+local bat = findBat()
+if bat then
+if bat.Parent ~= Player.Character then bat.Parent = Player.Character end
+bat:Activate()
+batActivatedInLock = true
+end
+end
+
+local function startFrontLock()
+local char = Player.Character
+if char then
+local hum = char:FindFirstChildOfClass("Humanoid")
+if hum then frontLockOriginalSpeed = hum.WalkSpeed end
+end
+batActivatedInLock = false
+end
+
+local function stopFrontLock()
+local char = Player.Character
+if char then
+local hum = char:FindFirstChildOfClass("Humanoid")
+local root = char:FindFirstChild("HumanoidRootPart")
+if hum then hum.WalkSpeed = frontLockOriginalSpeed end
+if root then
+root.Velocity = Vector3.new(0, 0, 0)
+if hum then hum:MoveTo(root.Position) end
+end
+end
+frontLockTarget = nil
+batActivatedInLock = false
+end
+
+RunService.RenderStepped:Connect(function()
+if not Features.FrontLock then batActivatedInLock = false return end
+local char = Player.Character
+if not char then return end
+local hum = char:FindFirstChildOfClass("Humanoid")
+local root = char:FindFirstChild("HumanoidRootPart")
+if not hum or not root then return end
+if hum.WalkSpeed ~= FrontLockConfig.SPEED then hum.WalkSpeed = FrontLockConfig.SPEED end
+if not frontLockTarget or not frontLockTarget.Character or not frontLockTarget.Character:FindFirstChild("HumanoidRootPart") then
+frontLockTarget = findNearestPlayerForFrontLock()
+batActivatedInLock = false
+end
+if frontLockTarget and frontLockTarget.Character then
+local targetRoot = frontLockTarget.Character:FindFirstChild("HumanoidRootPart")
+if targetRoot then
+activateBatOnce()
+local targetPos = targetRoot.Position
+local myPos = root.Position
+local targetCFrame = targetRoot.CFrame
+local lookVector = targetCFrame.LookVector
+local spotInFront = targetPos + (lookVector * FrontLockConfig.FRONT_DISTANCE)
+local directionVector = spotInFront - myPos
+local distance = directionVector.Magnitude
+local heightDiff = targetPos.Y - myPos.Y
+local horizontalDir = Vector3.new(directionVector.X, 0, directionVector.Z).Unit
+if horizontalDir.Magnitude == 0 then horizontalDir = Vector3.new(1,0,0) end
+local verticalVel = 0
+if math.abs(heightDiff) > 2 then
+verticalVel = (heightDiff > 0 and FrontLockConfig.SPEED * 0.8) or (-FrontLockConfig.SPEED * 0.8)
+end
+if distance > FrontLockConfig.STOP_DISTANCE then
+root.Velocity = Vector3.new(horizontalDir.X * FrontLockConfig.SPEED, verticalVel, horizontalDir.Z * FrontLockConfig.SPEED)
+hum:MoveTo(spotInFront)
+else
+root.Velocity = Vector3.new(0, 0, 0)
+hum:MoveTo(myPos)
+end
+else
+frontLockTarget = nil
+batActivatedInLock = false
+end
+else
+frontLockTarget = nil
+batActivatedInLock = false
+end
+end)
+
+Player.CharacterAdded:Connect(function(newChar)
+if Features.FrontLock then
+task.wait(0.05)
+local hum = newChar:FindFirstChildOfClass("Humanoid")
+if hum then hum.WalkSpeed = FrontLockConfig.SPEED end
+frontLockTarget = nil
+batActivatedInLock = false
+end
+end)
+
+-- 9. Path Steal Logic
 local pathActive = false
 local pathPaused = false
 local currentPathIndex = 1
@@ -69,266 +573,131 @@ local PATH_VELOCITY_SPEED, PATH_SECOND_SPEED = 57, 29
 local PATH_BASE_STOP, PATH_MIN_STOP = 1.35, 0.65
 local PATH_NEXT_POINT_BIAS, PATH_SMOOTH_FACTOR = 0.45, 0.12
 local currentPathType = nil
-local AutoStealValues = { PATH_TURN_WAIT = 0.5 }
 
 local function isPlayerRagdolled()
-    local char = Player.Character
-    if not char then return true end
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if not hum then return true end
-    local state = hum:GetState()
-    local ragdollStates = {
-        [Enum.HumanoidStateType.Physics] = true, 
-        [Enum.HumanoidStateType.Ragdoll] = true, 
-        [Enum.HumanoidStateType.FallingDown] = true
-    }
-    if ragdollStates[state] then return true end
-    local endTime = Player:GetAttribute("RagdollEndTime")
-    if endTime and (endTime - workspace:GetServerTimeNow()) > 0 then return true end
-    return false
+local char = Player.Character
+if not char then return true end
+local hum = char:FindFirstChildOfClass("Humanoid")
+if not hum then return true end
+local state = hum:GetState()
+local ragdollStates = {[Enum.HumanoidStateType.Physics] = true, [Enum.HumanoidStateType.Ragdoll] = true, [Enum.HumanoidStateType.FallingDown] = true}
+if ragdollStates[state] then return true end
+local endTime = Player:GetAttribute("RagdollEndTime")
+if endTime and (endTime - workspace:GetServerTimeNow()) > 0 then return true end
+return false
 end
 
 local function pathMoveToPoint(hrp, current, nextPoint, speed)
-    local conn
-    local reached = false
-    conn = RunService.Heartbeat:Connect(function()
-        if not pathActive then 
-            if conn then conn:Disconnect() end 
-            hrp.AssemblyLinearVelocity = Vector3.zero 
-            reached = true 
-            return 
-        end
-        if isPlayerRagdolled() then 
-            pathPaused = true 
-            hrp.AssemblyLinearVelocity = Vector3.zero 
-            return
-        else 
-            if pathPaused then pathPaused = false end 
-        end
-        if pathPaused then return end
-        
-        local pos = hrp.Position
-        local target = Vector3.new(current.X, pos.Y, current.Z)
-        local dir = target - pos
-        local dist = dir.Magnitude
-        local stopDist = math.clamp(PATH_BASE_STOP - dist * 0.04, PATH_MIN_STOP, PATH_BASE_STOP)
-        
-        if dist <= stopDist then 
-            if conn then conn:Disconnect() end 
-            hrp.AssemblyLinearVelocity = Vector3.zero 
-            reached = true 
-            return 
-        end
-        
-        local moveDir = dir.Unit
-        if nextPoint then
-            local nextDir = (Vector3.new(nextPoint.X, pos.Y, nextPoint.Z) - pos).Unit
-            moveDir = (moveDir + nextDir * PATH_NEXT_POINT_BIAS).Unit
-        end
-        if lastFlatVel.Magnitude > 0.1 then
-            moveDir = (moveDir * (1 - PATH_SMOOTH_FACTOR) + lastFlatVel.Unit * PATH_SMOOTH_FACTOR).Unit
-        end
-        local vel = Vector3.new(moveDir.X * speed, hrp.AssemblyLinearVelocity.Y, moveDir.Z * speed)
-        hrp.AssemblyLinearVelocity = vel
-        lastFlatVel = Vector3.new(vel.X, 0, vel.Z)
-    end)
-    
-    while pathActive and not reached and (Vector3.new(hrp.Position.X, 0, hrp.Position.Z) - Vector3.new(current.X, 0, current.Z)).Magnitude > PATH_BASE_STOP do
-        if isPlayerRagdolled() then pathPaused = true end
-        while pathActive and pathPaused do RunService.Heartbeat:Wait() end
-        if not pathActive then break end
-        RunService.Heartbeat:Wait()
-    end
-    if conn then conn:Disconnect() end
-    hrp.AssemblyLinearVelocity = Vector3.zero
-    return true
+local conn
+local reached = false
+conn = RunService.Heartbeat:Connect(function()
+if not pathActive then if conn then conn:Disconnect() end hrp.AssemblyLinearVelocity = Vector3.zero reached = true return end
+if isPlayerRagdolled() then pathPaused = true hrp.AssemblyLinearVelocity = Vector3.zero return
+else if pathPaused then pathPaused = false end end
+if pathPaused then return end
+local pos = hrp.Position
+local target = Vector3.new(current.X, pos.Y, current.Z)
+local dir = target - pos
+local dist = dir.Magnitude
+local stopDist = math.clamp(PATH_BASE_STOP - dist * 0.04, PATH_MIN_STOP, PATH_BASE_STOP)
+if dist <= stopDist then if conn then conn:Disconnect() end hrp.AssemblyLinearVelocity = Vector3.zero reached = true return end
+local moveDir = dir.Unit
+if nextPoint then
+local nextDir = (Vector3.new(nextPoint.X, pos.Y, nextPoint.Z) - pos).Unit
+moveDir = (moveDir + nextDir * PATH_NEXT_POINT_BIAS).Unit
+end
+if lastFlatVel.Magnitude > 0.1 then
+moveDir = (moveDir * (1 - PATH_SMOOTH_FACTOR) + lastFlatVel.Unit * PATH_SMOOTH_FACTOR).Unit
+end
+local vel = Vector3.new(moveDir.X * speed, hrp.AssemblyLinearVelocity.Y, moveDir.Z * speed)
+hrp.AssemblyLinearVelocity = vel
+lastFlatVel = Vector3.new(vel.X, 0, vel.Z)
+end)
+while pathActive and not reached and (Vector3.new(hrp.Position.X, 0, hrp.Position.Z) - Vector3.new(current.X, 0, current.Z)).Magnitude > PATH_BASE_STOP do
+if isPlayerRagdolled() then pathPaused = true end
+while pathActive and pathPaused do RunService.Heartbeat:Wait() end
+if not pathActive then break end
+RunService.Heartbeat:Wait()
+end
+if conn then conn:Disconnect() end
+hrp.AssemblyLinearVelocity = Vector3.zero
+return true
 end
 
 local function runStealPath(path)
-    local char = Player.Character or Player.CharacterAdded:Wait()
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    local startIndex = currentPathIndex
-    if startIndex > #path then startIndex = 1 end
-    
-    for i = startIndex, #path do
-        if not pathActive then return false end
-        while isPlayerRagdolled() and pathActive do 
-            pathPaused = true 
-            RunService.Heartbeat:Wait() 
-        end
-        if not pathActive then return false end
-        pathPaused = false
-        currentPathIndex = i
-        local speed = i > 2 and PATH_SECOND_SPEED or PATH_VELOCITY_SPEED
-        local nextP = path[i + 1] and path[i + 1].pos
-        local success = pathMoveToPoint(hrp, path[i].pos, nextP, speed)
-        if not success then return false end
-        if i == 2 then task.wait(AutoStealValues.PATH_TURN_WAIT) else task.wait(0.01) end
-        if not pathActive then return false end
-    end
-    return true
+local char = Player.Character or Player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local startIndex = currentPathIndex
+if startIndex > #path then startIndex = 1 end
+for i = startIndex, #path do
+if not pathActive then return false end
+while isPlayerRagdolled() and pathActive do pathPaused = true RunService.Heartbeat:Wait() end
+if not pathActive then return false end
+pathPaused = false
+currentPathIndex = i
+local speed = i > 2 and PATH_SECOND_SPEED or PATH_VELOCITY_SPEED
+local nextP = path[i + 1] and path[i + 1].pos
+local success = pathMoveToPoint(hrp, path[i].pos, nextP, speed)
+if not success then return false end
+if i == 2 then task.wait(AutoStealValues.PATH_TURN_WAIT) else task.wait(0.01) end
+if not pathActive then return false end
+end
+return true
 end
 
 local function startStealPath(path, pathType)
-    if pathActive then return end
-    pathActive = true
-    currentPathIndex = 1
-    currentPathType = pathType
+if pathActive then return end
+pathActive = true
+currentPathIndex = 1
+currentPathType = pathType
 
-    task.spawn(function()
-        while pathActive do
-            local completed = runStealPath(path)
-            if completed then
-                pathActive = false
-                currentPathIndex = 1
+task.spawn(function()
+while pathActive do
+local completed = runStealPath(path)
+if completed then
+pathActive = false
+currentPathIndex = 1
 
-                if currentPathType == "Right" then
-                    Features.AutoRight = false
-                    if mobileGui and mobileGui.RightBtn then
-                        mobileGui.RightBtn.BackgroundColor3 = COLOR_INACTIVE
-                    end
-                elseif currentPathType == "Left" then
-                    Features.AutoLeft = false
-                    if mobileGui and mobileGui.LeftBtn then
-                        mobileGui.LeftBtn.BackgroundColor3 = COLOR_INACTIVE
-                    end
-                end
+if currentPathType == "Right" then
+Features.AutoRight = false
+if mobileGui and mobileGui.RightBtn then
+mobileGui.RightBtn.BackgroundColor3 = COLOR_OFF
+end
+elseif currentPathType == "Left" then
+Features.AutoLeft = false
+if mobileGui and mobileGui.LeftBtn then
+mobileGui.LeftBtn.BackgroundColor3 = COLOR_OFF
+end
+end
 
-                local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-                if hrp then hrp.AssemblyLinearVelocity = Vector3.zero end
-                break
-            else
-                while pathActive and isPlayerRagdolled() do 
-                    pathPaused = true 
-                    RunService.Heartbeat:Wait() 
-                end
-                if not pathActive then break end
-                pathPaused = false
-            end
-        end
-    end)
+local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+if hrp then hrp.AssemblyLinearVelocity = Vector3.zero end
+break
+else
+while pathActive and isPlayerRagdolled() do pathPaused = true RunService.Heartbeat:Wait() end
+if not pathActive then break end
+pathPaused = false
+end
+end
+end)
 end
 
 local function stopStealPath()
-    pathActive = false
-    pathPaused = false
-    currentPathIndex = 1
-    local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.AssemblyLinearVelocity = Vector3.zero end
+pathActive = false
+pathPaused = false
+currentPathIndex = 1
+local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+if hrp then hrp.AssemblyLinearVelocity = Vector3.zero end
 end
-
--- ─── FRONT LOCK LOGIC ───────────────────────────────────────
-local frontLockTarget = nil
-local frontLockOriginalSpeed = 16
-local FrontLockConfig = { SPEED = 59, FRONT_DISTANCE = 3.5, STOP_DISTANCE = 1.5, DETECTION_RADIUS = 400 }
-
-local function findNearestPlayerForFrontLock()
-    local nearestDist = math.huge
-    local nearestPlayer = nil
-    local char = Player.Character
-    if not char then return nil end
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return nil end
-    local myPos = root.Position
-    
-    for _, otherPlayer in ipairs(Players:GetPlayers()) do
-        if otherPlayer ~= Player and otherPlayer.Character then
-            local targetRoot = otherPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if targetRoot then
-                local distance = (myPos - targetRoot.Position).Magnitude
-                if distance < nearestDist and distance <= FrontLockConfig.DETECTION_RADIUS then
-                    nearestDist = distance
-                    nearestPlayer = otherPlayer
-                end
-            end
-        end
-    end
-    return nearestPlayer
-end
-
-local function startFrontLock()
-    local char = Player.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then frontLockOriginalSpeed = hum.WalkSpeed end
-    end
-end
-
-local function stopFrontLock()
-    local char = Player.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if hum then hum.WalkSpeed = frontLockOriginalSpeed end
-        if root then
-            root.Velocity = Vector3.new(0, 0, 0)
-            if hum then hum:MoveTo(root.Position) end
-        end
-    end
-    frontLockTarget = nil
-end
-
-RunService.RenderStepped:Connect(function()
-    if not Features.FrontLock then return end
-    local char = Player.Character
-    if not char then return end
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not hum or not root then return end
-    
-    if hum.WalkSpeed ~= FrontLockConfig.SPEED then 
-        hum.WalkSpeed = FrontLockConfig.SPEED 
-    end
-    
-    if not frontLockTarget or not frontLockTarget.Character or not frontLockTarget.Character:FindFirstChild("HumanoidRootPart") then
-        frontLockTarget = findNearestPlayerForFrontLock()
-    end
-    
-    if frontLockTarget and frontLockTarget.Character then
-        local targetRoot = frontLockTarget.Character:FindFirstChild("HumanoidRootPart")
-        if targetRoot then
-            local targetPos = targetRoot.Position
-            local myPos = root.Position
-            local targetCFrame = targetRoot.CFrame
-            local lookVector = targetCFrame.LookVector
-            local spotInFront = targetPos + (lookVector * FrontLockConfig.FRONT_DISTANCE)
-            local directionVector = spotInFront - myPos
-            local distance = directionVector.Magnitude
-            local heightDiff = targetPos.Y - myPos.Y
-            local horizontalDir = Vector3.new(directionVector.X, 0, directionVector.Z).Unit
-            
-            if horizontalDir.Magnitude == 0 then 
-                horizontalDir = Vector3.new(1,0,0) 
-            end
-            
-            local verticalVel = 0
-            if math.abs(heightDiff) > 2 then
-                verticalVel = (heightDiff > 0 and FrontLockConfig.SPEED * 0.8) or (-FrontLockConfig.SPEED * 0.8)
-            end
-            
-            if distance > FrontLockConfig.STOP_DISTANCE then
-                root.Velocity = Vector3.new(horizontalDir.X * FrontLockConfig.SPEED, verticalVel, horizontalDir.Z * FrontLockConfig.SPEED)
-                hum:MoveTo(spotInFront)
-            else
-                root.Velocity = Vector3.new(0, 0, 0)
-                hum:MoveTo(myPos)
-            end
-        else
-            frontLockTarget = nil
-        end
-    else
-        frontLockTarget = nil
-    end
-end)
 
 -- ─── COMPACT MOBILE GUI ─────────────────────────────────────
 local mobileGui = {}
 
--- Main Panel (Smaller, positioned higher)
+-- Main Panel (Positioned higher on right side)
 local mainPanel = Instance.new("Frame", sg)
 mainPanel.Name = "ButtonPanel"
-mainPanel.Size = UDim2.new(0, 70, 0, 140) -- Smaller: 70x140 pixels
-mainPanel.Position = UDim2.new(1, -75, 0.3, 0) -- Higher up: 30% from top
+mainPanel.Size = UDim2.new(0, 70, 0, 140)
+mainPanel.Position = UDim2.new(1, -75, 0.25, 0) -- 25% from top (higher)
 mainPanel.BackgroundColor3 = COLOR_BG_MAIN
 mainPanel.BackgroundTransparency = 0.25
 mainPanel.BorderSizePixel = 0
@@ -340,187 +709,239 @@ panelStroke.Color = COLOR_ACCENT
 panelStroke.Thickness = 1.5
 panelStroke.Transparency = 0.3
 
--- Button creation function (smaller buttons)
+-- Button creation function with full names
 local function createButton(name, text, pos, icon, color)
-    local btn = Instance.new("TextButton", mainPanel)
-    btn.Name = name
-    btn.Size = UDim2.new(0, 60, 0, 60) -- Smaller: 60x60 pixels
-    btn.Position = pos
-    btn.BackgroundColor3 = COLOR_INACTIVE
-    btn.BackgroundTransparency = 0.25
-    btn.BorderSizePixel = 0
-    btn.Text = text
-    btn.TextColor3 = COLOR_TEXT
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 12 -- Smaller text
-    btn.ZIndex = 101
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-    
-    local btnStroke = Instance.new("UIStroke", btn)
-    btnStroke.Color = COLOR_GLOW
-    btnStroke.Thickness = 1
-    btnStroke.Transparency = 0.5
-    
-    -- Smaller icon
-    local iconLabel = Instance.new("TextLabel", btn)
-    iconLabel.Size = UDim2.new(0, 18, 0, 18)
-    iconLabel.Position = UDim2.new(0, 3, 0, 3)
-    iconLabel.BackgroundTransparency = 1
-    iconLabel.Text = icon or ""
-    iconLabel.TextColor3 = COLOR_GLOW
-    iconLabel.Font = Enum.Font.GothamBlack
-    iconLabel.TextSize = 14
-    iconLabel.ZIndex = 102
-    
-    -- Touch feedback
-    btn.MouseButton1Down:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.08), {BackgroundTransparency = 0.1}):Play()
-    end)
-    
-    btn.MouseButton1Up:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.08), {BackgroundTransparency = 0.25}):Play()
-    end)
-    
-    return btn
+local btn = Instance.new("TextButton", mainPanel)
+btn.Name = name
+btn.Size = UDim2.new(0, 60, 0, 60)
+btn.Position = pos
+btn.BackgroundColor3 = COLOR_OFF
+btn.BackgroundTransparency = 0.25
+btn.BorderSizePixel = 0
+btn.Text = text -- Full names: LEFT, RIGHT, LOCK, DROP
+btn.TextColor3 = COLOR_TEXT
+btn.Font = Enum.Font.GothamBold
+btn.TextSize = 10 -- Small text to fit full names
+btn.ZIndex = 101
+Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+
+local btnStroke = Instance.new("UIStroke", btn)
+btnStroke.Color = COLOR_GLOW
+btnStroke.Thickness = 1
+btnStroke.Transparency = 0.5
+
+-- Smaller icon
+local iconLabel = Instance.new("TextLabel", btn)
+iconLabel.Size = UDim2.new(0, 16, 0, 16)
+iconLabel.Position = UDim2.new(0, 2, 0, 2)
+iconLabel.BackgroundTransparency = 1
+iconLabel.Text = icon or ""
+iconLabel.TextColor3 = COLOR_GLOW
+iconLabel.Font = Enum.Font.GothamBlack
+iconLabel.TextSize = 12
+iconLabel.ZIndex = 102
+
+-- Touch feedback
+btn.MouseButton1Down:Connect(function()
+TweenService:Create(btn, TweenInfo.new(0.08), {BackgroundTransparency = 0.1}):Play()
+end)
+
+btn.MouseButton1Up:Connect(function()
+TweenService:Create(btn, TweenInfo.new(0.08), {BackgroundTransparency = 0.25}):Play()
+end)
+
+return btn
 end
 
--- Create 4 smaller buttons in 2x2 grid
+-- Create 4 buttons with full names
 -- Top row: LEFT | RIGHT
-mobileGui.LeftBtn = createButton("LeftBtn", "L", UDim2.new(0, 5, 0, 5), "◀", Color3.fromRGB(255, 100, 100))
-mobileGui.RightBtn = createButton("RightBtn", "R", UDim2.new(0, 32, 0, 5), "▶", Color3.fromRGB(100, 255, 100))
+mobileGui.LeftBtn = createButton("LeftBtn", "LEFT", UDim2.new(0, 5, 0, 5), "◀", Color3.fromRGB(255, 100, 100))
+mobileGui.RightBtn = createButton("RightBtn", "RIGHT", UDim2.new(0, 32, 0, 5), "▶", Color3.fromRGB(100, 255, 100))
 
 -- Bottom row: LOCK | DROP
-mobileGui.LockBtn = createButton("LockBtn", "K", UDim2.new(0, 5, 0, 70), "🎯", Color3.fromRGB(200, 100, 255))
-mobileGui.DropBtn = createButton("DropBtn", "D", UDim2.new(0, 32, 0, 70), "⬇", Color3.fromRGB(255, 150, 50))
+mobileGui.LockBtn = createButton("LockBtn", "LOCK", UDim2.new(0, 5, 0, 70), "🎯", Color3.fromRGB(200, 100, 255))
+mobileGui.DropBtn = createButton("DropBtn", "DROP", UDim2.new(0, 32, 0, 70), "⬇", Color3.fromRGB(255, 150, 50))
 
--- ─── BUTTON FUNCTIONALITY ─────────────────────────────────--
+-- ─── BUTTON FUNCTIONALITY WITH FULL LOGIC ─────────────────────
 
--- LEFT Button
+-- LEFT Button (Auto Left Steal + Speed Boost + Anti Ragdoll)
 mobileGui.LeftBtn.MouseButton1Click:Connect(function()
-    local newState = not Features.AutoLeft
-    Features.AutoLeft = newState
-    
-    if newState then
-        -- Turn off Right if Left is activated
-        if Features.AutoRight then
-            Features.AutoRight = false
-            mobileGui.RightBtn.BackgroundColor3 = COLOR_INACTIVE
-            stopStealPath()
-        end
-        mobileGui.LeftBtn.BackgroundColor3 = COLOR_ACTIVE
-        startStealPath(stealPath2, "Left")
-        print("[Auto Steal] LEFT path activated")
-    else
-        mobileGui.LeftBtn.BackgroundColor3 = COLOR_INACTIVE
-        stopStealPath()
-        print("[Auto Steal] LEFT path deactivated")
-    end
+local newState = not Features.AutoLeft
+Features.AutoLeft = newState
+
+if newState then
+-- Turn off Right if Left is activated
+if Features.AutoRight then
+Features.AutoRight = false
+mobileGui.RightBtn.BackgroundColor3 = COLOR_OFF
+stopStealPath()
+end
+-- Enable supporting features
+Features.SpeedBoost = true
+Features.AntiRagdoll = true
+Features.ThiefSpeed = true
+mobileGui.LeftBtn.BackgroundColor3 = COLOR_ACCENT
+startSpeedBoost()
+startAntiRagdoll()
+startStealPath(stealPath2, "Left")
+print("[Auto Steal] LEFT path activated with Speed Boost + Anti Ragdoll")
+else
+mobileGui.LeftBtn.BackgroundColor3 = COLOR_OFF
+-- Disable supporting features
+Features.SpeedBoost = false
+Features.AntiRagdoll = false
+Features.ThiefSpeed = false
+stopSpeedBoost()
+stopAntiRagdoll()
+stopStealPath()
+print("[Auto Steal] LEFT path deactivated")
+end
 end)
 
--- RIGHT Button
+-- RIGHT Button (Auto Right Steal + Speed Boost + Anti Ragdoll)
 mobileGui.RightBtn.MouseButton1Click:Connect(function()
-    local newState = not Features.AutoRight
-    Features.AutoRight = newState
-    
-    if newState then
-        -- Turn off Left if Right is activated
-        if Features.AutoLeft then
-            Features.AutoLeft = false
-            mobileGui.LeftBtn.BackgroundColor3 = COLOR_INACTIVE
-            stopStealPath()
-        end
-        mobileGui.RightBtn.BackgroundColor3 = COLOR_ACTIVE
-        startStealPath(stealPath1, "Right")
-        print("[Auto Steal] RIGHT path activated")
-    else
-        mobileGui.RightBtn.BackgroundColor3 = COLOR_INACTIVE
-        stopStealPath()
-        print("[Auto Steal] RIGHT path deactivated")
-    end
+local newState = not Features.AutoRight
+Features.AutoRight = newState
+
+if newState then
+-- Turn off Left if Right is activated
+if Features.AutoLeft then
+Features.AutoLeft = false
+mobileGui.LeftBtn.BackgroundColor3 = COLOR_OFF
+stopStealPath()
+end
+-- Enable supporting features
+Features.SpeedBoost = true
+Features.AntiRagdoll = true
+Features.ThiefSpeed = true
+mobileGui.RightBtn.BackgroundColor3 = COLOR_ACCENT
+startSpeedBoost()
+startAntiRagdoll()
+startStealPath(stealPath1, "Right")
+print("[Auto Steal] RIGHT path activated with Speed Boost + Anti Ragdoll")
+else
+mobileGui.RightBtn.BackgroundColor3 = COLOR_OFF
+-- Disable supporting features
+Features.SpeedBoost = false
+Features.AntiRagdoll = false
+Features.ThiefSpeed = false
+stopSpeedBoost()
+stopAntiRagdoll()
+stopStealPath()
+print("[Auto Steal] RIGHT path deactivated")
+end
 end)
 
--- LOCK Button (Front Lock)
+-- LOCK Button (Front Lock + Speed Boost + Anti Ragdoll)
 mobileGui.LockBtn.MouseButton1Click:Connect(function()
-    local newState = not Features.FrontLock
-    Features.FrontLock = newState
-    
-    if newState then
-        mobileGui.LockBtn.BackgroundColor3 = COLOR_ACTIVE
-        startFrontLock()
-        print("[Front Lock] Activated")
-    else
-        mobileGui.LockBtn.BackgroundColor3 = COLOR_INACTIVE
-        stopFrontLock()
-        print("[Front Lock] Deactivated")
-    end
+local newState = not Features.FrontLock
+Features.FrontLock = newState
+
+if newState then
+-- Enable supporting features
+Features.SpeedBoost = true
+Features.AntiRagdoll = true
+Features.Helicopter = true
+mobileGui.LockBtn.BackgroundColor3 = COLOR_ACCENT
+startSpeedBoost()
+startAntiRagdoll()
+startHelicopter()
+startFrontLock()
+print("[Front Lock] Activated with Speed Boost + Anti Ragdoll + Helicopter")
+else
+mobileGui.LockBtn.BackgroundColor3 = COLOR_OFF
+-- Disable supporting features
+Features.SpeedBoost = false
+Features.AntiRagdoll = false
+Features.Helicopter = false
+stopSpeedBoost()
+stopAntiRagdoll()
+stopHelicopter()
+stopFrontLock()
+print("[Front Lock] Deactivated")
+end
 end)
 
--- DROP Button (Drop Shot)
+-- DROP Button (Drop Shot + Speed Boost)
 mobileGui.DropBtn.MouseButton1Click:Connect(function()
-    local char = Player.Character or Player.CharacterAdded:Wait()
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    local startCF = hrp.CFrame
-    
-    -- Visual feedback
-    mobileGui.DropBtn.BackgroundColor3 = COLOR_ACTIVE
-    
-    -- Perform drop
-    hrp.AssemblyLinearVelocity = Vector3.new(0, 120, 0)
-    task.wait(0.35)
-    hrp.AssemblyLinearVelocity = Vector3.zero
-    hrp.CFrame = startCF
-    
-    -- Reset button color
-    task.wait(0.2)
-    mobileGui.DropBtn.BackgroundColor3 = COLOR_INACTIVE
-    print("[Drop Shot] Executed")
+local char = Player.Character or Player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local startCF = hrp.CFrame
+
+-- Enable speed boost for drop
+Features.SpeedBoost = true
+startSpeedBoost()
+
+-- Visual feedback
+mobileGui.DropBtn.BackgroundColor3 = COLOR_ACCENT
+
+-- Perform drop with boost
+hrp.AssemblyLinearVelocity = Vector3.new(0, 150, 0)
+task.wait(0.35)
+hrp.AssemblyLinearVelocity = Vector3.zero
+hrp.CFrame = startCF
+
+-- Keep speed boost for 2 seconds after drop
+task.wait(2)
+Features.SpeedBoost = false
+stopSpeedBoost()
+
+-- Reset button color
+mobileGui.DropBtn.BackgroundColor3 = COLOR_OFF
+print("[Drop Shot] Executed with Speed Boost")
 end)
 
 -- ─── ANIMATIONS ─────────────────────────────────────────────
 
 -- Subtle floating animation
 local floatAnim = TweenService:Create(mainPanel, TweenInfo.new(4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
-    Position = UDim2.new(1, -75, 0.3, 5)
+Position = UDim2.new(1, -75, 0.25, 5)
 })
 floatAnim:Play()
 
--- Pulse animation for active buttons (subtler)
+-- Pulse animation for active buttons
 local function pulseButton(btn)
-    if btn.BackgroundColor3 == COLOR_ACTIVE then
-        local pulse = TweenService:Create(btn, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
-            BackgroundTransparency = 0.15
-        })
-        pulse:Play()
-    end
+if btn.BackgroundColor3 == COLOR_ACCENT then
+local pulse = TweenService:Create(btn, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
+BackgroundTransparency = 0.15
+})
+pulse:Play()
+end
 end
 
 -- Start pulse for initially active buttons
 task.spawn(function()
-    while sg.Parent do
-        if Features.AutoLeft then pulseButton(mobileGui.LeftBtn) end
-        if Features.AutoRight then pulseButton(mobileGui.RightBtn) end
-        if Features.FrontLock then pulseButton(mobileGui.LockBtn) end
-        task.wait(2.5)
-    end
+while sg.Parent do
+if Features.AutoLeft then pulseButton(mobileGui.LeftBtn) end
+if Features.AutoRight then pulseButton(mobileGui.RightBtn) end
+if Features.FrontLock then pulseButton(mobileGui.LockBtn) end
+task.wait(2.5)
+end
 end)
 
 -- ─── CLEANUP ON RESPAWN ─────────────────────────────────────
 Player.CharacterAdded:Connect(function()
-    task.wait(0.5)
-    -- Reset all features on respawn
-    Features.AutoLeft = false
-    Features.AutoRight = false
-    Features.FrontLock = false
-    stopStealPath()
-    stopFrontLock()
-    
-    -- Reset button colors
-    if mobileGui then
-        mobileGui.LeftBtn.BackgroundColor3 = COLOR_INACTIVE
-        mobileGui.RightBtn.BackgroundColor3 = COLOR_INACTIVE
-        mobileGui.LockBtn.BackgroundColor3 = COLOR_INACTIVE
-        mobileGui.DropBtn.BackgroundColor3 = COLOR_INACTIVE
-    end
+task.wait(0.5)
+-- Reset all features on respawn
+Features.AutoLeft = false
+Features.AutoRight = false
+Features.FrontLock = false
+Features.SpeedBoost = false
+Features.AntiRagdoll = false
+Features.Helicopter = false
+stopStealPath()
+stopFrontLock()
+stopSpeedBoost()
+stopAntiRagdoll()
+stopHelicopter()
+
+-- Reset button colors
+if mobileGui then
+mobileGui.LeftBtn.BackgroundColor3 = COLOR_OFF
+mobileGui.RightBtn.BackgroundColor3 = COLOR_OFF
+mobileGui.LockBtn.BackgroundColor3 = COLOR_OFF
+mobileGui.DropBtn.BackgroundColor3 = COLOR_OFF
+end
 end)
 
-print("[Mobile Hub] Compact GUI Loaded! Size: 70x140px | Position: Right side, 30% from top")
+print("[Darker Hub] Compact GUI with FULL logic loaded! 4 buttons: LEFT RIGHT LOCK DROP")
