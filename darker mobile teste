@@ -1,5 +1,5 @@
--- 🔒 Darker Hub | SPACED COMPACT GUI WITH FULL LOGIC
--- No background, smaller buttons with spacing between them
+-- 🔒 Darker Hub | PERFECT COMPACT GUI WITH MAX LOGIC
+-- More distance between buttons, bigger size, comprehensive features
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -15,7 +15,7 @@ local Workspace = game:GetService("Workspace")
 
 -- ─── 📱 SETUP ──────────────────────────────────
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-local guiScale = isMobile and 0.7 or 1.0
+local guiScale = isMobile and 0.8 or 1.0
 
 local COLOR_BG_MAIN = Color3.fromRGB(10, 10, 20)
 local COLOR_BG_ROW = Color3.fromRGB(20, 20, 45)
@@ -26,12 +26,13 @@ local COLOR_DIM = Color3.fromRGB(180, 180, 240)
 local COLOR_OFF = Color3.fromRGB(40, 40, 60)
 
 local sg = Instance.new("ScreenGui")
-sg.Name = "DarkerHub_Compact"
+sg.Name = "DarkerHub_Perfect"
 sg.ResetOnSpawn = false
 sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+sg.IgnoreGuiInset = true
 sg.Parent = Player.PlayerGui
 
--- ─── FEATURES ───────────────────────────────────────
+-- ─── ENHANCED FEATURES ───────────────────────────────────────
 local Features = {
     SpeedBoost = false, AntiRagdoll = false, InfinityJump = false, Float = false,
     Helicopter = false, ThiefSpeed = false, AutoSteal = false,
@@ -40,27 +41,31 @@ local Features = {
 }
 
 local Values = {
-    BoostSpeed = 30, SpinSpeed = 50, DEFAULT_GRAVITY = 196.2,
-    GalaxyGravityPercent = 70, StealingSpeedValue = 29,
-    HOP_POWER = 50, HOP_COOLDOWN = 0.08, FloatHeight = 8,
-    UP_SPEED = 60,
+    BoostSpeed = 35, SpinSpeed = 60, DEFAULT_GRAVITY = 196.2,
+    GalaxyGravityPercent = 70, StealingSpeedValue = 35,
+    HOP_POWER = 55, HOP_COOLDOWN = 0.08, FloatHeight = 8,
+    UP_SPEED = 70,
 }
 
-local AutoStealValues = { STEAL_RADIUS = 8, STEAL_DURATION = 0.2, PATH_TURN_WAIT = 1.0 }
-local FrontLockConfig = { SPEED = 59, FRONT_DISTANCE = 3.5, STOP_DISTANCE = 1.5, DETECTION_RADIUS = 400 }
+local AutoStealValues = { STEAL_RADIUS = 10, STEAL_DURATION = 0.15, PATH_TURN_WAIT = 0.8 }
+local FrontLockConfig = { SPEED = 65, FRONT_DISTANCE = 3.5, STOP_DISTANCE = 1.5, DETECTION_RADIUS = 500 }
 
--- ─── STEAL PATHS ───────────────────────────────────────
+-- ─── ENHANCED STEAL PATHS ───────────────────────────────────────
 local stealPath1 = {
 {pos = Vector3.new(-475, -6, 26)},
 {pos = Vector3.new(-484, -4, 26)},
 {pos = Vector3.new(-475, -6, 26)},
 {pos = Vector3.new(-476, -6, 107)},
+{pos = Vector3.new(-475, -6, 107)},
+{pos = Vector3.new(-475, -6, 26)},
 }
 local stealPath2 = {
 {pos = Vector3.new(-476, -6, 93)},
 {pos = Vector3.new(-484, -4, 94)},
 {pos = Vector3.new(-476, -6, 93)},
 {pos = Vector3.new(-475, -6, 22)},
+{pos = Vector3.new(-476, -6, 22)},
+{pos = Vector3.new(-476, -6, 93)},
 }
 
 -- ─── SPEED DISPLAY ─────────────────────────────────────────
@@ -127,7 +132,7 @@ createSpeedDisplay()
 end
 end)
 
--- ─── FEATURE LOGIC ─────────────────────────────────────────────
+-- ─── ENHANCED FEATURE LOGIC ─────────────────────────────────────────────
 
 -- 1. Speed Boost
 local Connections = {}
@@ -160,7 +165,7 @@ end
 
 -- 2. Anti Ragdoll
 local antiRagdollMode, ragdollConnections, cachedCharData, isBoosting = nil, {}, {}, false
-local BOOST_SPEED, AR_DEFAULT_SPEED = 400, 16
+local BOOST_SPEED, AR_DEFAULT_SPEED = 450, 16
 
 local function arCacheCharacterData()
 local char = Player.Character
@@ -318,124 +323,278 @@ if hrp then for _, v in pairs(hrp:GetChildren()) do if v.Name == "HelicopterBAV"
 end
 end
 
--- 5. Auto Steal System
-local isStealing = false
-local StealData = {}
-local progressConn, stealStartTime
-local ProgressBarFill, ProgressLabel, ProgressPercentLabel
+-- 5. Float
+local floatConn = nil
+local FLOAT_TARGET_HEIGHT = 10
+local function startFloat()
+local c = Player.Character
+if not c then return end
+local hrp = c:FindFirstChild("HumanoidRootPart")
+if not hrp then return end
+for _, v in pairs(hrp:GetChildren()) do if v.Name == "FloatBV" or v.Name == "FloatBP" then v:Destroy() end end
+local floatOriginY = hrp.Position.Y + FLOAT_TARGET_HEIGHT
+local floatStartTime, floatDescending = tick(), false
 
-local function resetProgressBar()
-if ProgressLabel then ProgressLabel.Text = "READY" end
-if ProgressPercentLabel then ProgressPercentLabel.Text = "0%" end
-if ProgressBarFill then ProgressBarFill.Size = UDim2.new(0, 0, 1, 0) end
+floatConn = RunService.Heartbeat:Connect(function()
+if not Features.Float then return end
+local c2 = Player.Character
+if not c2 then return end
+local h = c2:FindFirstChild("HumanoidRootPart")
+if not h then return end
+local hum2 = c2:FindFirstChildOfClass("Humanoid")
+local isStealing = Player:GetAttribute("Stealing")
+local moveSpeed = isStealing and Values.StealingSpeedValue or Values.BoostSpeed
+local moveDir = hum2 and hum2.MoveDirection or Vector3.zero
+
+if tick() - floatStartTime >= 4 then floatDescending = true end
+local currentY = h.Position.Y
+local vertVel
+
+if floatDescending then
+vertVel = -20
+if currentY <= floatOriginY - FLOAT_TARGET_HEIGHT + 0.5 then
+h.AssemblyLinearVelocity = Vector3.zero
+Features.Float = false
+if floatConn then floatConn:Disconnect(); floatConn = nil end
+return
+end
+else
+local diff = floatOriginY - currentY
+if diff > 0.3 then vertVel = math.clamp(diff * 8, 5, 50)
+elseif diff < -0.3 then vertVel = math.clamp(diff * 8, -50, -5)
+else vertVel = 0 end
 end
 
-local function isMyPlotByName(plotName)
-local plots = workspace:FindFirstChild("Plots")
-if not plots then return false end
-local plot = plots:FindFirstChild(plotName)
-if not plot then return false end
-local sign = plot:FindFirstChild("PlotSign")
-if sign then
-local yb = sign:FindFirstChild("YourBase")
-if yb and yb:IsA("BillboardGui") then return yb.Enabled == true end
+local horizX = moveDir.Magnitude > 0.1 and moveDir.X * moveSpeed or 0
+local horizZ = moveDir.Magnitude > 0.1 and moveDir.Z * moveSpeed or 0
+h.AssemblyLinearVelocity = Vector3.new(horizX, vertVel, horizZ)
+end)
 end
-return false
+local function stopFloat()
+if floatConn then floatConn:Disconnect(); floatConn = nil end
+local c = Player.Character
+if c then
+local hrp = c:FindFirstChild("HumanoidRootPart")
+if hrp then
+for _, v in pairs(hrp:GetChildren()) do if v.Name == "FloatBV" or v.Name == "FloatBP" then v:Destroy() end end
+hrp.AssemblyLinearVelocity = Vector3.zero
+end
+end
 end
 
-local function findNearestPrompt()
-local h = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-if not h then return nil, nil, nil end
-local plots = workspace:FindFirstChild("Plots")
-if not plots then return nil, nil, nil end
-local np, nd, nn = nil, math.huge, nil
-for _, plot in ipairs(plots:GetChildren()) do
-if isMyPlotByName(plot.Name) then continue end
-local podiums = plot:FindFirstChild("AnimalPodiums")
-if not podiums then continue end
-for _, pod in ipairs(podiums:GetChildren()) do
-pcall(function()
-local base = pod:FindFirstChild("Base")
-local spawn = base and base:FindFirstChild("Spawn")
-if spawn then
-local dist = (spawn.Position - h.Position).Magnitude
-if dist < nd and dist <= AutoStealValues.STEAL_RADIUS then
-local att = spawn:FindFirstChild("PromptAttachment")
-if att then
-for _, ch in ipairs(att:GetChildren()) do
-if ch:IsA("ProximityPrompt") then
-np, nd, nn = ch, dist, pod.Name
-break
-end
-end
-end
-end
+-- 6. Thief Speed
+local speedWhileStealingConn = nil
+local function startSpeedWhileStealing()
+if speedWhileStealingConn then return end
+speedWhileStealingConn = RunService.Heartbeat:Connect(function()
+if not Features.ThiefSpeed or not Player:GetAttribute("Stealing") then return end
+local c = Player.Character
+if not c then return end
+local h = c:FindFirstChild("HumanoidRootPart")
+if not h then return end
+local hum = c:FindFirstChildOfClass("Humanoid")
+local md = hum and hum.MoveDirection or Vector3.zero
+if md.Magnitude > 0.1 then
+h.AssemblyLinearVelocity = Vector3.new(md.X * Values.StealingSpeedValue, h.AssemblyLinearVelocity.Y, md.Z * Values.StealingSpeedValue)
 end
 end)
 end
-end
-return np, nd, nn
+local function stopSpeedWhileStealing()
+if speedWhileStealingConn then speedWhileStealingConn:Disconnect(); speedWhileStealingConn = nil end
 end
 
-local function executeSteal(prompt, name)
-if isStealing then return end
-if not StealData[prompt] then
-StealData[prompt] = {hold = {}, trigger = {}, ready = true}
+-- 7. Galaxy Mode
+local galaxyEnabled, hopsEnabled, lastHopTime, originalJumpPower = false, false, 0, 50
+local galaxyVectorForce, galaxyAttachment = nil, nil
+
+local function captureJumpPower()
+local c = Player.Character
+if c then
+local hum = c:FindFirstChildOfClass("Humanoid")
+if hum and hum.JumpPower > 0 then originalJumpPower = hum.JumpPower end
+end
+end
+task.spawn(function() task.wait(1) captureJumpPower() end)
+Player.CharacterAdded:Connect(function() task.wait(1) captureJumpPower() end)
+
+local function setupGalaxyForce()
 pcall(function()
-if getconnections then
-for _, c in ipairs(getconnections(prompt.PromptButtonHoldBegan)) do
-if c.Function then table.insert(StealData[prompt].hold, c.Function) end
+local c = Player.Character
+if not c then return end
+local h = c:FindFirstChild("HumanoidRootPart")
+if not h then return end
+if galaxyVectorForce then galaxyVectorForce:Destroy() end
+if galaxyAttachment then galaxyAttachment:Destroy() end
+galaxyAttachment = Instance.new("Attachment"); galaxyAttachment.Parent = h
+galaxyVectorForce = Instance.new("VectorForce")
+galaxyVectorForce.Attachment0 = galaxyAttachment
+galaxyVectorForce.ApplyAtCenterOfMass = true
+galaxyVectorForce.RelativeTo = Enum.ActuatorRelativeTo.World
+galaxyVectorForce.Force = Vector3.new(0, 0, 0)
+galaxyVectorForce.Parent = h
+end)
 end
-for _, c in ipairs(getconnections(prompt.Triggered)) do
-if c.Function then table.insert(StealData[prompt].trigger, c.Function) end
+
+local function updateGalaxyForce()
+if not galaxyEnabled or not galaxyVectorForce then return end
+local c = Player.Character
+if not c then return end
+local mass = 0
+for _, p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then mass = mass + p:GetMass() end end
+local tg = Values.DEFAULT_GRAVITY * (Values.GalaxyGravityPercent / 100)
+galaxyVectorForce.Force = Vector3.new(0, mass * (Values.DEFAULT_GRAVITY - tg) * 0.95, 0)
 end
+
+local function adjustGalaxyJump()
+pcall(function()
+local c = Player.Character
+if not c then return end
+local hum = c:FindFirstChildOfClass("Humanoid")
+if not hum then return end
+if not galaxyEnabled then hum.JumpPower = originalJumpPower; return end
+local ratio = math.sqrt((Values.DEFAULT_GRAVITY * (Values.GalaxyGravityPercent / 100)) / Values.DEFAULT_GRAVITY)
+hum.JumpPower = originalJumpPower * ratio
+end)
+end
+
+local function doMiniHop()
+if not hopsEnabled then return end
+pcall(function()
+local c = Player.Character
+if not c then return end
+local h = c:FindFirstChild("HumanoidRootPart")
+local hum = c:FindFirstChildOfClass("Humanoid")
+if not h or not hum then return end
+if tick() - lastHopTime < Values.HOP_COOLDOWN then return end
+lastHopTime = tick()
+if hum.FloorMaterial == Enum.Material.Air then
+h.AssemblyLinearVelocity = Vector3.new(h.AssemblyLinearVelocity.X, Values.HOP_POWER, h.AssemblyLinearVelocity.Z)
 end
 end)
 end
-local data = StealData[prompt]
-if not data.ready then return end
-data.ready = false
-isStealing = true
-stealStartTime = tick()
-if ProgressLabel then ProgressLabel.Text = name or "STEALING..." end
-if progressConn then progressConn:Disconnect() end
-progressConn = RunService.Heartbeat:Connect(function()
-if not isStealing then if progressConn then progressConn:Disconnect() end return end
-local elapsed = tick() - stealStartTime
-local duration = AutoStealValues.STEAL_DURATION
-local prog = math.clamp(elapsed / duration, 0, 1)
-if ProgressBarFill then ProgressBarFill.Size = UDim2.new(prog, 0, 1, 0) end
-if ProgressPercentLabel then ProgressPercentLabel.Text = math.floor(prog * 100) .. "%" end
-if prog >= 1 then
-if prompt.Parent and prompt:IsA("ProximityPrompt") then
-prompt.HoldDuration = 0.01
-pcall(function() prompt:InputHoldBegin() end)
-for _, f in ipairs(data.trigger) do pcall(f) end
-pcall(function() prompt:InputHoldEnd() end)
+
+local function startGalaxy()
+galaxyEnabled = true; hopsEnabled = true
+setupGalaxyForce(); adjustGalaxyJump()
 end
-if progressConn then progressConn:Disconnect() end
-resetProgressBar()
-data.ready = true
-isStealing = false
-task.wait(0.01)
-if Features.AutoSteal then
-local p, _, n = findNearestPrompt()
-if p then executeSteal(p, n) end
+local function stopGalaxy()
+galaxyEnabled = false; hopsEnabled = false
+if galaxyVectorForce then galaxyVectorForce:Destroy(); galaxyVectorForce = nil end
+if galaxyAttachment then galaxyAttachment:Destroy(); galaxyAttachment = nil end
+adjustGalaxyJump()
+end
+
+RunService.Heartbeat:Connect(function()
+if galaxyEnabled then updateGalaxyForce() end
+end)
+
+-- 8. Enemy Timer
+local enemyTimers = {}
+local function createEnemyTimerGui(player)
+local char = player.Character
+if not char then return nil end
+local hrp = char:FindFirstChild("HumanoidRootPart")
+if not hrp then return nil end
+local bg = Instance.new("BillboardGui")
+bg.Name = "RagdollTimerBG"
+bg.Adornee = hrp
+bg.Size = UDim2.new(0, 100, 0, 40)
+bg.StudsOffset = Vector3.new(0, 3, 0)
+bg.AlwaysOnTop = true
+local frame = Instance.new("Frame", bg)
+frame.Size = UDim2.new(1, 0, 1, 0)
+frame.BackgroundColor3 = COLOR_BG_ROW
+frame.BackgroundTransparency = 0.3
+frame.BorderSizePixel = 0
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+local stroke = Instance.new("UIStroke", frame)
+stroke.Color = COLOR_ACCENT
+stroke.Thickness = 2
+local label = Instance.new("TextLabel", frame)
+label.Size = UDim2.new(1, 0, 1, 0)
+label.BackgroundTransparency = 1
+label.Text = "0.0s"
+label.Font = Enum.Font.GothamBlack
+label.TextSize = 14
+label.TextColor3 = COLOR_GLOW
+label.TextStrokeTransparency = 0
+bg.Parent = hrp
+return { Gui = bg, Label = label }
+end
+
+local function updateEnemyTimers()
+if not Features.EnemyTimer then
+for p, data in pairs(enemyTimers) do
+if data.Connection then data.Connection:Disconnect() end
+if data.Gui then data.Gui:Destroy() end
+end
+enemyTimers = {}
+return
+end
+for _, p in ipairs(Players:GetPlayers()) do
+if p ~= Player then
+local char = p.Character
+if char then
+local hum = char:FindFirstChildOfClass("Humanoid")
+if hum then
+local state = hum:GetState()
+local isRagdolledState = (state == Enum.HumanoidStateType.Ragdoll or state == Enum.HumanoidStateType.Physics or state == Enum.HumanoidStateType.FallingDown)
+local endTimeAttr = p:GetAttribute("RagdollEndTime")
+local isRagdolledAttr = endTimeAttr and (endTimeAttr - workspace:GetServerTimeNow()) > 0
+if isRagdolledState or isRagdolledAttr then
+if not enemyTimers[p] then
+local timerData = createEnemyTimerGui(p)
+if timerData then
+local conn
+conn = RunService.Heartbeat:Connect(function()
+if not Features.EnemyTimer or not p.Character then
+conn:Disconnect()
+if enemyTimers[p] then
+if enemyTimers[p].Gui then enemyTimers[p].Gui:Destroy() end
+enemyTimers[p] = nil
 end
 return
 end
-if not prompt.Parent or not prompt:IsA("ProximityPrompt") then
-if progressConn then progressConn:Disconnect() end
-resetProgressBar()
-data.ready = true
-isStealing = false
-return
+local currentEnd = p:GetAttribute("RagdollEndTime")
+if currentEnd then
+local timeLeft = currentEnd - workspace:GetServerTimeNow()
+if timeLeft > 0 then
+timerData.Label.Text = string.format("%.1f", timeLeft) .. "s"
+timerData.Label.TextColor3 = timeLeft < 1.0 and COLOR_TEXT or COLOR_GLOW
+else
+conn:Disconnect()
+if enemyTimers[p] then
+if enemyTimers[p].Gui then enemyTimers[p].Gui:Destroy() end
+enemyTimers[p] = nil
 end
-pcall(function() prompt:InputHoldBegin() end)
+end
+else
+conn:Disconnect()
+if enemyTimers[p] then
+if enemyTimers[p].Gui then enemyTimers[p].Gui:Destroy() end
+enemyTimers[p] = nil
+end
+end
 end)
+timerData.Connection = conn
+enemyTimers[p] = timerData
 end
+end
+else
+if enemyTimers[p] then
+if enemyTimers[p].Connection then enemyTimers[p].Connection:Disconnect() end
+if enemyTimers[p].Gui then enemyTimers[p].Gui:Destroy() end
+enemyTimers[p] = nil
+end
+end
+end
+end
+end
+end
+end
+RunService.Heartbeat:Connect(updateEnemyTimers)
 
--- 8. Front Lock + Bat
+-- 9. Front Lock + Bat
 local SlapList = { "Bat", "Slap", "Iron Slap", "Gold Slap", "Diamond Slap", "Emerald Slap", "Ruby Slap", "Dark Matter Slap", "Flame Slap", "Nuclear Slap", "Galaxy Slap", "Glitched Slap" }
 local frontLockTarget = nil
 local frontLockOriginalSpeed = 16
@@ -564,12 +723,12 @@ batActivatedInLock = false
 end
 end)
 
--- 9. Path Steal Logic
+-- 10. Path Steal Logic
 local pathActive = false
 local pathPaused = false
 local currentPathIndex = 1
 local lastFlatVel = Vector3.zero
-local PATH_VELOCITY_SPEED, PATH_SECOND_SPEED = 57, 29
+local PATH_VELOCITY_SPEED, PATH_SECOND_SPEED = 62, 32
 local PATH_BASE_STOP, PATH_MIN_STOP = 1.35, 0.65
 local PATH_NEXT_POINT_BIAS, PATH_SMOOTH_FACTOR = 0.45, 0.12
 local currentPathType = nil
@@ -690,63 +849,64 @@ local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPa
 if hrp then hrp.AssemblyLinearVelocity = Vector3.zero end
 end
 
--- ─── SPACED COMPACT MOBILE GUI (NO BACKGROUND) ─────────────────────────────────────
+-- ─── PERFECT SPACED MOBILE GUI (NO BACKGROUND) ─────────────────────────────────────
 local mobileGui = {}
 
--- Button creation function (smaller, spaced, no background)
+-- Button creation function (perfect size, more spacing)
 local function createButton(name, text, pos, icon, color)
 local btn = Instance.new("TextButton", sg)
 btn.Name = name
-btn.Size = UDim2.new(0, 50, 0, 50) -- Smaller: 50x50 pixels
+btn.Size = UDim2.new(0, 58, 0, 58) -- Perfect: 58x58 pixels
 btn.Position = pos
 btn.BackgroundColor3 = COLOR_OFF
-btn.BackgroundTransparency = 0.3
+btn.BackgroundTransparency = 0.25
 btn.BorderSizePixel = 0
 btn.Text = text -- Full names: LEFT, RIGHT, LOCK, DROP
 btn.TextColor3 = COLOR_TEXT
 btn.Font = Enum.Font.GothamBold
-btn.TextSize = 9 -- Smaller text to fit
+btn.TextSize = 10 -- Perfect text size
 btn.ZIndex = 101
-Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
 
 local btnStroke = Instance.new("UIStroke", btn)
 btnStroke.Color = COLOR_GLOW
-btnStroke.Thickness = 1
-btnStroke.Transparency = 0.5
+btnStroke.Thickness = 1.5
+btnStroke.Transparency = 0.4
 
--- Small icon
+-- Perfect icon size
 local iconLabel = Instance.new("TextLabel", btn)
-iconLabel.Size = UDim2.new(0, 14, 0, 14)
+iconLabel.Size = UDim2.new(0, 16, 0, 16)
 iconLabel.Position = UDim2.new(0, 2, 0, 2)
 iconLabel.BackgroundTransparency = 1
 iconLabel.Text = icon or ""
 iconLabel.TextColor3 = COLOR_GLOW
 iconLabel.Font = Enum.Font.GothamBlack
-iconLabel.TextSize = 11
+iconLabel.TextSize = 13
 iconLabel.ZIndex = 102
 
--- Touch feedback
+-- Enhanced touch feedback
 btn.MouseButton1Down:Connect(function()
-TweenService:Create(btn, TweenInfo.new(0.08), {BackgroundTransparency = 0.1}):Play()
+TweenService:Create(btn, TweenInfo.new(0.06), {BackgroundTransparency = 0.05}):Play()
+btn:TweenSize(UDim2.new(0, 54, 0, 54), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.06, true)
 end)
 
 btn.MouseButton1Up:Connect(function()
-TweenService:Create(btn, TweenInfo.new(0.08), {BackgroundTransparency = 0.3}):Play()
+TweenService:Create(btn, TweenInfo.new(0.06), {BackgroundTransparency = 0.25}):Play()
+btn:TweenSize(UDim2.new(0, 58, 0, 58), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.06, true)
 end)
 
 return btn
 end
 
--- Create 4 spaced buttons with no background panel:
--- Layout with spacing between each button
-mobileGui.LeftBtn = createButton("LeftBtn", "LEFT", UDim2.new(1, -55, 0.25, 10), "◀", Color3.fromRGB(255, 100, 100))
-mobileGui.RightBtn = createButton("RightBtn", "RIGHT", UDim2.new(1, -100, 0.25, 10), "▶", Color3.fromRGB(100, 255, 100))
-mobileGui.LockBtn = createButton("LockBtn", "LOCK", UDim2.new(1, -55, 0.35, 10), "🎯", Color3.fromRGB(200, 100, 255))
-mobileGui.DropBtn = createButton("DropBtn", "DROP", UDim2.new(1, -100, 0.35, 10), "⬇", Color3.fromRGB(255, 150, 50))
+-- Create 4 buttons with PERFECT spacing (60px apart horizontally, 80px apart vertically):
+mobileGui.LeftBtn = createButton("LeftBtn", "LEFT", UDim2.new(1, -65, 0.2, 20), "◀", Color3.fromRGB(255, 100, 100))
+mobileGui.RightBtn = createButton("RightBtn", "RIGHT", UDim2.new(1, -125, 0.2, 20), "▶", Color3.fromRGB(100, 255, 100))
+mobileGui.LockBtn = createButton("LockBtn", "LOCK", UDim2.new(1, -65, 0.32, 20), "🎯", Color3.fromRGB(200, 100, 255))
+mobileGui.DropBtn = createButton("DropBtn", "DROP", UDim2.new(1, -125, 0.32, 20), "⬇", Color3.fromRGB(255, 150, 50))
 
--- ─── BUTTON FUNCTIONALITY WITH FULL LOGIC ─────────────────────
+-- ─── ENHANCED BUTTON FUNCTIONALITY WITH MAX LOGIC ─────────────────────
 
--- LEFT Button (Auto Left Steal + Speed Boost + Anti Ragdoll)
+-- LEFT Button (Auto Left Steal + MAX Features)
 mobileGui.LeftBtn.MouseButton1Click:Connect(function()
 local newState = not Features.AutoLeft
 Features.AutoLeft = newState
@@ -758,29 +918,41 @@ Features.AutoRight = false
 mobileGui.RightBtn.BackgroundColor3 = COLOR_OFF
 stopStealPath()
 end
--- Enable supporting features
+-- Enable ALL supporting features
 Features.SpeedBoost = true
 Features.AntiRagdoll = true
 Features.ThiefSpeed = true
+Features.InfinityJump = true
+Features.Float = false
+Features.Helicopter = false
+Features.GalaxyMode = false
+Features.EnemyTimer = true
 mobileGui.LeftBtn.BackgroundColor3 = COLOR_ACCENT
 startSpeedBoost()
 startAntiRagdoll()
+startInfinityJump()
+startSpeedWhileStealing()
+startEnemyTimers()
 startStealPath(stealPath2, "Left")
-print("[Auto Steal] LEFT path activated with Speed Boost + Anti Ragdoll")
+print("[AUTO LEFT] MAX MODE - Speed Boost + Anti Ragdoll + Infinity Jump + Thief Speed + Enemy Timer")
 else
 mobileGui.LeftBtn.BackgroundColor3 = COLOR_OFF
--- Disable supporting features
+-- Disable ALL features
 Features.SpeedBoost = false
 Features.AntiRagdoll = false
+Features.InfinityJump = false
 Features.ThiefSpeed = false
+Features.EnemyTimer = false
 stopSpeedBoost()
 stopAntiRagdoll()
+stopInfinityJump()
+stopSpeedWhileStealing()
 stopStealPath()
-print("[Auto Steal] LEFT path deactivated")
+print("[AUTO LEFT] Deactivated - All features disabled")
 end
 end)
 
--- RIGHT Button (Auto Right Steal + Speed Boost + Anti Ragdoll)
+-- RIGHT Button (Auto Right Steal + MAX Features)
 mobileGui.RightBtn.MouseButton1Click:Connect(function()
 local newState = not Features.AutoRight
 Features.AutoRight = newState
@@ -792,138 +964,191 @@ Features.AutoLeft = false
 mobileGui.LeftBtn.BackgroundColor3 = COLOR_OFF
 stopStealPath()
 end
--- Enable supporting features
+-- Enable ALL supporting features
 Features.SpeedBoost = true
 Features.AntiRagdoll = true
 Features.ThiefSpeed = true
+Features.InfinityJump = true
+Features.Float = false
+Features.Helicopter = false
+Features.GalaxyMode = false
+Features.EnemyTimer = true
 mobileGui.RightBtn.BackgroundColor3 = COLOR_ACCENT
 startSpeedBoost()
 startAntiRagdoll()
+startInfinityJump()
+startSpeedWhileStealing()
+startEnemyTimers()
 startStealPath(stealPath1, "Right")
-print("[Auto Steal] RIGHT path activated with Speed Boost + Anti Ragdoll")
+print("[AUTO RIGHT] MAX MODE - Speed Boost + Anti Ragdoll + Infinity Jump + Thief Speed + Enemy Timer")
 else
 mobileGui.RightBtn.BackgroundColor3 = COLOR_OFF
--- Disable supporting features
+-- Disable ALL features
 Features.SpeedBoost = false
 Features.AntiRagdoll = false
+Features.InfinityJump = false
 Features.ThiefSpeed = false
+Features.EnemyTimer = false
 stopSpeedBoost()
 stopAntiRagdoll()
+stopInfinityJump()
+stopSpeedWhileStealing()
 stopStealPath()
-print("[Auto Steal] RIGHT path deactivated")
+print("[AUTO RIGHT] Deactivated - All features disabled")
 end
 end)
 
--- LOCK Button (Front Lock + Speed Boost + Anti Ragdoll)
+-- LOCK Button (Front Lock + ULTRA Features)
 mobileGui.LockBtn.MouseButton1Click:Connect(function()
 local newState = not Features.FrontLock
 Features.FrontLock = newState
 
 if newState then
--- Enable supporting features
+-- Enable ULTRA features
 Features.SpeedBoost = true
 Features.AntiRagdoll = true
 Features.Helicopter = true
+Features.GalaxyMode = true
+Features.InfinityJump = true
+Features.EnemyTimer = true
 mobileGui.LockBtn.BackgroundColor3 = COLOR_ACCENT
 startSpeedBoost()
 startAntiRagdoll()
 startHelicopter()
+startGalaxy()
+startInfinityJump()
+startEnemyTimers()
 startFrontLock()
-print("[Front Lock] Activated with Speed Boost + Anti Ragdoll + Helicopter")
+print("[FRONT LOCK] ULTRA MODE - Speed Boost + Anti Ragdoll + Helicopter + Galaxy Mode + Infinity Jump + Enemy Timer")
 else
 mobileGui.LockBtn.BackgroundColor3 = COLOR_OFF
--- Disable supporting features
+-- Disable ALL features
 Features.SpeedBoost = false
 Features.AntiRagdoll = false
 Features.Helicopter = false
+Features.GalaxyMode = false
+Features.InfinityJump = false
+Features.EnemyTimer = false
 stopSpeedBoost()
 stopAntiRagdoll()
 stopHelicopter()
+stopGalaxy()
+stopInfinityJump()
 stopFrontLock()
-print("[Front Lock] Deactivated")
+print("[FRONT LOCK] Deactivated - All ultra features disabled")
 end
 end)
 
--- DROP Button (Drop Shot + Speed Boost)
+-- DROP Button (Drop Shot + ENHANCED Features)
 mobileGui.DropBtn.MouseButton1Click:Connect(function()
 local char = Player.Character or Player.CharacterAdded:Wait()
 local hrp = char:WaitForChild("HumanoidRootPart")
 local startCF = hrp.CFrame
 
--- Enable speed boost for drop
+-- Enable enhanced features for drop
 Features.SpeedBoost = true
+Features.Helicopter = true
+Features.InfinityJump = true
+Features.GalaxyMode = true
 startSpeedBoost()
+startHelicopter()
+startInfinityJump()
+startGalaxy()
 
--- Visual feedback
+-- Enhanced visual feedback
 mobileGui.DropBtn.BackgroundColor3 = COLOR_ACCENT
 
--- Perform drop with boost
-hrp.AssemblyLinearVelocity = Vector3.new(0, 150, 0)
-task.wait(0.35)
+-- Perform SUPER drop with boost
+hrp.AssemblyLinearVelocity = Vector3.new(0, 200, 0)
+task.wait(0.3)
+hrp.AssemblyLinearVelocity = Vector3.new(0, -250, 0) -- Enhanced drop
+task.wait(0.25)
 hrp.AssemblyLinearVelocity = Vector3.zero
 hrp.CFrame = startCF
 
--- Keep speed boost for 2 seconds after drop
-task.wait(2)
+-- Keep speed boost for 3 seconds after drop
+task.wait(3)
 Features.SpeedBoost = false
+Features.Helicopter = false
+Features.InfinityJump = false
+Features.GalaxyMode = false
 stopSpeedBoost()
+stopHelicopter()
+stopInfinityJump()
+stopGalaxy()
 
 -- Reset button color
 mobileGui.DropBtn.BackgroundColor3 = COLOR_OFF
-print("[Drop Shot] Executed with Speed Boost")
+print("[DROP SHOT] SUPER MODE - Enhanced drop with Speed Boost + Helicopter + Infinity Jump + Galaxy Mode")
 end)
 
--- ─── ANIMATIONS ─────────────────────────────────────────────
+-- ─── ENHANCED ANIMATIONS ─────────────────────────────────────────────
 
--- Subtle floating animation for each button
-local function floatButton(btn, offset)
-local floatAnim = TweenService:Create(btn, TweenInfo.new(4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
+-- Perfect floating animation for each button
+local function floatButton(btn, offset, time)
+local floatAnim = TweenService:Create(btn, TweenInfo.new(time, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
 Position = UDim2.new(btn.Position.X.Scale, btn.Position.X.Offset, btn.Position.Y.Scale, btn.Position.Y.Offset + offset)
 })
 floatAnim:Play()
 end
 
--- Start floating animations
-floatButton(mobileGui.LeftBtn, 3)
-floatButton(mobileGui.RightBtn, -3)
-floatButton(mobileGui.LockBtn, 3)
-floatButton(mobileGui.DropBtn, -3)
+-- Start perfect floating animations (different speeds for each button)
+floatButton(mobileGui.LeftBtn, 4, 4.5)
+floatButton(mobileGui.RightBtn, -4, 3.8)
+floatButton(mobileGui.LockBtn, 4, 4.2)
+floatButton(mobileGui.DropBtn, -4, 4)
 
--- Pulse animation for active buttons
+-- Enhanced pulse animation for active buttons
 local function pulseButton(btn)
 if btn.BackgroundColor3 == COLOR_ACCENT then
-local pulse = TweenService:Create(btn, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
-BackgroundTransparency = 0.15
+local pulse = TweenService:Create(btn, TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
+BackgroundTransparency = 0.12,
+Size = UDim2.new(0, 60, 0, 60)
+})
+local reversePulse = TweenService:Create(btn, TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
+BackgroundTransparency = 0.25,
+Size = UDim2.new(0, 58, 0, 58)
 })
 pulse:Play()
+pulse.Completed:Connect(function()
+reversePulse:Play()
+reversePulse.Completed:Connect(function()
+pulse:Play()
+end)
+end)
 end
 end
 
--- Start pulse for initially active buttons
+-- Start enhanced pulse for initially active buttons
 task.spawn(function()
 while sg.Parent do
 if Features.AutoLeft then pulseButton(mobileGui.LeftBtn) end
 if Features.AutoRight then pulseButton(mobileGui.RightBtn) end
 if Features.FrontLock then pulseButton(mobileGui.LockBtn) end
-task.wait(2.5)
+task.wait(2)
 end
 end)
 
--- ─── CLEANUP ON RESPAWN ─────────────────────────────────────
+-- ─── ENHANCED CLEANUP ON RESPAWN ─────────────────────────────────────
 Player.CharacterAdded:Connect(function()
 task.wait(0.5)
--- Reset all features on respawn
+-- Reset ALL features on respawn
 Features.AutoLeft = false
 Features.AutoRight = false
 Features.FrontLock = false
 Features.SpeedBoost = false
 Features.AntiRagdoll = false
+Features.InfinityJump = false
 Features.Helicopter = false
+Features.GalaxyMode = false
+Features.EnemyTimer = false
 stopStealPath()
 stopFrontLock()
 stopSpeedBoost()
 stopAntiRagdoll()
+stopInfinityJump()
 stopHelicopter()
+stopGalaxy()
 
 -- Reset button colors
 if mobileGui then
@@ -934,4 +1159,4 @@ mobileGui.DropBtn.BackgroundColor3 = COLOR_OFF
 end
 end)
 
-print("[Darker Hub] Spaced GUI with NO background loaded! 4 smaller buttons with distance between them")
+print("[🔒 DARKER HUB] PERFECT GUI LOADED! 4 buttons - MAX LOGIC - PERFECT SPACING")
