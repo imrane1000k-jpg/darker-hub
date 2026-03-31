@@ -1,5 +1,6 @@
--- 🔒 Darker Hub | MOBILE GALAXY EDITION
--- Features: Auto-Scale, Galaxy BG, Fixed Mobile Keybinds, Touch Infinity Jump, X Close Button
+-- 🔒 Darker Hub | ORIGINAL GUI + GALAXY BG + FIXED MOBILE LAYOUT
+-- Restored original GUI style. Added Galaxy Background. Fixed Mobile Button Grid.
+-- Infinity Jump: Hold Touch to Fly (Works like PC Spacebar).
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -13,25 +14,23 @@ local Lighting = game:GetService("Lighting")
 local Player = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
 
--- ─── 📱 AUTO SCALE & DETECTION ────────────────────────
+-- ─── 📱 AUTO SCALE ────────────────────────
 local isMobile = UserInputService.TouchEnabled
--- Auto-scale based on screen size (Works on small phones and large tablets)
 local screenSize = workspace.CurrentCamera.ViewportSize
-local scaleFactor = math.clamp(screenSize.Y / 1000, 0.8, 1.3) 
-local guiScale = isMobile and scaleFactor or 0.9
+local scaleFactor = math.clamp(screenSize.Y / 1000, 0.8, 1.2) 
+local guiScale = isMobile and scaleFactor or 1.0
 
--- ─── 🎨 COLORS (Galaxy Theme) ────────────────────────
-local COLOR_BG_MAIN = Color3.fromRGB(15, 10, 30)
-local COLOR_BG_ROW = Color3.fromRGB(25, 20, 50)
-local COLOR_ACCENT = Color3.fromRGB(180, 50, 255)
-local COLOR_ACCENT_2 = Color3.fromRGB(50, 200, 255)
-local COLOR_GLOW = Color3.fromRGB(0, 255, 200)
+-- ─── 🎨 COLORS (Original Dark Style) ────────────────────────
+local COLOR_BG_MAIN = Color3.fromRGB(10, 10, 20)
+local COLOR_BG_ROW = Color3.fromRGB(20, 20, 45)
+local COLOR_ACCENT = Color3.fromRGB(138, 43, 226)
+local COLOR_GLOW = Color3.fromRGB(0, 255, 255)
 local COLOR_TEXT = Color3.fromRGB(255, 255, 255)
-local COLOR_DIM = Color3.fromRGB(200, 200, 255)
-local COLOR_OFF = Color3.fromRGB(40, 40, 70)
-local COLOR_CLOSE = Color3.fromRGB(255, 60, 60)
+local COLOR_DIM = Color3.fromRGB(180, 180, 240)
+local COLOR_OFF = Color3.fromRGB(40, 40, 60)
+local COLOR_CLOSE = Color3.fromRGB(80, 20, 20)
 
--- ─── 🌌 GALAXY BACKGROUND FUNCTION ────────────────────────
+-- ─── 🌌 GALAXY BACKGROUND (Behind GUI only) ────────────────────────
 local function createGalaxyBackground(parent)
     local galaxyFrame = Instance.new("Frame", parent)
     galaxyFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -39,19 +38,17 @@ local function createGalaxyBackground(parent)
     galaxyFrame.BorderSizePixel = 0
     galaxyFrame.ZIndex = 0
     
-    -- Deep Space Gradient
     local grad = Instance.new("UIGradient", galaxyFrame)
     grad.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 5, 20)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(40, 10, 70)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(30, 10, 60)),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 5, 20))
     })
     grad.Rotation = 45
 
-    -- Animated Stars
     for i = 1, 40 do
         local star = Instance.new("Frame", galaxyFrame)
-        local size = math.random(2, 5) * guiScale
+        local size = math.random(2, 4) * guiScale
         star.Size = UDim2.new(0, size, 0, size)
         star.Position = UDim2.new(math.random(), 0, math.random(), 0)
         star.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -61,7 +58,6 @@ local function createGalaxyBackground(parent)
         local corner = Instance.new("UICorner", star)
         corner.CornerRadius = UDim.new(1, 1)
         
-        -- Twinkle
         task.spawn(function()
             while star.Parent do
                 local t = TweenService:Create(star, TweenInfo.new(math.random(1, 3), Enum.EasingStyle.Sine), {BackgroundTransparency = math.random(2, 8)/10})
@@ -70,32 +66,12 @@ local function createGalaxyBackground(parent)
             end
         end)
     end
-    
-    -- Nebula Blobs
-    for i = 1, 3 do
-        local blob = Instance.new("Frame", galaxyFrame)
-        blob.Size = UDim2.new(0, 150 * guiScale, 0, 150 * guiScale)
-        blob.Position = UDim2.new(math.random(), -0.5, math.random(), -0.5)
-        blob.BackgroundColor3 = i % 2 == 0 and COLOR_ACCENT or COLOR_ACCENT_2
-        blob.BackgroundTransparency = 0.9
-        blob.BorderSizePixel = 0
-        blob.ZIndex = 0
-        local corner = Instance.new("UICorner", blob)
-        corner.CornerRadius = UDim.new(1, 1)
-        
-        task.spawn(function()
-            while blob.Parent do
-                TweenService:Create(blob, TweenInfo.new(15, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, false, 0), {Position = blob.Position + UDim2.new(0, math.random(-30, 30), 0, math.random(-30, 30))}):Play()
-                task.wait(15)
-            end
-        end)
-    end
     return galaxyFrame
 end
 
 -- ─── SETUP GUI ──────────────────────────────────
 local sg = Instance.new("ScreenGui")
-sg.Name = "DarkerHub_MobileGalaxy"
+sg.Name = "DarkerHub_Original"
 sg.ResetOnSpawn = false
 sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 sg.Parent = Player.PlayerGui
@@ -103,7 +79,6 @@ sg.Parent = Player.PlayerGui
 local W, H = 380 * guiScale, 500 * guiScale
 local HeaderH = 45 * guiScale
 
--- Feature States
 local Features = {
 SpeedBoost = false, AntiRagdoll = false, InfinityJump = false, Float = false,
 Helicopter = false, ThiefSpeed = false, AutoSteal = false,
@@ -140,14 +115,12 @@ local char = Player.Character
 if not char then return end
 local hrp = char:FindFirstChild("HumanoidRootPart")
 if not hrp then return end
-
 speedLabelBillboard = Instance.new("BillboardGui")
 speedLabelBillboard.Name = "SpeedDisplay"
 speedLabelBillboard.Adornee = hrp
 speedLabelBillboard.Size = UDim2.new(0, 100, 0, 40)
 speedLabelBillboard.StudsOffset = Vector3.new(0, 3.5, 0)
 speedLabelBillboard.AlwaysOnTop = true
-
 speedTextLabel = Instance.new("TextLabel", speedLabelBillboard)
 speedTextLabel.Size = UDim2.new(1, 0, 1, 0)
 speedTextLabel.BackgroundTransparency = 1
@@ -189,7 +162,7 @@ task.wait(0.5)
 if (Features.SpeedBoost or Features.ThiefSpeed or Features.GalaxyMode) then createSpeedDisplay() end
 end)
 
--- ─── FEATURE LOGIC ─────────────────────────────────────────────
+-- ─── FEATURE LOGIC (UNCHANGED) ─────────────────────────────────────────────
 
 -- 1. Speed Boost
 local Connections = {}
@@ -199,7 +172,6 @@ if not c then return Vector3.zero end
 local hum = c:FindFirstChildOfClass("Humanoid")
 return hum and hum.MoveDirection or Vector3.zero
 end
-
 local function startSpeedBoost()
 if Connections.speed then return end
 Connections.speed = RunService.Heartbeat:Connect(function()
@@ -223,7 +195,6 @@ end
 -- 2. Anti Ragdoll
 local antiRagdollMode, ragdollConnections, cachedCharData, isBoosting = nil, {}, {}, false
 local BOOST_SPEED, AR_DEFAULT_SPEED = 400, 16
-
 local function arCacheCharacterData()
 local char = Player.Character
 if not char then return false end
@@ -232,12 +203,10 @@ if not hum or not root then return false end
 cachedCharData = { character = char, humanoid = hum, root = root }
 return true
 end
-
 local function arDisconnectAll()
 for _, conn in ipairs(ragdollConnections) do pcall(function() conn:Disconnect() end) end
 ragdollConnections = {}
 end
-
 local function arIsRagdolled()
 if not cachedCharData.humanoid then return false end
 local state = cachedCharData.humanoid:GetState()
@@ -247,7 +216,6 @@ local endTime = Player:GetAttribute("RagdollEndTime")
 if endTime and (endTime - workspace:GetServerTimeNow()) > 0 then return true end
 return false
 end
-
 local function arForceExitRagdoll()
 if not cachedCharData.humanoid or not cachedCharData.root then return end
 pcall(function() Player:SetAttribute("RagdollEndTime", workspace:GetServerTimeNow()) end)
@@ -265,7 +233,6 @@ cachedCharData.humanoid:ChangeState(Enum.HumanoidStateType.Running)
 end
 cachedCharData.root.Anchored = false
 end
-
 local function startAntiRagdoll()
 if antiRagdollMode == "v1" then return end
 if not arCacheCharacterData() then return end
@@ -291,7 +258,6 @@ end
 end
 end)
 end
-
 local function stopAntiRagdoll()
 antiRagdollMode = nil
 if isBoosting and cachedCharData.humanoid then cachedCharData.humanoid.WalkSpeed = AR_DEFAULT_SPEED end
@@ -300,19 +266,18 @@ arDisconnectAll()
 cachedCharData = {}
 end
 
--- 3. ✅ INFINITY JUMP (FIXED FOR MOBILE TOUCH)
+-- 3. ✅ INFINITY JUMP (PC STYLE ON MOBILE)
 local infinityJumpEnabled = false
 local jumpLoopConnection = nil
 local isTouchingJump = false
 
--- Global function to trigger jump hold from mobile buttons
+-- Global functions for mobile touch
 function StartTouchJump() isTouchingJump = true end
 function StopTouchJump() isTouchingJump = false end
 
 local function startInfinityJump()
 infinityJumpEnabled = true
 if jumpLoopConnection then jumpLoopConnection:Disconnect() end
-
 jumpLoopConnection = RunService.Heartbeat:Connect(function()
 if not infinityJumpEnabled then return end
 local char = Player.Character
@@ -321,7 +286,7 @@ local hrp = char:FindFirstChild("HumanoidRootPart")
 local hum = char:FindFirstChildOfClass("Humanoid")
 if not hrp or not hum then return end
 
--- Check for Spacebar OR Mobile Touch Flag
+-- Logic: Hold Space OR Hold Touch
 local shouldFly = UserInputService:IsKeyDown(Enum.KeyCode.Space) or isTouchingJump
 
 if hum.FloorMaterial == Enum.Material.Air then
@@ -389,7 +354,6 @@ if not hrp then return end
 for _, v in pairs(hrp:GetChildren()) do if v.Name == "FloatBV" or v.Name == "FloatBP" then v:Destroy() end end
 local floatOriginY = hrp.Position.Y + FLOAT_TARGET_HEIGHT
 local floatStartTime, floatDescending = tick(), false
-
 floatConn = RunService.Heartbeat:Connect(function()
 if not Features.Float then return end
 local c2 = Player.Character
@@ -400,11 +364,9 @@ local hum2 = c2:FindFirstChildOfClass("Humanoid")
 local isStealing = Player:GetAttribute("Stealing")
 local moveSpeed = isStealing and Values.StealingSpeedValue or Values.BoostSpeed
 local moveDir = hum2 and hum2.MoveDirection or Vector3.zero
-
 if tick() - floatStartTime >= 4 then floatDescending = true end
 local currentY = h.Position.Y
 local vertVel
-
 if floatDescending then
 vertVel = -20
 if currentY <= floatOriginY - FLOAT_TARGET_HEIGHT + 0.5 then
@@ -419,7 +381,6 @@ if diff > 0.3 then vertVel = math.clamp(diff * 8, 5, 50)
 elseif diff < -0.3 then vertVel = math.clamp(diff * 8, -50, -5)
 else vertVel = 0 end
 end
-
 local horizX = moveDir.Magnitude > 0.1 and moveDir.X * moveSpeed or 0
 local horizZ = moveDir.Magnitude > 0.1 and moveDir.Z * moveSpeed or 0
 h.AssemblyLinearVelocity = Vector3.new(horizX, vertVel, horizZ)
@@ -806,7 +767,6 @@ if pathActive then return end
 pathActive = true
 currentPathIndex = 1
 currentPathType = pathType
-
 task.spawn(function()
 while pathActive do
 local completed = runStealPath(path)
@@ -843,7 +803,6 @@ end
 -- 10. Galaxy Mode
 local galaxyEnabled, hopsEnabled, lastHopTime, originalJumpPower = false, false, 0, 50
 local galaxyVectorForce, galaxyAttachment = nil, nil
-
 local function captureJumpPower()
 local c = Player.Character
 if c then
@@ -853,7 +812,6 @@ end
 end
 task.spawn(function() task.wait(1) captureJumpPower() end)
 Player.CharacterAdded:Connect(function() task.wait(1) captureJumpPower() end)
-
 local function setupGalaxyForce()
 pcall(function()
 local c = Player.Character
@@ -871,7 +829,6 @@ galaxyVectorForce.Force = Vector3.new(0, 0, 0)
 galaxyVectorForce.Parent = h
 end)
 end
-
 local function updateGalaxyForce()
 if not galaxyEnabled or not galaxyVectorForce then return end
 local c = Player.Character
@@ -881,7 +838,6 @@ for _, p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then mass = mass 
 local tg = Values.DEFAULT_GRAVITY * (Values.GalaxyGravityPercent / 100)
 galaxyVectorForce.Force = Vector3.new(0, mass * (Values.DEFAULT_GRAVITY - tg) * 0.95, 0)
 end
-
 local function adjustGalaxyJump()
 pcall(function()
 local c = Player.Character
@@ -893,7 +849,6 @@ local ratio = math.sqrt((Values.DEFAULT_GRAVITY * (Values.GalaxyGravityPercent /
 hum.JumpPower = originalJumpPower * ratio
 end)
 end
-
 local function startGalaxy()
 galaxyEnabled = true; hopsEnabled = true
 setupGalaxyForce(); adjustGalaxyJump()
@@ -904,7 +859,6 @@ if galaxyVectorForce then galaxyVectorForce:Destroy(); galaxyVectorForce = nil e
 if galaxyAttachment then galaxyAttachment:Destroy(); galaxyAttachment = nil end
 adjustGalaxyJump()
 end
-
 RunService.Heartbeat:Connect(function()
 if galaxyEnabled then updateGalaxyForce() end
 end)
@@ -923,7 +877,6 @@ local function stopUnwalk()
 local c = Player.Character
 if c and savedAnimations.Animate then savedAnimations.Animate:Clone().Parent = c; savedAnimations.Animate = nil end
 end
-
 local optimizerConnections = {}
 local function enableOptimizer()
 if getgenv and getgenv().OPTIMIZER_ACTIVE then return end
@@ -968,7 +921,6 @@ end)
 end)
 table.insert(optimizerConnections, streamConn)
 end
-
 local function disableOptimizer()
 if getgenv then getgenv().OPTIMIZER_ACTIVE = false end
 for _, conn in ipairs(optimizerConnections) do if conn.Connected then conn:Disconnect() end end
@@ -1012,7 +964,6 @@ label.TextStrokeTransparency = 0
 bg.Parent = hrp
 return { Gui = bg, Label = label }
 end
-
 local function updateEnemyTimers()
 if not Features.EnemyTimer then
 for p, data in pairs(enemyTimers) do
@@ -1076,11 +1027,11 @@ end
 end
 RunService.Heartbeat:Connect(updateEnemyTimers)
 
--- ─── UI BUILDERS ───────────────────────────────────────────────
+-- ─── UI BUILDERS (ORIGINAL STYLE) ───────────────────────────────────────────────
 local toggleSliderOrder = 0
 local scriptActive = true
 local SliderReferences = {}
-local ConfigFileName = "DarkerHub_Mobile_Config.json"
+local ConfigFileName = "DarkerHub_Config.json"
 local rainbowElements = {}
 
 local PB_W, PB_H = 340 * guiScale, 35 * guiScale
@@ -1174,21 +1125,21 @@ title.TextColor3 = COLOR_GLOW
 
 -- CLOSE BUTTON (X)
 local closeBtn = Instance.new("TextButton", header)
-closeBtn.Size = UDim2.new(0, 30 * guiScale, 0, 30 * guiScale)
-closeBtn.Position = UDim2.new(1, -34 * guiScale, 0.5, -15 * guiScale)
+closeBtn.Size = UDim2.new(0, 28 * guiScale, 0, 28 * guiScale)
+closeBtn.Position = UDim2.new(1, -32 * guiScale, 0.5, -14 * guiScale)
 closeBtn.BackgroundColor3 = COLOR_CLOSE
 closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
 closeBtn.Font = Enum.Font.GothamBlack
-closeBtn.TextSize = 16 * guiScale
+closeBtn.TextSize = 14 * guiScale
 closeBtn.BorderSizePixel = 0
 closeBtn.ZIndex = 7
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6 * guiScale)
 
 -- HIDE BUTTON
 local hideBtn = Instance.new("TextButton", header)
-hideBtn.Size = UDim2.new(0, 30 * guiScale, 0, 30 * guiScale)
-hideBtn.Position = UDim2.new(1, -68 * guiScale, 0.5, -15 * guiScale)
+hideBtn.Size = UDim2.new(0, 28 * guiScale, 0, 28 * guiScale)
+hideBtn.Position = UDim2.new(1, -64 * guiScale, 0.5, -14 * guiScale)
 hideBtn.BackgroundColor3 = COLOR_BG_ROW
 hideBtn.Text = "_"
 hideBtn.TextColor3 = COLOR_GLOW
@@ -1527,7 +1478,7 @@ setVisual(on)
 Features.InfinityJump = on
 if on then
 startInfinityJump()
-print("[InfJump] ENABLED! Hold SPACE or Touch Button to fly.")
+print("[InfJump] ENABLED! Hold SPACE or Touch to fly.")
 else
 stopInfinityJump()
 print("[InfJump] DISABLED.")
@@ -1815,7 +1766,7 @@ return
 end
 end)
 
--- CLOSE BUTTON LOGIC (FULL DISABLE)
+-- CLOSE BUTTON LOGIC
 closeBtn.MouseButton1Click:Connect(function()
 scriptActive = false
 stopSpeedBoost()
@@ -1852,12 +1803,16 @@ end
 end
 end)
 
--- ─── 📱 MOBILE KEYBINDS (FIXED TO WORK LIKE PC) ─────────────────────
+-- ─── 📱 MOBILE BUTTONS (EXACT LAYOUT REQUESTED) ─────────────────────
 if isMobile then
-    local function createCornerButton(parent, pos, color, icon, text, featureName, onClick)
+    local btnSize = 60 * guiScale
+    local gap = 10 * guiScale
+    
+    -- Helper to create simple square buttons
+    local function createSimpleButton(parent, pos, color, icon, text, onClick)
         local btn = Instance.new("Frame", parent)
-        btn.Name = "CornerButton_" .. featureName
-        btn.Size = UDim2.new(0, 70 * guiScale, 0, 70 * guiScale)
+        btn.Name = "MobileBtn_" .. text
+        btn.Size = UDim2.new(0, btnSize, 0, btnSize)
         btn.Position = pos
         btn.BackgroundColor3 = color
         btn.BackgroundTransparency = 0.2
@@ -1865,42 +1820,32 @@ if isMobile then
         btn.ZIndex = 100
         
         local corner = Instance.new("UICorner", btn)
-        corner.CornerRadius = UDim.new(0, 15 * guiScale)
+        corner.CornerRadius = UDim.new(0, 12 * guiScale)
         
         local stroke = Instance.new("UIStroke", btn)
         stroke.Color = COLOR_GLOW
-        stroke.Thickness = 2.5 * guiScale
+        stroke.Thickness = 2 * guiScale
         stroke.Transparency = 0.4
-        
-        local glow = Instance.new("Frame", btn)
-        glow.Size = UDim2.new(1, -10 * guiScale, 1, -10 * guiScale)
-        glow.Position = UDim2.new(0, 5 * guiScale, 0, 5 * guiScale)
-        glow.BackgroundColor3 = color
-        glow.BackgroundTransparency = 0.7
-        glow.BorderSizePixel = 0
-        glow.ZIndex = 99
-        Instance.new("UICorner", glow).CornerRadius = UDim.new(0, 12 * guiScale)
         
         local iconLabel = Instance.new("TextLabel", btn)
         iconLabel.Size = UDim2.new(0, 30 * guiScale, 0, 30 * guiScale)
-        iconLabel.Position = UDim2.new(0.5, -15 * guiScale, 0, 10 * guiScale)
+        iconLabel.Position = UDim2.new(0.5, -15 * guiScale, 0, 5 * guiScale)
         iconLabel.BackgroundTransparency = 1
         iconLabel.Text = icon
         iconLabel.TextColor3 = COLOR_TEXT
         iconLabel.Font = Enum.Font.GothamBlack
-        iconLabel.TextSize = 22 * guiScale
+        iconLabel.TextSize = 20 * guiScale
         iconLabel.TextStrokeTransparency = 0
-        iconLabel.TextStrokeColor3 = color
         iconLabel.ZIndex = 101
         
         local textLabel = Instance.new("TextLabel", btn)
-        textLabel.Size = UDim2.new(1, 0, 0, 15 * guiScale)
-        textLabel.Position = UDim2.new(0, 0, 1, -18 * guiScale)
+        textLabel.Size = UDim2.new(1, 0, 0, 12 * guiScale)
+        textLabel.Position = UDim2.new(0, 0, 1, -14 * guiScale)
         textLabel.BackgroundTransparency = 1
         textLabel.Text = text
         textLabel.TextColor3 = COLOR_TEXT
         textLabel.Font = Enum.Font.GothamBold
-        textLabel.TextSize = 11 * guiScale
+        textLabel.TextSize = 9 * guiScale
         textLabel.TextScaled = true
         textLabel.ZIndex = 101
         
@@ -1909,63 +1854,19 @@ if isMobile then
         clickBtn.BackgroundTransparency = 1
         clickBtn.Text = ""
         clickBtn.ZIndex = 102
-        
-        -- Animation
-        clickBtn.MouseButton1Down:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(0, 62 * guiScale, 0, 62 * guiScale)}):Play()
-        end)
-        clickBtn.MouseButton1Up:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(0, 70 * guiScale, 0, 70 * guiScale)}):Play()
-        end)
-        
-        -- Actual Click Logic (Fixed to toggle like PC)
         clickBtn.MouseButton1Click:Connect(onClick)
         
-        return btn, clickBtn, iconLabel, textLabel
+        return btn, clickBtn, iconLabel
     end
+
+    -- LAYOUT GRID (Top Right Corner)
+    -- Row 1: Left Steal | Right Steal
+    -- Row 2: Drop       | Bat Lock
     
-    -- 1. DROP BUTTON (Top Right)
-    local dropFrame, dropBtn, dropIcon, dropText = createCornerButton(sg, UDim2.new(1, -85 * guiScale, 0, 20 * guiScale), Color3.fromRGB(255, 50, 50), "⬇", "DROP", "Drop", function()
-        local char = Player.Character or Player.CharacterAdded:Wait()
-        local hrp = char:WaitForChild("HumanoidRootPart")
-        local startCF = hrp.CFrame
-        hrp.AssemblyLinearVelocity = Vector3.new(0, 120, 0)
-        task.wait(0.35)
-        hrp.AssemblyLinearVelocity = Vector3.zero
-        hrp.CFrame = startCF
-        -- Flash effect
-        dropFrame.BackgroundColor3 = Color3.fromRGB(255, 150, 150)
-        task.wait(0.1)
-        dropFrame.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    end)
+    local startX = UDim2.new(1, -(btnSize * 2 + gap), 0, 20) -- Positioned from right edge
     
-    -- 2. AUTO RIGHT (Right Side Below Drop)
-    local rightFrame, rightBtn, rightIcon, rightText = createCornerButton(sg, UDim2.new(1, -85 * guiScale, 0, 110 * guiScale), Color3.fromRGB(50, 255, 50), "▶", "RIGHT", "AutoRight", function()
-        local newState = not Features.AutoRight
-        if newState and Features.AutoLeft then
-            Features.AutoLeft = false
-            if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
-        end
-        Features.AutoRight = newState
-        if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](newState) end
-        if newState then 
-            stopStealPath()
-            startStealPath(stealPath1, "Right") 
-        else 
-            stopStealPath() 
-        end
-        -- Visual feedback
-        if newState then
-            rightFrame.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
-            rightIcon.Text = "▶✓"
-        else
-            rightFrame.BackgroundColor3 = Color3.fromRGB(50, 255, 50)
-            rightIcon.Text = "▶"
-        end
-    end)
-    
-    -- 3. AUTO LEFT (Top Left)
-    local leftFrame, leftBtn, leftIcon, leftText = createCornerButton(sg, UDim2.new(0, 20 * guiScale, 0, 20 * guiScale), Color3.fromRGB(50, 150, 255), "◀", "LEFT", "AutoLeft", function()
+    -- 1. Left Steal (Top Left of grid)
+    local leftBtnFrame, leftBtn, leftIcon = createSimpleButton(sg, startX, Color3.fromRGB(50, 150, 255), "◀", "L-Steal", function()
         local newState = not Features.AutoLeft
         if newState and Features.AutoRight then
             Features.AutoRight = false
@@ -1973,96 +1874,61 @@ if isMobile then
         end
         Features.AutoLeft = newState
         if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](newState) end
-        if newState then 
-            stopStealPath()
-            startStealPath(stealPath2, "Left") 
-        else 
-            stopStealPath() 
-        end
-        -- Visual feedback
-        if newState then
-            leftFrame.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
-            leftIcon.Text = "◀✓"
-        else
-            leftFrame.BackgroundColor3 = Color3.fromRGB(50, 150, 255)
-            leftIcon.Text = "◀"
-        end
+        if newState then stopStealPath(); startStealPath(stealPath2, "Left") else stopStealPath() end
+        leftBtnFrame.BackgroundColor3 = newState and Color3.fromRGB(100, 200, 255) or Color3.fromRGB(50, 150, 255)
+        leftIcon.Text = newState and "◀✓" or "◀"
     end)
-    
-    -- 4. FRONT LOCK (Bottom Left Behind)
-    local lockFrame, lockBtn, lockIcon, lockText = createCornerButton(sg, UDim2.new(0, 20 * guiScale, 1, -85 * guiScale), Color3.fromRGB(200, 50, 255), "🎯", "LOCK", "FrontLock", function()
+
+    -- 2. Right Steal (Top Right of grid)
+    local rightBtnFrame, rightBtn, rightIcon = createSimpleButton(sg, startX + UDim2.new(0, btnSize + gap, 0, 0), Color3.fromRGB(50, 255, 50), "▶", "R-Steal", function()
+        local newState = not Features.AutoRight
+        if newState and Features.AutoLeft then
+            Features.AutoLeft = false
+            if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
+        end
+        Features.AutoRight = newState
+        if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](newState) end
+        if newState then stopStealPath(); startStealPath(stealPath1, "Right") else stopStealPath() end
+        rightBtnFrame.BackgroundColor3 = newState and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(50, 255, 50)
+        rightIcon.Text = newState and "▶✓" or "▶"
+    end)
+
+    -- 3. Drop (Bottom Left of grid)
+    local dropBtnFrame, dropBtn, dropIcon = createSimpleButton(sg, startX + UDim2.new(0, 0, 0, btnSize + gap), Color3.fromRGB(255, 50, 50), "⬇", "Drop", function()
+        local char = Player.Character or Player.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        local startCF = hrp.CFrame
+        hrp.AssemblyLinearVelocity = Vector3.new(0, 120, 0)
+        task.wait(0.35)
+        hrp.AssemblyLinearVelocity = Vector3.zero
+        hrp.CFrame = startCF
+        dropBtnFrame.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+        task.wait(0.1)
+        dropBtnFrame.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    end)
+
+    -- 4. Bat Lock (Bottom Right of grid)
+    local lockBtnFrame, lockBtn, lockIcon = createSimpleButton(sg, startX + UDim2.new(0, btnSize + gap, 0, btnSize + gap), Color3.fromRGB(200, 50, 255), "🎯", "Lock", function()
         local newState = not Features.FrontLock
         Features.FrontLock = newState
         if _G["UpdateVisual_FrontLock"] then _G["UpdateVisual_FrontLock"](newState) end
-        if newState then 
-            startFrontLock() 
-        else 
-            stopFrontLock() 
-        end
-        -- Visual feedback
-        if newState then
-            lockFrame.BackgroundColor3 = Color3.fromRGB(230, 100, 255)
-            lockIcon.Text = "🎯✓"
-        else
-            lockFrame.BackgroundColor3 = Color3.fromRGB(200, 50, 255)
-            lockIcon.Text = "🎯"
-        end
+        if newState then startFrontLock() else stopFrontLock() end
+        lockBtnFrame.BackgroundColor3 = newState and Color3.fromRGB(230, 100, 255) or Color3.fromRGB(200, 50, 255)
+        lockIcon.Text = newState and "🎯✓" or "🎯"
     end)
 
-    -- 5. INFINITY JUMP TOUCH BUTTON (Center Bottom for easy access)
-    local jumpFrame, jumpBtn, jumpIcon, jumpText = createCornerButton(sg, UDim2.new(0.5, -35 * guiScale, 1, -90 * guiScale), Color3.fromRGB(255, 200, 50), "✈", "FLY", "InfJump", function()
-        -- This button just toggles the feature ON/OFF in the menu logic
-        -- But to FLY, you HOLD this button or any part of screen if enabled
-        local newState = not Features.InfinityJump
-        Features.InfinityJump = newState
-        if _G["UpdateVisual_InfinityJump"] then _G["UpdateVisual_InfinityJump"](newState) end
-        if newState then startInfinityJump() else stopInfinityJump() end
-        
-        if newState then
-            jumpFrame.BackgroundColor3 = Color3.fromRGB(255, 230, 100)
-            jumpIcon.Text = "✈✓"
-        else
-            jumpFrame.BackgroundColor3 = Color3.fromRGB(255, 200, 50)
-            jumpIcon.Text = "✈"
-        end
-    end)
-    
-    -- Special Touch Logic for Infinity Jump (Hold to Fly)
-    jumpBtn.MouseButton1Down:Connect(function()
-        if Features.InfinityJump then StartTouchJump() end
-    end)
-    jumpBtn.MouseButton1Up:Connect(function()
-        StopTouchJump()
-    end)
-    jumpBtn.TouchTap:Connect(function()
-         if Features.InfinityJump then StartTouchJump() end
-    end)
-    -- Ensure release stops it even if touch moves off
-    jumpBtn.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then StopTouchJump() end
-    end)
-
-    -- Floating animation
-    local function floatCornerButton(button)
-        local floatUp = TweenService:Create(button, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {Position = button.Position + UDim2.new(0, 0, 0, -5 * guiScale)})
-        floatUp:Play()
-    end
-    floatCornerButton(dropFrame); floatCornerButton(rightFrame); floatCornerButton(leftFrame); floatCornerButton(lockFrame); floatCornerButton(jumpFrame)
-    
-    -- Sync Visuals
+    -- Sync visuals
     local function updateMobileVisuals()
-        if Features.AutoRight then rightFrame.BackgroundColor3 = Color3.fromRGB(100, 255, 100); rightIcon.Text = "▶✓" else rightFrame.BackgroundColor3 = Color3.fromRGB(50, 255, 50); rightIcon.Text = "▶" end
-        if Features.AutoLeft then leftFrame.BackgroundColor3 = Color3.fromRGB(100, 200, 255); leftIcon.Text = "◀✓" else leftFrame.BackgroundColor3 = Color3.fromRGB(50, 150, 255); leftIcon.Text = "◀" end
-        if Features.FrontLock then lockFrame.BackgroundColor3 = Color3.fromRGB(230, 100, 255); lockIcon.Text = "🎯✓" else lockFrame.BackgroundColor3 = Color3.fromRGB(200, 50, 255); lockIcon.Text = "🎯" end
-        if Features.InfinityJump then jumpFrame.BackgroundColor3 = Color3.fromRGB(255, 230, 100); jumpIcon.Text = "✈✓" else jumpFrame.BackgroundColor3 = Color3.fromRGB(255, 200, 50); jumpIcon.Text = "✈" end
+        if Features.AutoLeft then leftBtnFrame.BackgroundColor3 = Color3.fromRGB(100, 200, 255); leftIcon.Text = "◀✓" else leftBtnFrame.BackgroundColor3 = Color3.fromRGB(50, 150, 255); leftIcon.Text = "◀" end
+        if Features.AutoRight then rightBtnFrame.BackgroundColor3 = Color3.fromRGB(100, 255, 100); rightIcon.Text = "▶✓" else rightBtnFrame.BackgroundColor3 = Color3.fromRGB(50, 255, 50); rightIcon.Text = "▶" end
+        if Features.FrontLock then lockBtnFrame.BackgroundColor3 = Color3.fromRGB(230, 100, 255); lockIcon.Text = "🎯✓" else lockBtnFrame.BackgroundColor3 = Color3.fromRGB(200, 50, 255); lockIcon.Text = "🎯" end
     end
     
-    if _G["UpdateVisual_AutoRight"] then local orig = _G["UpdateVisual_AutoRight"]; _G["UpdateVisual_AutoRight"] = function(s) orig(s); updateMobileVisuals() end end
     if _G["UpdateVisual_AutoLeft"] then local orig = _G["UpdateVisual_AutoLeft"]; _G["UpdateVisual_AutoLeft"] = function(s) orig(s); updateMobileVisuals() end end
+    if _G["UpdateVisual_AutoRight"] then local orig = _G["UpdateVisual_AutoRight"]; _G["UpdateVisual_AutoRight"] = function(s) orig(s); updateMobileVisuals() end end
     if _G["UpdateVisual_FrontLock"] then local orig = _G["UpdateVisual_FrontLock"]; _G["UpdateVisual_FrontLock"] = function(s) orig(s); updateMobileVisuals() end end
-    if _G["UpdateVisual_InfinityJump"] then local orig = _G["UpdateVisual_InfinityJump"]; _G["UpdateVisual_InfinityJump"] = function(s) orig(s); updateMobileVisuals() end end
     
     updateMobileVisuals()
 end
 
-print("[Darker Hub] Loaded! Galaxy Mode Active. Mobile Keybinds Fixed.")
+print("[Darker Hub] Loaded! Original GUI Restored. Mobile Buttons Fixed.")
