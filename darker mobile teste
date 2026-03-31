@@ -1,5 +1,5 @@
--- 🔒 Darker Hub | PERFECT COMPACT GUI WITH MAX LOGIC
--- More distance between buttons, bigger size, comprehensive features
+-- 🔒 Darker Hub | PERFECT STATIC GUI WITH MAX LOGIC
+-- No shaking, bigger buttons, equal spacing in all directions
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -26,7 +26,7 @@ local COLOR_DIM = Color3.fromRGB(180, 180, 240)
 local COLOR_OFF = Color3.fromRGB(40, 40, 60)
 
 local sg = Instance.new("ScreenGui")
-sg.Name = "DarkerHub_Perfect"
+sg.Name = "DarkerHub_PerfectStatic"
 sg.ResetOnSpawn = false
 sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 sg.IgnoreGuiInset = true
@@ -41,14 +41,14 @@ local Features = {
 }
 
 local Values = {
-    BoostSpeed = 35, SpinSpeed = 60, DEFAULT_GRAVITY = 196.2,
-    GalaxyGravityPercent = 70, StealingSpeedValue = 35,
-    HOP_POWER = 55, HOP_COOLDOWN = 0.08, FloatHeight = 8,
-    UP_SPEED = 70,
+    BoostSpeed = 40, SpinSpeed = 70, DEFAULT_GRAVITY = 196.2,
+    GalaxyGravityPercent = 70, StealingSpeedValue = 40,
+    HOP_POWER = 60, HOP_COOLDOWN = 0.08, FloatHeight = 8,
+    UP_SPEED = 80,
 }
 
-local AutoStealValues = { STEAL_RADIUS = 10, STEAL_DURATION = 0.15, PATH_TURN_WAIT = 0.8 }
-local FrontLockConfig = { SPEED = 65, FRONT_DISTANCE = 3.5, STOP_DISTANCE = 1.5, DETECTION_RADIUS = 500 }
+local AutoStealValues = { STEAL_RADIUS = 12, STEAL_DURATION = 0.12, PATH_TURN_WAIT = 0.6 }
+local FrontLockConfig = { SPEED = 75, FRONT_DISTANCE = 3.5, STOP_DISTANCE = 1.5, DETECTION_RADIUS = 600 }
 
 -- ─── ENHANCED STEAL PATHS ───────────────────────────────────────
 local stealPath1 = {
@@ -165,7 +165,7 @@ end
 
 -- 2. Anti Ragdoll
 local antiRagdollMode, ragdollConnections, cachedCharData, isBoosting = nil, {}, {}, false
-local BOOST_SPEED, AR_DEFAULT_SPEED = 450, 16
+local BOOST_SPEED, AR_DEFAULT_SPEED = 500, 16
 
 local function arCacheCharacterData()
 local char = Player.Character
@@ -728,7 +728,7 @@ local pathActive = false
 local pathPaused = false
 local currentPathIndex = 1
 local lastFlatVel = Vector3.zero
-local PATH_VELOCITY_SPEED, PATH_SECOND_SPEED = 62, 32
+local PATH_VELOCITY_SPEED, PATH_SECOND_SPEED = 68, 35
 local PATH_BASE_STOP, PATH_MIN_STOP = 1.35, 0.65
 local PATH_NEXT_POINT_BIAS, PATH_SMOOTH_FACTOR = 0.45, 0.12
 local currentPathType = nil
@@ -849,60 +849,67 @@ local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPa
 if hrp then hrp.AssemblyLinearVelocity = Vector3.zero end
 end
 
--- ─── PERFECT SPACED MOBILE GUI (NO BACKGROUND) ─────────────────────────────────────
+-- ─── PERFECT STATIC GUI (NO SHAKING, BIGGER BUTTONS, EQUAL SPACING) ─────────────────────────────────────
 local mobileGui = {}
 
--- Button creation function (perfect size, more spacing)
+-- Perfect spacing values
+local BUTTON_SIZE = 65 -- Bigger buttons
+local BUTTON_SPACING = 80 -- Equal spacing between all buttons
+local START_X = 110 -- Distance from right edge
+local START_Y = 0.18 -- Start position from top
+
+-- Button creation function (static, no shaking)
 local function createButton(name, text, pos, icon, color)
 local btn = Instance.new("TextButton", sg)
 btn.Name = name
-btn.Size = UDim2.new(0, 58, 0, 58) -- Perfect: 58x58 pixels
+btn.Size = UDim2.new(0, BUTTON_SIZE, 0, BUTTON_SIZE)
 btn.Position = pos
 btn.BackgroundColor3 = COLOR_OFF
 btn.BackgroundTransparency = 0.25
 btn.BorderSizePixel = 0
-btn.Text = text -- Full names: LEFT, RIGHT, LOCK, DROP
+btn.Text = text
 btn.TextColor3 = COLOR_TEXT
 btn.Font = Enum.Font.GothamBold
-btn.TextSize = 10 -- Perfect text size
+btn.TextSize = 11
 btn.ZIndex = 101
-Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
 
 local btnStroke = Instance.new("UIStroke", btn)
 btnStroke.Color = COLOR_GLOW
-btnStroke.Thickness = 1.5
+btnStroke.Thickness = 2
 btnStroke.Transparency = 0.4
 
--- Perfect icon size
+-- Perfect icon
 local iconLabel = Instance.new("TextLabel", btn)
-iconLabel.Size = UDim2.new(0, 16, 0, 16)
-iconLabel.Position = UDim2.new(0, 2, 0, 2)
+iconLabel.Size = UDim2.new(0, 18, 0, 18)
+iconLabel.Position = UDim2.new(0, 3, 0, 3)
 iconLabel.BackgroundTransparency = 1
 iconLabel.Text = icon or ""
 iconLabel.TextColor3 = COLOR_GLOW
 iconLabel.Font = Enum.Font.GothamBlack
-iconLabel.TextSize = 13
+iconLabel.TextSize = 15
 iconLabel.ZIndex = 102
 
--- Enhanced touch feedback
+-- Clean touch feedback (no size changing)
 btn.MouseButton1Down:Connect(function()
-TweenService:Create(btn, TweenInfo.new(0.06), {BackgroundTransparency = 0.05}):Play()
-btn:TweenSize(UDim2.new(0, 54, 0, 54), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.06, true)
+TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundTransparency = 0.1}):Play()
 end)
 
 btn.MouseButton1Up:Connect(function()
-TweenService:Create(btn, TweenInfo.new(0.06), {BackgroundTransparency = 0.25}):Play()
-btn:TweenSize(UDim2.new(0, 58, 0, 58), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.06, true)
+TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundTransparency = 0.25}):Play()
 end)
 
 return btn
 end
 
--- Create 4 buttons with PERFECT spacing (60px apart horizontally, 80px apart vertically):
-mobileGui.LeftBtn = createButton("LeftBtn", "LEFT", UDim2.new(1, -65, 0.2, 20), "◀", Color3.fromRGB(255, 100, 100))
-mobileGui.RightBtn = createButton("RightBtn", "RIGHT", UDim2.new(1, -125, 0.2, 20), "▶", Color3.fromRGB(100, 255, 100))
-mobileGui.LockBtn = createButton("LockBtn", "LOCK", UDim2.new(1, -65, 0.32, 20), "🎯", Color3.fromRGB(200, 100, 255))
-mobileGui.DropBtn = createButton("DropBtn", "DROP", UDim2.new(1, -125, 0.32, 20), "⬇", Color3.fromRGB(255, 150, 50))
+-- Create 4 buttons with PERFECT EQUAL SPACING (no shaking):
+-- Layout:
+-- LEFT   RIGHT  (row 1)
+-- LOCK   DROP   (row 2)
+mobileGui.LeftBtn = createButton("LeftBtn", "LEFT", UDim2.new(1, -START_X, START_Y, 20), "◀", Color3.fromRGB(255, 100, 100))
+mobileGui.RightBtn = createButton("RightBtn", "RIGHT", UDim2.new(1, -(START_X + BUTTON_SPACING), START_Y, 20), "▶", Color3.fromRGB(100, 255, 100))
+mobileGui.LockBtn = createButton("LockBtn", "LOCK", UDim2.new(1, -START_X, START_Y + 0.14, 20), "🎯", Color3.fromRGB(200, 100, 255))
+mobileGui.DropBtn = createButton("DropBtn", "DROP", UDim2.new(1, -(START_X + BUTTON_SPACING), START_Y + 0.14, 20), "⬇", Color3.fromRGB(255, 150, 50))
 
 -- ─── ENHANCED BUTTON FUNCTIONALITY WITH MAX LOGIC ─────────────────────
 
@@ -932,9 +939,9 @@ startSpeedBoost()
 startAntiRagdoll()
 startInfinityJump()
 startSpeedWhileStealing()
-startEnemyTimers()
+updateEnemyTimers()
 startStealPath(stealPath2, "Left")
-print("[AUTO LEFT] MAX MODE - Speed Boost + Anti Ragdoll + Infinity Jump + Thief Speed + Enemy Timer")
+print("[🚀 AUTO LEFT] ULTIMATE MODE - Speed Boost + Anti Ragdoll + Infinity Jump + Thief Speed + Enemy Timer")
 else
 mobileGui.LeftBtn.BackgroundColor3 = COLOR_OFF
 -- Disable ALL features
@@ -948,7 +955,7 @@ stopAntiRagdoll()
 stopInfinityJump()
 stopSpeedWhileStealing()
 stopStealPath()
-print("[AUTO LEFT] Deactivated - All features disabled")
+print("[❌ AUTO LEFT] Deactivated - All features disabled")
 end
 end)
 
@@ -978,9 +985,9 @@ startSpeedBoost()
 startAntiRagdoll()
 startInfinityJump()
 startSpeedWhileStealing()
-startEnemyTimers()
+updateEnemyTimers()
 startStealPath(stealPath1, "Right")
-print("[AUTO RIGHT] MAX MODE - Speed Boost + Anti Ragdoll + Infinity Jump + Thief Speed + Enemy Timer")
+print("[🚀 AUTO RIGHT] ULTIMATE MODE - Speed Boost + Anti Ragdoll + Infinity Jump + Thief Speed + Enemy Timer")
 else
 mobileGui.RightBtn.BackgroundColor3 = COLOR_OFF
 -- Disable ALL features
@@ -994,7 +1001,7 @@ stopAntiRagdoll()
 stopInfinityJump()
 stopSpeedWhileStealing()
 stopStealPath()
-print("[AUTO RIGHT] Deactivated - All features disabled")
+print("[❌ AUTO RIGHT] Deactivated - All features disabled")
 end
 end)
 
@@ -1017,9 +1024,9 @@ startAntiRagdoll()
 startHelicopter()
 startGalaxy()
 startInfinityJump()
-startEnemyTimers()
+updateEnemyTimers()
 startFrontLock()
-print("[FRONT LOCK] ULTRA MODE - Speed Boost + Anti Ragdoll + Helicopter + Galaxy Mode + Infinity Jump + Enemy Timer")
+print("[🎯 FRONT LOCK] GOD MODE - Speed Boost + Anti Ragdoll + Helicopter + Galaxy Mode + Infinity Jump + Enemy Timer")
 else
 mobileGui.LockBtn.BackgroundColor3 = COLOR_OFF
 -- Disable ALL features
@@ -1035,7 +1042,7 @@ stopHelicopter()
 stopGalaxy()
 stopInfinityJump()
 stopFrontLock()
-print("[FRONT LOCK] Deactivated - All ultra features disabled")
+print("[❌ FRONT LOCK] Deactivated - All god features disabled")
 end
 end)
 
@@ -1059,9 +1066,9 @@ startGalaxy()
 mobileGui.DropBtn.BackgroundColor3 = COLOR_ACCENT
 
 -- Perform SUPER drop with boost
-hrp.AssemblyLinearVelocity = Vector3.new(0, 200, 0)
+hrp.AssemblyLinearVelocity = Vector3.new(0, 250, 0)
 task.wait(0.3)
-hrp.AssemblyLinearVelocity = Vector3.new(0, -250, 0) -- Enhanced drop
+hrp.AssemblyLinearVelocity = Vector3.new(0, -300, 0) -- Enhanced drop
 task.wait(0.25)
 hrp.AssemblyLinearVelocity = Vector3.zero
 hrp.CFrame = startCF
@@ -1079,47 +1086,22 @@ stopGalaxy()
 
 -- Reset button color
 mobileGui.DropBtn.BackgroundColor3 = COLOR_OFF
-print("[DROP SHOT] SUPER MODE - Enhanced drop with Speed Boost + Helicopter + Infinity Jump + Galaxy Mode")
+print("[💥 DROP SHOT] LEGENDARY MODE - Enhanced drop with Speed Boost + Helicopter + Infinity Jump + Galaxy Mode")
 end)
 
--- ─── ENHANCED ANIMATIONS ─────────────────────────────────────────────
+-- ─── CLEAN STATIC PULSE (NO SHAKING) ─────────────────────────────────────────────
 
--- Perfect floating animation for each button
-local function floatButton(btn, offset, time)
-local floatAnim = TweenService:Create(btn, TweenInfo.new(time, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
-Position = UDim2.new(btn.Position.X.Scale, btn.Position.X.Offset, btn.Position.Y.Scale, btn.Position.Y.Offset + offset)
-})
-floatAnim:Play()
-end
-
--- Start perfect floating animations (different speeds for each button)
-floatButton(mobileGui.LeftBtn, 4, 4.5)
-floatButton(mobileGui.RightBtn, -4, 3.8)
-floatButton(mobileGui.LockBtn, 4, 4.2)
-floatButton(mobileGui.DropBtn, -4, 4)
-
--- Enhanced pulse animation for active buttons
+-- Static pulse animation for active buttons (no floating/shaking)
 local function pulseButton(btn)
 if btn.BackgroundColor3 == COLOR_ACCENT then
-local pulse = TweenService:Create(btn, TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
-BackgroundTransparency = 0.12,
-Size = UDim2.new(0, 60, 0, 60)
-})
-local reversePulse = TweenService:Create(btn, TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
-BackgroundTransparency = 0.25,
-Size = UDim2.new(0, 58, 0, 58)
+local pulse = TweenService:Create(btn, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
+BackgroundTransparency = 0.08
 })
 pulse:Play()
-pulse.Completed:Connect(function()
-reversePulse:Play()
-reversePulse.Completed:Connect(function()
-pulse:Play()
-end)
-end)
 end
 end
 
--- Start enhanced pulse for initially active buttons
+-- Start static pulse for initially active buttons
 task.spawn(function()
 while sg.Parent do
 if Features.AutoLeft then pulseButton(mobileGui.LeftBtn) end
@@ -1159,4 +1141,5 @@ mobileGui.DropBtn.BackgroundColor3 = COLOR_OFF
 end
 end)
 
-print("[🔒 DARKER HUB] PERFECT GUI LOADED! 4 buttons - MAX LOGIC - PERFECT SPACING")
+print("[🔒 DARKER HUB] PERFECT STATIC GUI LOADED!")
+print("✅ NO SHAKING - BIGGER BUTTONS - EQUAL SPACING - MAX LOGIC")
