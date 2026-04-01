@@ -1,181 +1,133 @@
--- 📱 MOBILE KEY BIND GUI ONLY
--- Standalone Mobile Control Panel
--- Dragable, Auto-Scaled, Touch Optimized
+-- 📱 MOBILE GUI + KEYBINDS (Right Middle Position)
+-- Complete standalone script for phone players only
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Player = Players.LocalPlayer
 
--- Only run if on mobile or if you want it on PC too (remove the check if needed)
 local isMobile = UserInputService.TouchEnabled
+if not isMobile then return end -- Phone only
 
--- ─── 🎨 COLORS ────────────────────────
-local COLOR_BG = Color3.fromRGB(20, 10, 40)
-local COLOR_STROKE = Color3.fromRGB(138, 43, 226)
-local COLOR_LEFT = Color3.fromRGB(0, 100, 255)
-local COLOR_RIGHT = Color3.fromRGB(0, 255, 200)
-local COLOR_LOCK = Color3.fromRGB(200, 0, 255)
-local COLOR_DROP = Color3.fromRGB(255, 50, 100)
-local COLOR_TEXT = Color3.fromRGB(255, 255, 255)
-
--- ─── 📏 SCALE & SETUP ────────────────────────
-local screenSize = workspace.CurrentCamera.ViewportSize
-local scaleFactor = math.clamp(screenSize.Y / 1000, 0.8, 1.2)
-local guiScale = isMobile and scaleFactor or 1.0
-
+local guiScale = math.clamp(workspace.CurrentCamera.ViewportSize.Y / 1000, 0.8, 1.2)
 local sg = Instance.new("ScreenGui")
-sg.Name = "MobileControlsGUI"
+sg.Name = "MobileKeybindsGUI"
 sg.ResetOnSpawn = false
 sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 sg.Parent = Player.PlayerGui
 
--- Main Container Frame
+-- Colors
+local GALAXY_LEFT = Color3.fromRGB(0, 100, 255)
+local GALAXY_RIGHT = Color3.fromRGB(0, 255, 200)
+local GALAXY_LOCK = Color3.fromRGB(200, 0, 255)
+local GALAXY_DROP = Color3.fromRGB(255, 50, 100)
+local COLOR_TEXT = Color3.fromRGB(255, 255, 255)
+local COLOR_BG_MAIN = Color3.fromRGB(5, 5, 20)
+local COLOR_BG_ROW = Color3.fromRGB(20, 10, 40)
+local COLOR_ACCENT = Color3.fromRGB(138, 43, 226)
+
+-- ─── MAIN MOBILE GUI (Right Middle) ────────────────────────
 local mainFrame = Instance.new("Frame", sg)
-mainFrame.Name = "MobileBindPanel"
-mainFrame.Size = UDim2.new(0, 200 * guiScale, 0, 240 * guiScale)
--- Position: Bottom Right for easy thumb access on mobile
-mainFrame.Position = UDim2.new(1, -(210 * guiScale), 1, -(250 * guiScale)) 
-mainFrame.BackgroundColor3 = COLOR_BG
+mainFrame.Size = UDim2.new(0, 220 * guiScale, 0, 320 * guiScale)
+mainFrame.Position = UDim2.new(1, -240 * guiScale, 0.5, -160 * guiScale) -- RIGHT MIDDLE
+mainFrame.BackgroundColor3 = COLOR_BG_MAIN
 mainFrame.BackgroundTransparency = 0.1
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
-mainFrame.Draggable = true -- Draggable for PC users
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 15 * guiScale)
+mainFrame.Draggable = true
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 12 * guiScale)
 
 local stroke = Instance.new("UIStroke", mainFrame)
-stroke.Color = COLOR_STROKE
+stroke.Color = COLOR_ACCENT
 stroke.Thickness = 2.5 * guiScale
 
-local layout = Instance.new("UIGridLayout", mainFrame)
-layout.CellSize = UDim2.new(0, 85 * guiScale, 0, 85 * guiScale)
-layout.CellPadding = UDim2.new(0, 10 * guiScale, 0, 10 * guiScale)
-layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-layout.VerticalAlignment = Enum.VerticalAlignment.Center
-layout.FillDirection = Enum.FillDirection.Horizontal
-layout.SortOrder = Enum.SortOrder.LayoutOrder
+-- Header
+local header = Instance.new("Frame", mainFrame)
+header.Size = UDim2.new(1, 0, 0, 45 * guiScale)
+header.BackgroundColor3 = COLOR_BG_ROW
+header.BorderSizePixel = 0
+Instance.new("UICorner", header).CornerRadius = UDim.new(0, 12 * guiScale)
 
-local padding = Instance.new("UIPadding", mainFrame)
-padding.PaddingTop = UDim.new(0, 10 * guiScale)
-padding.PaddingBottom = UDim.new(0, 10 * guiScale)
+local title = Instance.new("TextLabel", header)
+title.Size = UDim2.new(0.8, 0, 1, 0)
+title.BackgroundTransparency = 1
+title.Text = "MOBILE HUB"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 14 * guiScale
+title.TextColor3 = COLOR_TEXT
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Position = UDim2.new(0, 10 * guiScale, 0, 0)
 
--- Header Label
-local header = Instance.new("TextLabel", mainFrame)
-header.Size = UDim2.new(1, 0, 0, 25 * guiScale)
-header.Position = UDim2.new(0, 0, 0, -25 * guiScale) -- Above the frame slightly or inside top
-header.BackgroundTransparency = 1
-header.Text = "MOBILE CONTROLS"
-header.Font = Enum.Font.GothamBlack
-header.TextSize = 12 * guiScale
-header.TextColor3 = COLOR_STROKE
-header.TextStrokeTransparency = 0.5
+local closeBtn = Instance.new("TextButton", header)
+closeBtn.Size = UDim2.new(0, 30 * guiScale, 0, 30 * guiScale)
+closeBtn.Position = UDim2.new(1, -35 * guiScale, 0.5, -15 * guiScale)
+closeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+closeBtn.Text = "✕"
+closeBtn.TextColor3 = COLOR_TEXT
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 14 * guiScale
+closeBtn.BorderSizePixel = 0
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6 * guiScale)
 
--- Helper to create buttons
-local function createBindButton(text, color, order, onClick)
-    local btn = Instance.new("TextButton", mainFrame)
-    btn.LayoutOrder = order
-    btn.Size = UDim2.new(0, 85 * guiScale, 0, 85 * guiScale)
-    btn.BackgroundColor3 = COLOR_BG
-    btn.BackgroundTransparency = 0.4
-    btn.Text = text
-    btn.TextColor3 = color
-    btn.Font = Enum.Font.GothamBlack
-    btn.TextSize = 14 * guiScale
-    btn.AutoButtonColor = false
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12 * guiScale)
+-- Content Area
+local content = Instance.new("Frame", mainFrame)
+content.Size = UDim2.new(1, 0, 1, -45 * guiScale)
+content.Position = UDim2.new(0, 0, 0, 45 * guiScale)
+content.BackgroundTransparency = 1
+
+local listLayout = Instance.new("UIListLayout", content)
+listLayout.Padding = UDim.new(0, 8 * guiScale)
+listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+-- ─── TOUCH KEYBIND BUTTONS ────────────────────────
+local buttons = {
+    {name="LEFT STEAL", key="AutoLeft", color=GALAXY_LEFT},
+    {name="RIGHT STEAL", key="AutoRight", color=GALAXY_RIGHT},
+    {name="FRONT LOCK", key="FrontLock", color=GALAXY_LOCK},
+    {name="DROP", key="performDrop", color=GALAXY_DROP}
+}
+
+for i, btnData in ipairs(buttons) do
+    local btn = Instance.new("TextButton", content)
+    btn.Size = UDim2.new(1, -20 * guiScale, 0, 50 * guiScale)
+    btn.BackgroundColor3 = COLOR_BG_ROW
+    btn.BackgroundTransparency = 0.3
+    btn.Text = btnData.name
+    btn.TextColor3 = btnData.color
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 11 * guiScale
+    btn.BorderSizePixel = 0
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10 * guiScale)
     
     local btnStroke = Instance.new("UIStroke", btn)
-    btnStroke.Color = color
-    btnStroke.Thickness = 2.5 * guiScale
+    btnStroke.Color = btnData.color
+    btnStroke.Thickness = 2 * guiScale
+    btnStroke.Transparency = 0.3
     
-    -- Hover/Press Effect
+    -- Button Logic (Syncs with your main script)
     btn.MouseButton1Click:Connect(function()
-        if onClick then onClick() end
+        -- Press effect
+        TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(1, -25 * guiScale, 0, 45 * guiScale)}):Play()
+        TweenService:Create(btnStroke, TweenInfo.new(0.1), {Transparency = 0}):Play()
         
-        -- Visual Flash
-        local originalTrans = btn.BackgroundTransparency
-        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundTransparency = 0.1}):Play()
-        task.wait(0.1)
-        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundTransparency = originalTrans}):Play()
-    end)
-    
-    return btn, btnStroke
-end
-
--- ─── BUTTON LOGIC (Connects to your existing functions) ─────────────────────
-
--- 1. AUTO LEFT
-local leftBtn, leftStroke = createBindButton("LEFT\nAUTO", COLOR_LEFT, 1, function()
-    if _G["ToggleAutoLeft"] then 
-        _G["ToggleAutoLeft"]() 
-    else
-        -- Fallback if global function doesn't exist yet (optional logic)
-        print("Left Triggered")
-    end
-end)
-
--- 2. AUTO RIGHT
-local rightBtn, rightStroke = createBindButton("RIGHT\nAUTO", COLOR_RIGHT, 2, function()
-    if _G["ToggleAutoRight"] then 
-        _G["ToggleAutoRight"]() 
-    else
-        print("Right Triggered")
-    end
-end)
-
--- 3. FRONT LOCK
-local lockBtn, lockStroke = createBindButton("LOCK", COLOR_LOCK, 3, function()
-    if _G["ToggleFrontLock"] then 
-        _G["ToggleFrontLock"]() 
-    else
-        print("Lock Triggered")
-    end
-end)
-
--- 4. DROP
-local dropBtn, dropStroke = createBindButton("DROP", COLOR_DROP, 4, function()
-    if _G["performDrop"] then 
-        _G["performDrop"]() 
-    else
-        -- Direct fallback logic if not in global
-        local char = Player.Character
-        if char then
-            local hrp = char:FindFirstChild("HumanoidRootPart")
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if hrp and hum then
-                hum.Jump = true
-                task.wait(0.05)
-                hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, -55, hrp.AssemblyLinearVelocity.Z)
-            end
+        -- Execute
+        if btnData.key == "performDrop" then
+            if performDrop then performDrop() end
+        else
+            local toggleFunc = _G["Toggle" .. btnData.key]
+            if toggleFunc then toggleFunc() end
         end
-    end
-end)
-
--- Sync Visuals (Optional: If you have toggle states, update button colors here)
-local function updateButtonVisuals()
-    -- Example: If Features.AutoLeft is true, change text or glow
-    -- This requires access to your 'Features' table from the main script
-    if _G.Features then
-        leftBtn.TextColor3 = _G.Features.AutoLeft and COLOR_TEXT or COLOR_LEFT
-        leftStroke.Color = _G.Features.AutoLeft and COLOR_TEXT or COLOR_LEFT
         
-        rightBtn.TextColor3 = _G.Features.AutoRight and COLOR_TEXT or COLOR_RIGHT
-        rightStroke.Color = _G.Features.AutoRight and COLOR_TEXT or COLOR_RIGHT
-        
-        lockBtn.TextColor3 = _G.Features.FrontLock and COLOR_TEXT or COLOR_LOCK
-        lockStroke.Color = _G.Features.FrontLock and COLOR_TEXT or COLOR_LOCK
-    end
+        task.wait(0.1)
+        TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(1, -20 * guiScale, 0, 50 * guiScale)}):Play()
+        TweenService:Create(btnStroke, TweenInfo.new(0.1), {Transparency = 0.3}):Play()
+    end)
 end
 
--- Run visual update every second to sync with main script toggles
-task.spawn(function()
-    while mainFrame.Parent do
-        updateButtonVisuals()
-        task.wait(0.2)
-    end
+-- Close Button
+closeBtn.MouseButton1Click:Connect(function()
+    sg:Destroy()
 end)
 
--- Make sure your main script exposes these globals for this to work perfectly:
--- _G.ToggleAutoLeft, _G.ToggleAutoRight, _G.ToggleFrontLock
--- _G.Features (table containing boolean states)
--- _G.performDrop (function)
+print("📱 Mobile GUI + Keybinds Loaded! (Right Middle)")
+print("Drag to move • Touch buttons for controls")
