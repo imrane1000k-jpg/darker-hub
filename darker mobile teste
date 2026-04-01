@@ -1,7 +1,6 @@
--- 🔒 Darker Hub | OPTIMIZED & MOBILE FLY FIX
--- 1. Optimizer no longer removes all textures, just boosts FPS via settings.
--- 2. Keybind buttons are now medium-sized and centered on the right.
--- 3. Mobile Infinity Jump now works via a "🚀 Fly" button you HOLD down.
+-- Darker Hub | INFINITY JUMP (HOLD JUMP TO FLY)
+-- Toggle ON = Hold Jump to Fly | Toggle OFF = Normal
+-- Works on PC and Mobile!
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -15,7 +14,7 @@ local Lighting = game:GetService("Lighting")
 local Player = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
 
--- ─── 🔑 KEYBINDS ────────────────────────────────
+-- Keybinds
 local Keybinds = {
 ToggleMenu = Enum.KeyCode.RightShift,
 SpeedBoost = Enum.KeyCode.Q,
@@ -28,7 +27,7 @@ DropShot = Enum.KeyCode.X,
 FrontLock = Enum.KeyCode.F,
 }
 
--- ─── 📱 SETUP ──────────────────────────────────
+-- Mobile detection
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 local guiScale = isMobile and 0.9 or 1.0
 
@@ -79,7 +78,11 @@ local stealPath2 = {
 {pos = Vector3.new(-475, -6, 22)},
 }
 
--- ─── SPEED DISPLAY ─────────────────────────────────────────
+-- MOBILE JUMP TRACKING
+local mobileJumpHeld = false
+local mobileFlyButton = nil
+
+-- Speed Display
 local speedLabelBillboard = nil
 local speedTextLabel = nil
 
@@ -123,9 +126,7 @@ if not (Features.SpeedBoost or Features.ThiefSpeed or Features.GalaxyMode) then
 destroySpeedDisplay()
 return
 end
-
 if not speedLabelBillboard then createSpeedDisplay() end
-
 local char = Player.Character
 if char and char:FindFirstChild("HumanoidRootPart") then
 local vel = char.HumanoidRootPart.AssemblyLinearVelocity
@@ -143,7 +144,7 @@ createSpeedDisplay()
 end
 end)
 
--- ─── FEATURE LOGIC ─────────────────────────────────────────────
+-- Feature Logic
 
 -- 1. Speed Boost
 local Connections = {}
@@ -254,7 +255,7 @@ arDisconnectAll()
 cachedCharData = {}
 end
 
--- 3. ✅ INFINITY JUMP (HOLD SPACE TO FLY)
+-- 3. INFINITY JUMP (HOLD JUMP TO FLY) - PC + MOBILE
 local infinityJumpEnabled = false
 local jumpLoopConnection = nil
 
@@ -273,18 +274,18 @@ local hum = char:FindFirstChildOfClass("Humanoid")
 
 if not hrp or not hum then return end
 
--- Only work when in air
-if hum.FloorMaterial == Enum.Material.Air then
+-- Check if jump is held (PC: Space, Mobile: Custom button)
+local isJumpHeld = UserInputService:IsKeyDown(Enum.KeyCode.Space) or mobileJumpHeld
 
--- HOLD SPACE to fly up
-if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+if hum.FloorMaterial == Enum.Material.Air then
+-- HOLD JUMP to fly up
+if isJumpHeld then
 local currentVel = hrp.AssemblyLinearVelocity
 hrp.AssemblyLinearVelocity = Vector3.new(currentVel.X, Values.UP_SPEED, currentVel.Z)
 end
--- Release space = normal gravity (drop)
-
+-- Release = normal gravity (drop)
 else
--- On ground: zero Y velocity to prevent bounces
+-- On ground: zero Y velocity
 local currentVel = hrp.AssemblyLinearVelocity
 if math.abs(currentVel.Y) < 1 then
 hrp.AssemblyLinearVelocity = Vector3.new(currentVel.X, 0, currentVel.Z)
@@ -301,7 +302,6 @@ jumpLoopConnection = nil
 end
 end
 
--- Respawn Handler
 Player.CharacterAdded:Connect(function(char)
 if Features.InfinityJump and infinityJumpEnabled then
 task.wait(0.5)
@@ -762,14 +762,12 @@ if pathActive then return end
 pathActive = true
 currentPathIndex = 1
 currentPathType = pathType
-
 task.spawn(function()
 while pathActive do
 local completed = runStealPath(path)
 if completed then
 pathActive = false
 currentPathIndex = 1
-
 if currentPathType == "Right" then
 Features.AutoRight = false
 if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end
@@ -777,7 +775,6 @@ elseif currentPathType == "Left" then
 Features.AutoLeft = false
 if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
 end
-
 local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
 if hrp then hrp.AssemblyLinearVelocity = Vector3.zero end
 break
@@ -902,8 +899,6 @@ local optimizerConnections = {}
 local function enableOptimizer()
 if getgenv and getgenv().OPTIMIZER_ACTIVE then return end
 if getgenv then getgenv().OPTIMIZER_ACTIVE = true end
-
--- *** FIXED: ONLY BOOSTS FPS, DOES NOT REMOVE TEXTURES/MATERIALS ***
 pcall(function()
 settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
 Lighting.GlobalShadows = false
@@ -911,20 +906,37 @@ Lighting.Brightness = 3
 Lighting.FogEnd = 9e9
 Lighting.FogStart = 0
 end)
-
--- Keep the stream connection to maintain settings on new objects, but don't destroy their appearance.
+local function cleanVisuals(obj)
+if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Fire") or obj:IsA("Smoke") then
+obj:Destroy()
+end
+end
+local function optimizeParts()
+for _, obj in ipairs(workspace:GetDescendants()) do
+pcall(function()
+if obj:IsA("BasePart") then
+obj.Material = Enum.Material.Plastic
+obj.Color = Color3.fromRGB(100, 100, 100)
+for _, child in ipairs(obj:GetChildren()) do
+if child:IsA("Decal") or child:IsA("Texture") then child:Destroy() end
+end
+end
+cleanVisuals(obj)
+end)
+end
+end
+optimizeParts()
 local streamConn = Workspace.DescendantAdded:Connect(function(obj)
 if not Features.Optimizer then return end
 pcall(function()
-    -- Instead of destroying, we can just leave it be. This is a non-destructive optimization.
-    if obj:IsA("BasePart") then
-        -- No longer forcing material and color
-        -- No longer deleting Decals/Textures
-    end
-    -- Still remove performance-heavy effects
-    if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Fire") or obj:IsA("Smoke") then
-        obj:Destroy()
-    end
+if obj:IsA("BasePart") then
+obj.Material = Enum.Material.Plastic
+obj.Color = Color3.fromRGB(90, 90, 90)
+for _, child in ipairs(obj:GetChildren()) do
+if child:IsA("Decal") or child:IsA("Texture") then child:Destroy() end
+end
+end
+cleanVisuals(obj)
 end)
 end)
 table.insert(optimizerConnections, streamConn)
@@ -936,10 +948,9 @@ for _, conn in ipairs(optimizerConnections) do
 if conn.Connected then conn:Disconnect() end
 end
 optimizerConnections = {}
-
 pcall(function()
-settings().Rendering.QualityLevel = Enum.QualityLevel.Level05 -- Restore a bit of quality
-Lighting.GlobalShadows = true -- Restore shadows
+settings().Rendering.QualityLevel = Enum.QualityLevel.Level05
+Lighting.GlobalShadows = true
 end)
 end
 
@@ -1049,7 +1060,7 @@ end
 end
 RunService.Heartbeat:Connect(updateEnemyTimers)
 
--- ─── UI BUILDERS ───────────────────────────────────────────────
+-- UI BUILDERS
 local toggleSliderOrder = 0
 local scriptActive = true
 local SliderReferences = {}
@@ -1288,17 +1299,16 @@ end
 end
 if hasKeybind then
 local kbBtn = Instance.new("TextButton", frame)
--- *** FIXED: MEDIUM SIZED & CENTERED-RIGHT KEYBINDS ***
-kbBtn.Size = UDim2.new(0, 50 * guiScale, 0, 20 * guiScale) -- Bigger size
-kbBtn.Position = UDim2.new(1, -115 * guiScale, 0.5, -10 * guiScale) -- More centered position
+kbBtn.Size = UDim2.new(0, 32 * guiScale, 0, 16 * guiScale)
+kbBtn.Position = UDim2.new(1, -82 * guiScale, 0.5, -8 * guiScale)
 kbBtn.BackgroundColor3 = COLOR_BG_MAIN
 kbBtn.TextColor3 = COLOR_GLOW
 kbBtn.Font = Enum.Font.GothamBold
-kbBtn.TextSize = 10 * guiScale -- Bigger text
+kbBtn.TextSize = 8 * guiScale
 kbBtn.Text = "BIND"
 kbBtn.BorderSizePixel = 0
 kbBtn.ZIndex = 8
-Instance.new("UICorner", kbBtn).CornerRadius = UDim.new(0, 6 * guiScale) -- Larger corner
+Instance.new("UICorner", kbBtn).CornerRadius = UDim.new(0, 4 * guiScale)
 local kbStroke = Instance.new("UIStroke", kbBtn)
 kbStroke.Thickness = 1 * guiScale
 kbStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -1505,15 +1515,14 @@ if Features.AntiRagdoll then setVisual(true) startAntiRagdoll() end
 end
 
 do
--- ✅ INFINITY JUMP (HOLD SPACE TO FLY) - NO KEYBIND
-local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Inf Jump (Hold Space)", "InfinityJump", false, nil, false)
+local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Inf Jump (Hold Jump)", "InfinityJump", false, nil, false)
 btn.MouseButton1Click:Connect(function()
 local on = not getState()
 setVisual(on)
 Features.InfinityJump = on
 if on then
 startInfinityJump()
-print("[InfJump] ENABLED! Hold SPACE to fly, release to drop.")
+print("[InfJump] ENABLED! Hold JUMP to fly, release to drop.")
 else
 stopInfinityJump()
 print("[InfJump] DISABLED.")
@@ -1608,7 +1617,7 @@ if Features.Unwalk then setVisual(true) startUnwalk() end
 end
 
 do
-local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Optimizer (FPS Boost)", "Optimizer", false, nil, false)
+local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Optimizer (No Texture Only)", "Optimizer", false, nil, false)
 btn.MouseButton1Click:Connect(function()
 local on = not getState()
 setVisual(on)
@@ -1804,7 +1813,6 @@ end)
 -- CLOSE BUTTON LOGIC
 closeBtn.MouseButton1Click:Connect(function()
 scriptActive = false
-
 stopSpeedBoost()
 stopAntiRagdoll()
 stopInfinityJump()
@@ -1817,15 +1825,12 @@ stopUnwalk()
 disableOptimizer()
 stopStealPath()
 stopFrontLock()
-
 for p, data in pairs(enemyTimers) do
 if data.Connection then data.Connection:Disconnect() end
 if data.Gui then data.Gui:Destroy() end
 end
 enemyTimers = {}
-
 destroySpeedDisplay()
-
 sg:Destroy()
 print("GUI Closed Completely. All features stopped.")
 end)
@@ -1842,291 +1847,242 @@ end
 end
 end)
 
--- ─── 📱 FLOATING CORNER MOBILE BUTTONS ──────────────────────────────────
+-- MOBILE BUTTONS - 2 UP 2 DOWN IN MIDDLE (NO EMOJIS)
 if isMobile then
-    -- Create floating corner buttons
-    local function createCornerButton(parent, pos, color, icon, text, featureName)
-        local btn = Instance.new("Frame", parent)
-        btn.Name = "CornerButton_" .. featureName
-        btn.Size = UDim2.new(0, 65, 0, 65)
-        btn.Position = pos
-        btn.BackgroundColor3 = color
-        btn.BackgroundTransparency = 0.3
-        btn.BorderSizePixel = 0
-        btn.ZIndex = 100
-        
-        -- Rounded corners
-        local corner = Instance.new("UICorner", btn)
-        corner.CornerRadius = UDim.new(0, 15)
-        
-        -- Glowing border
-        local stroke = Instance.new("UIStroke", btn)
-        stroke.Color = COLOR_GLOW
-        stroke.Thickness = 2.5
-        stroke.Transparency = 0.4
-        
-        -- Inner glow effect
-        local glow = Instance.new("Frame", btn)
-        glow.Size = UDim2.new(1, -10, 1, -10)
-        glow.Position = UDim2.new(0, 5, 0, 5)
-        glow.BackgroundColor3 = color
-        glow.BackgroundTransparency = 0.7
-        glow.BorderSizePixel = 0
-        glow.ZIndex = 99
-        Instance.new("UICorner", glow).CornerRadius = UDim.new(0, 12)
-        
-        -- Icon
-        local iconLabel = Instance.new("TextLabel", btn)
-        iconLabel.Size = UDim2.new(0, 30, 0, 30)
-        iconLabel.Position = UDim2.new(0.5, -15, 0, 10)
-        iconLabel.BackgroundTransparency = 1
-        iconLabel.Text = icon
-        iconLabel.TextColor3 = COLOR_GLOW
-        iconLabel.Font = Enum.Font.GothamBlack
-        iconLabel.TextSize = 22
-        iconLabel.TextStrokeTransparency = 0
-        iconLabel.TextStrokeColor3 = color
-        iconLabel.ZIndex = 101
-        
-        -- Text label
-        local textLabel = Instance.new("TextLabel", btn)
-        textLabel.Size = UDim2.new(1, 0, 0, 15)
-        textLabel.Position = UDim2.new(0, 0, 1, -18)
-        textLabel.BackgroundTransparency = 1
-        textLabel.Text = text
-        textLabel.TextColor3 = COLOR_TEXT
-        textLabel.Font = Enum.Font.GothamBold
-        textLabel.TextSize = 11
-        textLabel.TextScaled = true
-        textLabel.ZIndex = 101
-        
-        -- Clickable area
-        local clickBtn = Instance.new("TextButton", btn)
-        clickBtn.Size = UDim2.new(1, 0, 1, 0)
-        clickBtn.BackgroundTransparency = 1
-        clickBtn.Text = ""
-        clickBtn.ZIndex = 102
-        
-        -- Press animation
-        clickBtn.MouseButton1Down:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.15), {Size = UDim2.new(0, 58, 0, 58)}):Play()
-            TweenService:Create(stroke, TweenInfo.new(0.15), {Thickness = 4, Transparency = 0}):Play()
-        end)
-        
-        clickBtn.MouseButton1Up:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.15), {Size = UDim2.new(0, 65, 0, 65)}):Play()
-            TweenService:Create(stroke, TweenInfo.new(0.15), {Thickness = 2.5, Transparency = 0.4}):Play()
-        end)
-        
-        return btn, clickBtn, iconLabel, textLabel
-    end
-    
-    -- Drop Button - Top Right
-    local dropFrame, dropBtn, dropIcon, dropText = createCornerButton(sg, UDim2.new(1, -85, 0, 20), Color3.fromRGB(255, 50, 50), "⬇", "DROP", "Drop")
-    dropBtn.MouseButton1Click:Connect(function()
-        local char = Player.Character or Player.CharacterAdded:Wait()
-        local hrp = char:WaitForChild("HumanoidRootPart")
-        local startCF = hrp.CFrame
-        hrp.AssemblyLinearVelocity = Vector3.new(0, 120, 0)
-        task.wait(0.35)
-        hrp.AssemblyLinearVelocity = Vector3.zero
-        hrp.CFrame = startCF
-        
-        -- Flash effect
-        dropFrame.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-        task.wait(0.2)
-        dropFrame.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    end)
-    
-    -- Auto Right Button - Right Side Below
-    local rightFrame, rightBtn, rightIcon, rightText = createCornerButton(sg, UDim2.new(1, -85, 0, 110), Color3.fromRGB(50, 255, 50), "▶", "RIGHT", "AutoRight")
-    rightBtn.MouseButton1Click:Connect(function()
-        local newState = not Features.AutoRight
-        if newState then
-            if Features.AutoLeft then
-                Features.AutoLeft = false
-                if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
-            end
-        end
-        Features.AutoRight = newState
-        if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](newState) end
-        if newState then 
-            stopStealPath()
-            startStealPath(stealPath1, "Right") 
-        else 
-            stopStealPath() 
-        end
-        
-        -- Visual feedback
-        if newState then
-            rightFrame.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
-            rightIcon.Text = "▶✓"
-        else
-            rightFrame.BackgroundColor3 = Color3.fromRGB(50, 255, 50)
-            rightIcon.Text = "▶"
-        end
-    end)
-    
-    -- Auto Left Button - Behind Left Side
-    local leftFrame, leftBtn, leftIcon, leftText = createCornerButton(sg, UDim2.new(0, 20, 0, 20), Color3.fromRGB(50, 150, 255), "◀", "LEFT", "AutoLeft")
-    leftBtn.MouseButton1Click:Connect(function()
-        local newState = not Features.AutoLeft
-        if newState then
-            if Features.AutoRight then
-                Features.AutoRight = false
-                if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end
-            end
-        end
-        Features.AutoLeft = newState
-        if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](newState) end
-        if newState then 
-            stopStealPath()
-            startStealPath(stealPath2, "Left") 
-        else 
-            stopStealPath() 
-        end
-        
-        -- Visual feedback
-        if newState then
-            leftFrame.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
-            leftIcon.Text = "◀✓"
-        else
-            leftFrame.BackgroundColor3 = Color3.fromRGB(50, 150, 255)
-            leftIcon.Text = "◀"
-        end
-    end)
-    
-    -- Front Lock Button - Bottom Left Behind
-    local lockFrame, lockBtn, lockIcon, lockText = createCornerButton(sg, UDim2.new(0, 20, 1, -85), Color3.fromRGB(200, 50, 255), "🎯", "LOCK", "FrontLock")
-    lockBtn.MouseButton1Click:Connect(function()
-        local newState = not Features.FrontLock
-        Features.FrontLock = newState
-        if _G["UpdateVisual_FrontLock"] then _G["UpdateVisual_FrontLock"](newState) end
-        if newState then 
-            startFrontLock() 
-        else 
-            stopFrontLock() 
-        end
-        
-        -- Visual feedback
-        if newState then
-            lockFrame.BackgroundColor3 = Color3.fromRGB(230, 100, 255)
-            lockIcon.Text = "🎯✓"
-        else
-            lockFrame.BackgroundColor3 = Color3.fromRGB(200, 50, 255)
-            lockIcon.Text = "🎯"
-        end
-    end)
+local btnSize = 70
+local btnGap = 15
+local gridWidth = btnSize * 2 + btnGap
+local gridHeight = btnSize * 2 + btnGap
+local startX = 0.5 - gridWidth / 2
+local startY = 0.5 - gridHeight / 2
 
-    -- *** ADDED: MOBILE INFINITY JUMP (HOLD) BUTTON ***
-    local mobileInfJumpActive = false
-    local mobileInfJumpConnection = nil
+local function createMobileButton(name, pos, color, callback)
+local btn = Instance.new("Frame", sg)
+btn.Name = "MobBtn_" .. name
+btn.Size = UDim2.new(0, btnSize, 0, btnSize)
+btn.Position = pos
+btn.BackgroundColor3 = color
+btn.BackgroundTransparency = 0.25
+btn.BorderSizePixel = 0
+btn.ZIndex = 100
+Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
 
-    local flyFrame, flyBtn, flyIcon, flyText = createCornerButton(sg, UDim2.new(1, -85, 0, 200), Color3.fromRGB(255, 120, 0), "🚀", "FLY", "Fly")
-    
-    flyBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            mobileInfJumpActive = true
-            flyFrame.BackgroundColor3 = Color3.fromRGB(255, 180, 0)
-            flyIcon.Text = "🚀✓"
+local stroke = Instance.new("UIStroke", btn)
+stroke.Color = COLOR_GLOW
+stroke.Thickness = 2.5
+stroke.Transparency = 0.3
 
-            if mobileInfJumpConnection then mobileInfJumpConnection:Disconnect() end
-            mobileInfJumpConnection = RunService.Heartbeat:Connect(function()
-                if not mobileInfJumpActive then return end
-                local char = Player.Character
-                if not char then return end
-                local hrp = char:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    local currentVel = hrp.AssemblyLinearVelocity
-                    hrp.AssemblyLinearVelocity = Vector3.new(currentVel.X, Values.UP_SPEED, currentVel.Z)
-                end
-            end)
-        end
-    end)
+local label = Instance.new("TextLabel", btn)
+label.Size = UDim2.new(1, 0, 1, 0)
+label.BackgroundTransparency = 1
+label.Text = name
+label.TextColor3 = COLOR_TEXT
+label.Font = Enum.Font.GothamBlack
+label.TextSize = 13
+label.TextScaled = true
+label.ZIndex = 101
 
-    flyBtn.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            mobileInfJumpActive = false
-            flyFrame.BackgroundColor3 = Color3.fromRGB(255, 120, 0)
-            flyIcon.Text = "🚀"
-            
-            if mobileInfJumpConnection then
-                mobileInfJumpConnection:Disconnect()
-                mobileInfJumpConnection = nil
-            end
-        end
-    end)
-    
-    -- Floating animation
-    local function floatCornerButton(button)
-        local floatUp = TweenService:Create(button, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {Position = button.Position + UDim2.new(0, 0, 0, -5)})
-        floatUp:Play()
-    end
-    
-    -- Apply floating animation to all buttons
-    floatCornerButton(dropFrame)
-    floatCornerButton(rightFrame)
-    floatCornerButton(leftFrame)
-    floatCornerButton(lockFrame)
-    floatCornerButton(flyFrame)
-    
-    -- Update button states when features change
-    local function updateMobileVisuals()
-        -- Update Auto Right
-        if Features.AutoRight then
-            rightFrame.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
-            rightIcon.Text = "▶✓"
-        else
-            rightFrame.BackgroundColor3 = Color3.fromRGB(50, 255, 50)
-            rightIcon.Text = "▶"
-        end
-        
-        -- Update Auto Left
-        if Features.AutoLeft then
-            leftFrame.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
-            leftIcon.Text = "◀✓"
-        else
-            leftFrame.BackgroundColor3 = Color3.fromRGB(50, 150, 255)
-            leftIcon.Text = "◀"
-        end
-        
-        -- Update Front Lock
-        if Features.FrontLock then
-            lockFrame.BackgroundColor3 = Color3.fromRGB(230, 100, 255)
-            lockIcon.Text = "🎯✓"
-        else
-            lockFrame.BackgroundColor3 = Color3.fromRGB(200, 50, 255)
-            lockIcon.Text = "🎯"
-        end
-    end
-    
-    -- Hook into visual updates
-    if _G["UpdateVisual_AutoRight"] then
-        local original = _G["UpdateVisual_AutoRight"]
-        _G["UpdateVisual_AutoRight"] = function(state)
-            original(state)
-            updateMobileVisuals()
-        end
-    end
-    
-    if _G["UpdateVisual_AutoLeft"] then
-        local original = _G["UpdateVisual_AutoLeft"]
-        _G["UpdateVisual_AutoLeft"] = function(state)
-            original(state)
-            updateMobileVisuals()
-        end
-    end
-    
-    if _G["UpdateVisual_FrontLock"] then
-        local original = _G["UpdateVisual_FrontLock"]
-        _G["UpdateVisual_FrontLock"] = function(state)
-            original(state)
-            updateMobileVisuals()
-        end
-    end
-    
-    -- Initial state update
-    updateMobileVisuals()
+local clickBtn = Instance.new("TextButton", btn)
+clickBtn.Size = UDim2.new(1, 0, 1, 0)
+clickBtn.BackgroundTransparency = 1
+clickBtn.Text = ""
+clickBtn.ZIndex = 102
+
+clickBtn.MouseButton1Down:Connect(function()
+TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(0, btnSize - 5, 0, btnSize - 5), BackgroundTransparency = 0}):Play()
+end)
+
+clickBtn.MouseButton1Up:Connect(function()
+TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(0, btnSize, 0, btnSize), BackgroundTransparency = 0.25}):Play()
+callback()
+end)
+
+clickBtn.TouchTap:Connect(function()
+callback()
+end)
+
+return btn, label
 end
 
-print("[Darker Hub] Loaded! Optimized & Mobile Fly Fix Applied.")
+-- TOP ROW: RIGHT (left) | DROP (right)
+local rightBtn, rightLabel = createMobileButton("RIGHT", UDim2.new(startX, 0, startY, 0), Color3.fromRGB(50, 200, 50), function()
+local newState = not Features.AutoRight
+if newState then
+if Features.AutoLeft then
+Features.AutoLeft = false
+if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
+leftBtn.BackgroundColor3 = Color3.fromRGB(50, 120, 200)
+end
+end
+Features.AutoRight = newState
+if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](newState) end
+if newState then
+stopStealPath()
+startStealPath(stealPath1, "Right")
+rightBtn.BackgroundColor3 = Color3.fromRGB(80, 255, 80)
+else
+stopStealPath()
+rightBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+end
+end)
+
+local dropBtn, dropLabel = createMobileButton("DROP", UDim2.new(startX + btnSize + btnGap, 0, startY, 0), Color3.fromRGB(220, 50, 50), function()
+local char = Player.Character or Player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local startCF = hrp.CFrame
+hrp.AssemblyLinearVelocity = Vector3.new(0, 120, 0)
+task.wait(0.35)
+hrp.AssemblyLinearVelocity = Vector3.zero
+hrp.CFrame = startCF
+dropBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+task.delay(0.2, function()
+dropBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+end)
+end)
+
+-- BOTTOM ROW: LEFT (left) | LOCK (right)
+local leftBtn, leftLabel = createMobileButton("LEFT", UDim2.new(startX, 0, startY + btnSize + btnGap, 0), Color3.fromRGB(50, 120, 200), function()
+local newState = not Features.AutoLeft
+if newState then
+if Features.AutoRight then
+Features.AutoRight = false
+if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end
+rightBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+end
+end
+Features.AutoLeft = newState
+if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](newState) end
+if newState then
+stopStealPath()
+startStealPath(stealPath2, "Left")
+leftBtn.BackgroundColor3 = Color3.fromRGB(80, 160, 255)
+else
+stopStealPath()
+leftBtn.BackgroundColor3 = Color3.fromRGB(50, 120, 200)
+end
+end)
+
+local lockBtn, lockLabel = createMobileButton("LOCK", UDim2.new(startX + btnSize + btnGap, 0, startY + btnSize + btnGap, 0), Color3.fromRGB(180, 50, 220), function()
+local newState = not Features.FrontLock
+Features.FrontLock = newState
+if _G["UpdateVisual_FrontLock"] then _G["UpdateVisual_FrontLock"](newState) end
+if newState then
+startFrontLock()
+lockBtn.BackgroundColor3 = Color3.fromRGB(220, 100, 255)
+else
+stopFrontLock()
+lockBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 220)
+end
+end)
+
+-- FLY BUTTON for Mobile Infinity Jump
+local flyBtnSize = 80
+local flyBtn = Instance.new("Frame", sg)
+flyBtn.Name = "FlyButton"
+flyBtn.Size = UDim2.new(0, flyBtnSize, 0, flyBtnSize)
+flyBtn.Position = UDim2.new(0, 15, 1, -flyBtnSize - 15)
+flyBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+flyBtn.BackgroundTransparency = 0.25
+flyBtn.BorderSizePixel = 0
+flyBtn.ZIndex = 100
+Instance.new("UICorner", flyBtn).CornerRadius = UDim.new(1, 0)
+
+local flyStroke = Instance.new("UIStroke", flyBtn)
+flyStroke.Color = COLOR_GLOW
+flyStroke.Thickness = 3
+flyStroke.Transparency = 0.2
+
+local flyLabel = Instance.new("TextLabel", flyBtn)
+flyLabel.Size = UDim2.new(1, 0, 1, 0)
+flyLabel.BackgroundTransparency = 1
+flyLabel.Text = "FLY"
+flyLabel.TextColor3 = COLOR_GLOW
+flyLabel.Font = Enum.Font.GothamBlack
+flyLabel.TextSize = 20
+flyLabel.ZIndex = 101
+
+local flyTouchBtn = Instance.new("TextButton", flyBtn)
+flyTouchBtn.Size = UDim2.new(1, 0, 1, 0)
+flyTouchBtn.BackgroundTransparency = 1
+flyTouchBtn.Text = ""
+flyTouchBtn.ZIndex = 102
+
+-- Touch events for holding
+flyTouchBtn.MouseButton1Down:Connect(function()
+mobileJumpHeld = true
+flyBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+flyBtn.BackgroundTransparency = 0
+end)
+
+flyTouchBtn.MouseButton1Up:Connect(function()
+mobileJumpHeld = false
+flyBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+flyBtn.BackgroundTransparency = 0.25
+end)
+
+-- Handle touch properly
+flyTouchBtn.TouchTap:Connect(function()
+mobileJumpHeld = true
+flyBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+flyBtn.BackgroundTransparency = 0
+task.delay(0.5, function()
+mobileJumpHeld = false
+flyBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+flyBtn.BackgroundTransparency = 0.25
+end)
+end)
+
+-- Better touch handling
+UserInputService.InputBegan:Connect(function(input, gpe)
+if gpe then return end
+if input.UserInputType == Enum.UserInputType.Touch then
+local touchPos = input.Position
+local btnAbsPos = flyBtn.AbsolutePosition
+local btnAbsSize = flyBtn.AbsoluteSize
+if touchPos.X >= btnAbsPos.X and touchPos.X <= btnAbsPos.X + btnAbsSize.X and
+touchPos.Y >= btnAbsPos.Y and touchPos.Y <= btnAbsPos.Y + btnAbsSize.Y then
+mobileJumpHeld = true
+flyBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+flyBtn.BackgroundTransparency = 0
+end
+end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+if input.UserInputType == Enum.UserInputType.Touch then
+if mobileJumpHeld then
+mobileJumpHeld = false
+flyBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+flyBtn.BackgroundTransparency = 0.25
+end
+end
+end)
+
+mobileFlyButton = flyBtn
+
+-- Hook visual updates
+local origRight = _G["UpdateVisual_AutoRight"]
+_G["UpdateVisual_AutoRight"] = function(state)
+if origRight then origRight(state) end
+rightBtn.BackgroundColor3 = state and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(50, 200, 50)
+end
+
+local origLeft = _G["UpdateVisual_AutoLeft"]
+_G["UpdateVisual_AutoLeft"] = function(state)
+if origLeft then origLeft(state) end
+leftBtn.BackgroundColor3 = state and Color3.fromRGB(80, 160, 255) or Color3.fromRGB(50, 120, 200)
+end
+
+local origLock = _G["UpdateVisual_FrontLock"]
+_G["UpdateVisual_FrontLock"] = function(state)
+if origLock then origLock(state) end
+lockBtn.BackgroundColor3 = state and Color3.fromRGB(220, 100, 255) or Color3.fromRGB(180, 50, 220)
+end
+
+-- Initial state
+if Features.AutoRight then rightBtn.BackgroundColor3 = Color3.fromRGB(80, 255, 80) end
+if Features.AutoLeft then leftBtn.BackgroundColor3 = Color3.fromRGB(80, 160, 255) end
+if Features.FrontLock then lockBtn.BackgroundColor3 = Color3.fromRGB(220, 100, 255) end
+end
+
+print("[Darker Hub] Loaded! PC: Hold SPACE to fly | Mobile: Hold FLY button to fly")
