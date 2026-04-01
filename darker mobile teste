@@ -1,5 +1,5 @@
 -- Darker Hub | Ultimate Edition + Mobile Grid & Pure Text Speed Counter
--- FIXED: True Hit Circle System (Circle Visual + AlignOrientation Snap + Auto Swing) fully merged into Front Lock.
+-- FIXED: Exact Clean Pathing 57/29, Galaxy Bat Hitbox Color
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -24,6 +24,7 @@ local Keybinds = {
     AutoLeftSteal = Enum.KeyCode.C,
     DropShot = Enum.KeyCode.X,
     FrontLock = Enum.KeyCode.F,
+    Float = Enum.KeyCode.T,
 }
 
 -- ──────────────────────────────────────────────────────────────────────────────
@@ -54,7 +55,7 @@ local Features = {
     SpeedBoost = false, AntiRagdoll = false, InfinityJump = false, Float = false,
     Helicopter = false, ThiefSpeed = false, AutoSteal = false, SpamBat = false,
     GalaxyMode = false, Unwalk = false, Optimizer = false,
-    XRay = false, EnemyTimer = false, AutoRight = false, AutoLeft = false, FrontLock = false
+    EnemyTimer = false, AutoRight = false, AutoLeft = false, FrontLock = false
 }
 
 -- ⚙️ VALUES
@@ -64,7 +65,7 @@ local Values = {
 }
 
 -- AUTO STEAL VALUES
-local AutoStealValues = { STEAL_RADIUS = 8, STEAL_DURATION = 0.2, PATH_TURN_WAIT = 1.0 }
+local AutoStealValues = { STEAL_RADIUS = 8, STEAL_DURATION = 0.2, PATH_TURN_WAIT = 0.2 }
 
 -- FRONT LOCK CONFIGURATION
 local FrontLockConfig = { SPEED = 59, FRONT_DISTANCE = 3.5, STOP_DISTANCE = 1.5, DETECTION_RADIUS = 400 }
@@ -82,7 +83,7 @@ local function SaveConfig()
         Optimizer = Features.Optimizer, SpeedBoost = Features.SpeedBoost, AntiRagdoll = Features.AntiRagdoll,
         InfinityJump = Features.InfinityJump, Float = Features.Float, Helicopter = Features.Helicopter,
         ThiefSpeed = Features.ThiefSpeed, AutoSteal = Features.AutoSteal, SpamBat = Features.SpamBat,
-        GalaxyMode = Features.GalaxyMode, Unwalk = Features.Unwalk, XRay = Features.XRay, 
+        GalaxyMode = Features.GalaxyMode, Unwalk = Features.Unwalk, 
         EnemyTimer = Features.EnemyTimer, FrontLock = Features.FrontLock,
         BoostSpeed = Values.BoostSpeed, SpinSpeed = Values.SpinSpeed, GalaxyGravityPercent = Values.GalaxyGravityPercent,
         StealingSpeedValue = Values.StealingSpeedValue, HOP_POWER = Values.HOP_POWER, HOP_COOLDOWN = Values.HOP_COOLDOWN,
@@ -92,7 +93,7 @@ local function SaveConfig()
         KEY_INFJUMP = Keybinds.InfinityJump.Name, KEY_HELI = Keybinds.Helicopter.Name,
         KEY_MENU = Keybinds.ToggleMenu.Name, KEY_FRONTLOCK = Keybinds.FrontLock.Name,
         KEY_AUTORIGHT = Keybinds.AutoRightSteal.Name, KEY_AUTOLEFT = Keybinds.AutoLeftSteal.Name,
-        KEY_DROP = Keybinds.DropShot.Name,
+        KEY_DROP = Keybinds.DropShot.Name, KEY_FLOAT = Keybinds.Float.Name,
     }
     pcall(function() writefile(ConfigFileName, HttpService:JSONEncode(fullConfig)) end)
 end
@@ -121,6 +122,7 @@ local function LoadConfig()
             if data.KEY_MENU then Keybinds.ToggleMenu = Enum.KeyCode[data.KEY_MENU] or Keybinds.ToggleMenu end
             if data.KEY_FRONTLOCK then Keybinds.FrontLock = Enum.KeyCode[data.KEY_FRONTLOCK] or Keybinds.FrontLock end
             if data.KEY_DROP then Keybinds.DropShot = Enum.KeyCode[data.KEY_DROP] or Keybinds.DropShot end
+            if data.KEY_FLOAT then Keybinds.Float = Enum.KeyCode[data.KEY_FLOAT] or Keybinds.Float end
             if data.KEY_AUTORIGHT then Keybinds.AutoRightSteal = Enum.KeyCode[data.KEY_AUTORIGHT] or Keybinds.AutoRightSteal end
             if data.KEY_AUTOLEFT then Keybinds.AutoLeftSteal = Enum.KeyCode[data.KEY_AUTOLEFT] or Keybinds.AutoLeftSteal end
             for key, ref in pairs(SliderReferences) do
@@ -446,17 +448,43 @@ end
 local infinityJumpEnabled = false
 local jumpForce = 50
 local clampFallSpeed = 80
+local mobileJumpHeldTimer = nil
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
+        spaceHeld = true
+    end
+end)
+UserInputService.InputEnded:Connect(function(input, gpe)
+    if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
+        spaceHeld = false
+    end
+end)
+
 UserInputService.JumpRequest:Connect(function()
     if not scriptActive or not infinityJumpEnabled then return end
-    local char = Player.Character; if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.Velocity = Vector3.new(hrp.Velocity.X, jumpForce, hrp.Velocity.Z) end
+    if isMobile then
+        spaceHeld = true
+        if mobileJumpHeldTimer then task.cancel(mobileJumpHeldTimer) end
+        mobileJumpHeldTimer = task.delay(0.3, function()
+            spaceHeld = false
+            mobileJumpHeldTimer = nil
+        end)
+    end
 end)
+
 RunService.Heartbeat:Connect(function()
-    if not scriptActive or not infinityJumpEnabled then return end
+    if not scriptActive or not infinityJumpEnabled or Features.GalaxyMode then return end
     local char = Player.Character; if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
-    if hrp and hrp.Velocity.Y < -clampFallSpeed then hrp.Velocity = Vector3.new(hrp.Velocity.X, -clampFallSpeed, hrp.Velocity.Z) end
+    if not hrp then return end
+    
+    if spaceHeld then
+        hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, jumpForce, hrp.AssemblyLinearVelocity.Z)
+    elseif hrp.AssemblyLinearVelocity.Y < -clampFallSpeed then
+        hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, -clampFallSpeed, hrp.AssemblyLinearVelocity.Z)
+    end
 end)
 
 -- Helicopter
@@ -479,14 +507,13 @@ local function stopHelicopter()
     if c then local hrp = c:FindFirstChild("HumanoidRootPart"); if hrp then for _, v in pairs(hrp:GetChildren()) do if v.Name == "HelicopterBAV" then v:Destroy() end end end end
 end
 
--- Float
+-- Float (INFINITE TIME)
 local floatConn, FLOAT_TARGET_HEIGHT, floatOriginY = nil, 10, nil
 local function startFloat()
     local c = Player.Character; if not c then return end
     local hrp = c:FindFirstChild("HumanoidRootPart"); if not hrp then return end
     for _, v in pairs(hrp:GetChildren()) do if v.Name == "FloatBV" or v.Name == "FloatBP" then v:Destroy() end end
     floatOriginY = hrp.Position.Y + FLOAT_TARGET_HEIGHT
-    local floatStartTime, floatDescending = tick(), false
     floatConn = RunService.Heartbeat:Connect(function()
         if not scriptActive or not Features.Float then return end
         local c2 = Player.Character; if not c2 then return end
@@ -495,21 +522,14 @@ local function startFloat()
         local isStealing = Player:GetAttribute("Stealing")
         local moveSpeed = isStealing and Values.StealingSpeedValue or Values.BoostSpeed
         local moveDir = hum2 and hum2.MoveDirection or Vector3.zero
-        if tick() - floatStartTime >= 4 then floatDescending = true end
+        
         local currentY = h.Position.Y
+        local diff = floatOriginY - currentY
         local vertVel
-        if floatDescending then
-            vertVel = -20
-            if currentY <= floatOriginY - FLOAT_TARGET_HEIGHT + 0.5 then
-                h.AssemblyLinearVelocity = Vector3.zero; Features.Float = false
-                if floatConn then floatConn:Disconnect(); floatConn = nil end; return
-            end
-        else
-            local diff = floatOriginY - currentY
-            if diff > 0.3 then vertVel = math.clamp(diff * 8, 5, 50)
-            elseif diff < -0.3 then vertVel = math.clamp(diff * 8, -50, -5)
-            else vertVel = 0 end
-        end
+        if diff > 0.3 then vertVel = math.clamp(diff * 8, 5, 50)
+        elseif diff < -0.3 then vertVel = math.clamp(diff * 8, -50, -5)
+        else vertVel = 0 end
+        
         local horizX = moveDir.Magnitude > 0.1 and moveDir.X * moveSpeed or 0
         local horizZ = moveDir.Magnitude > 0.1 and moveDir.Z * moveSpeed or 0
         h.AssemblyLinearVelocity = Vector3.new(horizX, vertVel, horizZ)
@@ -540,10 +560,6 @@ local function stopSpeedWhileStealing() if speedWhileStealingConn then speedWhil
 local isStealing = false
 local StealData = {}
 local pathActive = false
-local lastFlatVel = Vector3.zero
-local PATH_VELOCITY_SPEED, PATH_SECOND_SPEED = 57, 29
-local PATH_BASE_STOP, PATH_MIN_STOP = 1.35, 0.65
-local PATH_NEXT_POINT_BIAS, PATH_SMOOTH_FACTOR = 0.45, 0.12
 
 local function isMyPlotByName(plotName)
     local plots = workspace:FindFirstChild("Plots"); if not plots then return false end
@@ -664,6 +680,40 @@ local function startSpamBat()
 end
 local function stopSpamBat() if spamBatConn then spamBatConn:Disconnect(); spamBatConn = nil end end
 
+-- AUTO BAT HITBOX (ALWAYS ON + GALAXY COLOR)
+local function applyAutoHitbox()
+    pcall(function()
+        local char = Player.Character
+        if not char then return end
+        local bp = Player:FindFirstChildOfClass("Backpack")
+        local tools = {}
+        if bp then for _, t in ipairs(bp:GetChildren()) do if t:IsA("Tool") then table.insert(tools, t) end end end
+        for _, t in ipairs(char:GetChildren()) do if t:IsA("Tool") then table.insert(tools, t) end end
+        
+        local galaxyColor = Color3.fromHSV(tick() * 0.5 % 1, 1, 1) -- GALAXY COLOR MATH
+        
+        for _, tool in ipairs(tools) do
+            if tool.Name:lower():find("bat") or tool.Name == "Medusa" then
+                for _, part in ipairs(tool:GetDescendants()) do
+                    if part:IsA("BasePart") and (part.Name == "Handle" or part:IsA("MeshPart")) then
+                        if part.Size.X < 10 or part.Size.Y < 10 or part.Size.Z < 10 then
+                            part.Size = Vector3.new(15, 15, 15)
+                            part.Massless = true
+                            part.CanCollide = false
+                            part.Material = Enum.Material.Neon -- Makes the color pop out
+                        end
+                        part.Color = galaxyColor -- APPLY GALAXY COLOR
+                    end
+                end
+            end
+        end
+    end)
+end
+RunService.Heartbeat:Connect(function()
+    if not scriptActive then return end
+    applyAutoHitbox()
+end)
+
 -- Galaxy Mode
 local galaxyEnabled, hopsEnabled, lastHopTime, originalJumpPower = false, false, 0, 50
 local galaxyVectorForce, galaxyAttachment = nil, nil
@@ -739,34 +789,43 @@ local function startUnwalk()
 end
 local function stopUnwalk() local c = Player.Character; if c and savedAnimations.Animate then savedAnimations.Animate:Clone().Parent = c; savedAnimations.Animate = nil end end
 
--- Optimizer + XRay
-local originalTransparency = {}
-local xrayActive = false
+-- MERGED Optimizer + No Texture
 local function enableOptimizer()
     if getgenv and getgenv().OPTIMIZER_ACTIVE then return end
     if getgenv then getgenv().OPTIMIZER_ACTIVE = true end
     pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01; game:GetService("Lighting").GlobalShadows = false; game:GetService("Lighting").Brightness = 3; game:GetService("Lighting").FogEnd = 9e9 end)
-    pcall(function() for _, obj in ipairs(workspace:GetDescendants()) do pcall(function() if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then obj:Destroy() elseif obj:IsA("BasePart") then obj.CastShadow = false; obj.Material = Enum.Material.Plastic end end) end end)
-    xrayActive = true
-    pcall(function() for _, obj in ipairs(workspace:GetDescendants()) do if obj:IsA("BasePart") and obj.Anchored and (obj.Name:lower():find("base") or (obj.Parent and obj.Parent.Name:lower():find("base"))) then originalTransparency[obj] = obj.LocalTransparencyModifier; obj.LocalTransparencyModifier = 0.85 end end end)
+    pcall(function() 
+        for _, obj in ipairs(workspace:GetDescendants()) do 
+            pcall(function() 
+                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Decal") or obj:IsA("Texture") then 
+                    obj:Destroy() 
+                elseif obj:IsA("BasePart") then 
+                    obj.CastShadow = false
+                    obj.Material = Enum.Material.Plastic 
+                    if obj:IsA("MeshPart") then obj.TextureID = "" end 
+                end 
+            end) 
+        end 
+    end)
 end
 local function disableOptimizer()
     if getgenv then getgenv().OPTIMIZER_ACTIVE = false end
-    if xrayActive then for part, value in pairs(originalTransparency) do if part then part.LocalTransparencyModifier = value end end; originalTransparency = {}; xrayActive = false end
 end
 
--- Path Steal Logic
+-- ╔══════════════════════════════════════════════════════════════╗
+-- ║       EXACT CLEAN PATH STEAL LOGIC (57/29 SPEED)           ║
+-- ╚══════════════════════════════════════════════════════════════╝
 local stealPath1 = {
     {pos = Vector3.new(-476, -6, 27)},
     {pos = Vector3.new(-483, -4, 27)},
     {pos = Vector3.new(-476, -6, 27)},
-    {pos = Vector3.new(-474, -6, 94)},
+    {pos = Vector3.new(-475, -6, 101)},
 }
 local stealPath2 = {
     {pos = Vector3.new(-476, -6, 93)},
     {pos = Vector3.new(-483, -4, 95)},
     {pos = Vector3.new(-476, -6, 93)},
-    {pos = Vector3.new(-475, -6, 28)},
+    {pos = Vector3.new(-474, -6, 20)},
 }
 
 local function isPlayerRagdolled()
@@ -780,6 +839,12 @@ local function isPlayerRagdolled()
     return false
 end
 
+-- EXACT SPEEDS YOU WANTED
+local PATH_VELOCITY_SPEED, PATH_SECOND_SPEED = 57, 29
+-- CLEAN BRAKE MATH
+local PATH_BASE_STOP, PATH_MIN_STOP = 1.0, 0.4
+local PATH_NEXT_POINT_BIAS, PATH_SMOOTH_FACTOR = 0.5, 0.1
+
 local function pathMoveToPoint(hrp, current, nextPoint, speed)
     local conn; local reached = false
     conn = RunService.Heartbeat:Connect(function()
@@ -788,15 +853,36 @@ local function pathMoveToPoint(hrp, current, nextPoint, speed)
         local target = Vector3.new(current.X, pos.Y, current.Z)
         local dir = target - pos
         local dist = dir.Magnitude
+        
         local stopDist = math.clamp(PATH_BASE_STOP - dist * 0.04, PATH_MIN_STOP, PATH_BASE_STOP)
-        if dist <= stopDist then if conn then conn:Disconnect() end; hrp.AssemblyLinearVelocity = Vector3.zero; reached = true; return end
+        
+        if dist <= stopDist then 
+            if conn then conn:Disconnect() end
+            hrp.AssemblyLinearVelocity = Vector3.zero
+            reached = true
+            return 
+        end
+        
         local moveDir = dir.Unit
-        if nextPoint then local nextDir = (Vector3.new(nextPoint.X, pos.Y, nextPoint.Z) - pos).Unit; moveDir = (moveDir + nextDir * PATH_NEXT_POINT_BIAS).Unit end
-        if lastFlatVel.Magnitude > 0.1 then moveDir = (moveDir * (1 - PATH_SMOOTH_FACTOR) + lastFlatVel.Unit * PATH_SMOOTH_FACTOR).Unit end
-        local vel = Vector3.new(moveDir.X * speed, hrp.AssemblyLinearVelocity.Y, moveDir.Z * speed)
-        hrp.AssemblyLinearVelocity = vel; lastFlatVel = Vector3.new(vel.X, 0, vel.Z)
+        if nextPoint then 
+            local nextDir = (Vector3.new(nextPoint.X, pos.Y, nextPoint.Z) - pos).Unit
+            moveDir = (moveDir + nextDir * PATH_NEXT_POINT_BIAS).Unit
+        end
+        
+        local lastFlat = Vector3.new(hrp.AssemblyLinearVelocity.X, 0, hrp.AssemblyLinearVelocity.Z)
+        if lastFlat.Magnitude > 0.1 then 
+            moveDir = (moveDir * (1 - PATH_SMOOTH_FACTOR) + lastFlat.Unit * PATH_SMOOTH_FACTOR).Unit
+        end
+        
+        -- FORCE Y TO 0 SO IT STICKS EXACTLY TO THE FLAT PATH COORDINATES
+        local vel = Vector3.new(moveDir.X * speed, 0, moveDir.Z * speed)
+        hrp.AssemblyLinearVelocity = vel
     end)
-    while pathActive and not reached and not isPlayerRagdolled() and (Vector3.new(hrp.Position.X, 0, hrp.Position.Z) - Vector3.new(current.X, 0, current.Z)).Magnitude > PATH_BASE_STOP do RunService.Heartbeat:Wait() end
+    
+    while pathActive and not reached and not isPlayerRagdolled() and (Vector3.new(hrp.Position.X, 0, hrp.Position.Z) - Vector3.new(current.X, 0, current.Z)).Magnitude > PATH_BASE_STOP do 
+        RunService.Heartbeat:Wait() 
+    end
+    
     if conn then conn:Disconnect() end
     hrp.AssemblyLinearVelocity = Vector3.zero
     return not isPlayerRagdolled()
@@ -811,7 +897,13 @@ local function runStealPath(path)
         local nextP = path[i + 1] and path[i + 1].pos
         local success = pathMoveToPoint(hrp, p.pos, nextP, speed)
         if not success then return false end
-        if i == 2 then task.wait(AutoStealValues.PATH_TURN_WAIT) else task.wait(0.01) end
+        
+        if i == 2 then 
+            task.wait(AutoStealValues.PATH_TURN_WAIT) 
+        else 
+            RunService.Heartbeat:Wait() 
+        end
+        
         if isPlayerRagdolled() or not pathActive then return false end
     end
     return true
@@ -823,8 +915,12 @@ local function startStealPath(path)
     task.spawn(function()
         while pathActive do
             local completed = runStealPath(path)
-            if not completed then while pathActive and isPlayerRagdolled() do RunService.Heartbeat:Wait() end; if not pathActive then break end
-            else task.wait(0.1) end
+            if not completed then 
+                while pathActive and isPlayerRagdolled() do RunService.Heartbeat:Wait() end
+                if not pathActive then break end
+            else 
+                task.wait(0.05) 
+            end
         end
     end)
 end
@@ -892,6 +988,7 @@ RunService.Heartbeat:Connect(updateEnemyTimers)
 local Cebo = { Circle = nil, Align = nil, Attach = nil }
 local frontLockTarget = nil
 local frontLockOriginalSpeed = 16
+local frontLockEquippedBat = false
 
 local function findNearestPlayerForFrontLock()
     local nearestDist = math.huge; local nearestPlayer = nil
@@ -913,16 +1010,15 @@ end
 
 local function startFrontLock()
     frontLockOriginalSpeed = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid") and Player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed or 16
+    frontLockEquippedBat = false
     local c = Player.Character
     if c then
         local hrp = c:FindFirstChild("HumanoidRootPart")
         if hrp then
-            -- Clean up old parts
             if Cebo.Attach then Cebo.Attach:Destroy() end
             if Cebo.Align then Cebo.Align:Destroy() end
             if Cebo.Circle then Cebo.Circle:Destroy() end
             
-            -- Create Hit Circle Components
             Cebo.Attach = Instance.new("Attachment", hrp)
             Cebo.Align = Instance.new("AlignOrientation", hrp)
             Cebo.Align.Attachment0 = Cebo.Attach
@@ -955,7 +1051,7 @@ local function stopFrontLock()
         if root then root.Velocity = Vector3.new(0, 0, 0); hum:MoveTo(root.Position) end
     end
     frontLockTarget = nil
-    -- Destroy Hit Circle Components
+    frontLockEquippedBat = false
     if Cebo.Circle then Cebo.Circle:Destroy(); Cebo.Circle = nil end
     if Cebo.Align then Cebo.Align:Destroy(); Cebo.Align = nil end
     if Cebo.Attach then Cebo.Attach:Destroy(); Cebo.Attach = nil end
@@ -971,6 +1067,7 @@ RunService.RenderStepped:Connect(function()
     
     if not frontLockTarget or not frontLockTarget.Character or not frontLockTarget.Character:FindFirstChild("HumanoidRootPart") then 
         frontLockTarget = findNearestPlayerForFrontLock() 
+        frontLockEquippedBat = false
     end
     
     if frontLockTarget and frontLockTarget.Character then
@@ -993,18 +1090,24 @@ RunService.RenderStepped:Connect(function()
                 root.Velocity = Vector3.new(0, 0, 0); hum:MoveTo(myPos) 
             end
             
-            -- TRUE HIT CIRCLE SYSTEM (Align + Auto Swing)
             char.Humanoid.AutoRotate = false
             if Cebo.Align then
                 Cebo.Align.Enabled = true
                 Cebo.Align.CFrame = CFrame.lookAt(myPos, Vector3.new(targetPos.X, myPos.Y, targetPos.Z))
             end
             
-            local t = char:FindFirstChild("Bat") or char:FindFirstChild("Medusa")
-            if t then pcall(function() t:Activate() end) end
+            if not frontLockEquippedBat then
+                local backpack = Player:FindFirstChildOfClass("Backpack")
+                local bat = char:FindFirstChild("Bat") or char:FindFirstChild("Medusa") or (backpack and (backpack:FindFirstChild("Bat") or backpack:FindFirstChild("Medusa")))
+                if bat then
+                    if bat.Parent ~= char then bat.Parent = char end
+                    frontLockEquippedBat = true
+                end
+            end
         else frontLockTarget = nil end
     else 
         frontLockTarget = nil
+        frontLockEquippedBat = false
         if Cebo.Align then Cebo.Align.Enabled = false end
         if char:FindFirstChild("Humanoid") then char.Humanoid.AutoRotate = true end
     end
@@ -1230,7 +1333,7 @@ do
 end
 
 do
-    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Float", "Float", false, nil, false)
+    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Float [" .. Keybinds.Float.Name .. "]", "Float", true, Keybinds.Float, false)
     btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.Float = on; if on then startFloat() else stopFloat() end; SaveConfig() end)
     if Features.Float then setVisual(true); startFloat() end
 end
@@ -1275,15 +1378,9 @@ do
 end
 
 do
-    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Optimizer", "Optimizer", false, nil, false)
+    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Optimize+NoTex", "Optimizer", false, nil, false)
     btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.Optimizer = on; if on then enableOptimizer() else disableOptimizer() end; SaveConfig() end)
     if Features.Optimizer then setVisual(true); enableOptimizer() end
-end
-
-do
-    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "XRay", "XRay", false, nil, false)
-    btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.XRay = on; if on then enableOptimizer() else disableOptimizer() end; SaveConfig() end)
-    if Features.XRay then setVisual(true); enableOptimizer() end
 end
 
 do
@@ -1358,6 +1455,9 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     if input.KeyCode == Keybinds.InfinityJump then 
         syncToggle("InfinityJump", not Features.InfinityJump, false); return 
     end
+    if input.KeyCode == Keybinds.Float then 
+        local s = not Features.Float; syncToggle("Float", s, false); if s then startFloat() else stopFloat() end; return 
+    end
     if input.KeyCode == Keybinds.Helicopter then 
         local s = not Features.Helicopter; syncToggle("Helicopter", s, false); if s then startHelicopter() else stopHelicopter() end; return 
     end
@@ -1387,16 +1487,17 @@ hideBtn.MouseButton1Click:Connect(function() TweenService:Create(main, TweenInfo
 header.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then if main.Size.Y.Offset <= HeaderH + 5 then TweenService:Create(main, TweenInfo.new(0.2), {Size = UDim2.new(0, W, 0, H)}):Play() end end end)
 
 
--- ─── [UPDATED] MOBILE 2x2 CUBE GRID BUTTONS (LEFT SIDE) ─────────────────────────────
+-- ─── [UPDATED] MOBILE BUTTONS (RIGHT SIDE, VERTICAL LIST) ─────
 if isMobile then
     local mobileFrame = Instance.new("Frame")
-    mobileFrame.Name = "MobileCubeGrid"
-    local btnSize = 55 * guiScale
+    mobileFrame.Name = "MobileButtons"
+    local btnW = 100 * guiScale
+    local btnH = 45 * guiScale
     local pad = 6 * guiScale
-    local totalSize = (btnSize * 2) + (pad * 3)
+    local totalH = (btnH * 5) + (pad * 6)
     
-    mobileFrame.Size = UDim2.new(0, totalSize, 0, totalSize)
-    mobileFrame.Position = UDim2.new(0, 12 * guiScale, 0.5, -totalSize / 2) -- Positioned securely to the Left
+    mobileFrame.Size = UDim2.new(0, btnW + (pad * 2), 0, totalH)
+    mobileFrame.Position = UDim2.new(1, -12 * guiScale - (btnW + pad * 2), 0.5, -totalH / 2) 
     mobileFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 30)
     mobileFrame.BackgroundTransparency = 0.15
     mobileFrame.Visible = true
@@ -1409,19 +1510,19 @@ if isMobile then
     boxStroke.Transparency = 0.3
     mobileFrame.Parent = sg
 
-    local gridLayout = Instance.new("UIGridLayout", mobileFrame)
-    gridLayout.CellSize = UDim2.new(0, btnSize, 0, btnSize)
-    gridLayout.CellPadding = UDim2.new(0, pad, 0, pad)
-    gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    gridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    gridLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    local listLay = Instance.new("UIListLayout", mobileFrame)
+    listLay.Padding = UDim.new(0, pad)
+    listLay.SortOrder = Enum.SortOrder.LayoutOrder
+    listLay.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    listLay.VerticalAlignment = Enum.VerticalAlignment.Center
 
     local function createCubeButton(text, featureKey, isToggle)
         local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, btnW, 0, btnH)
         btn.BackgroundColor3 = COLOR_BG_MAIN
         btn.TextColor3 = COLOR_GLOW
         btn.Font = Enum.Font.GothamBlack
-        btn.TextSize = 11 * guiScale
+        btn.TextSize = 12 * guiScale
         btn.Text = text
         btn.BorderSizePixel = 0
         btn.ZIndex = 55
@@ -1449,6 +1550,8 @@ if isMobile then
                 elseif featureKey == "AutoLeft" and not newState then stopStealPath()
                 elseif featureKey == "FrontLock" then
                     if newState then startFrontLock() else stopFrontLock() end
+                elseif featureKey == "Float" then
+                    if newState then startFloat() else stopFloat() end
                 end
                 
                 if _G["UpdateVisual_"..featureKey] then _G["UpdateVisual_"..featureKey](newState) end
@@ -1474,12 +1577,9 @@ if isMobile then
         return btn
     end
 
-    -- Top Left: Drop
     createCubeButton("Drop", "DropShot", false)
-    -- Top Right: Lock
+    createCubeButton("Float", "Float", true)
     createCubeButton("Lock", "FrontLock", true)
-    -- Bottom Left: Auto L
     createCubeButton("Auto L", "AutoLeft", true)
-    -- Bottom Right: Auto R
     createCubeButton("Auto R", "AutoRight", true)
 end
