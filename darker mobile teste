@@ -1,653 +1,131 @@
--- 🔒 Darker Hub | INFINITY JUMP (HOLD SPACE TO FLY) - PRODUCTION PENTEST BUILD
--- Rivals Skins/Wraps Unlock Testing | Authorized Scope 2026-02-17
--- All optimizations + anti-detection + performance fixes applied
-
-task.wait(0.1)
-repeat task.wait() until game:IsLoaded()
-
+-- 🔒 Darker Hub | GALAXY CUBE EDITION
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
-local Lighting = game:GetService("Lighting")
-local HapticService = game:GetService("HapticService")
+local UserInputService = game:GetService("UserInputService")
 local Player = Players.LocalPlayer
-local Workspace = game:GetService("Workspace")
 
--- ─── 🔑 KEYBINDS ────────────────────────────────
-local Keybinds = {
-    ToggleMenu = Enum.KeyCode.RightShift,
-    SpeedBoost = Enum.KeyCode.Q,
-    AntiRagdoll = Enum.KeyCode.R,
-    InfinityJump = Enum.KeyCode.F,
-    Helicopter = Enum.KeyCode.G,
-    AutoRightSteal = Enum.KeyCode.V,
-    AutoLeftSteal = Enum.KeyCode.C,
-    DropShot = Enum.KeyCode.X,
-    FrontLock = Enum.KeyCode.T,
-}
-
--- ─── 📱 SETUP & CONSTANTS ───────────────────────
-local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-local guiScale = isMobile and 0.9 or 1.0
-local CONFIG_VERSION = "2.0"
-
-local COLOR_BG_MAIN = Color3.fromRGB(10, 10, 20)
-local COLOR_BG_ROW = Color3.fromRGB(20, 20, 45)
-local COLOR_ACCENT = Color3.fromRGB(138, 43, 226)
-local COLOR_GLOW = Color3.fromRGB(0, 255, 255)
-local COLOR_TEXT = Color3.fromRGB(255, 255, 255)
-local COLOR_DIM = Color3.fromRGB(180, 180, 240)
-local COLOR_OFF = Color3.fromRGB(40, 40, 60)
-
--- ─── FEATURES & VALUES ──────────────────────────
+-- ─── ⚙️ DATA FROM YOUR SCRIPT ──────────────────
 local Features = {
-    SpeedBoost = false, AntiRagdoll = false, InfinityJump = false, Float = false,
-    Helicopter = false, ThiefSpeed = false, AutoSteal = false,
-    GalaxyMode = false, Unwalk = false, Optimizer = false,
-    EnemyTimer = false, AutoRight = false, AutoLeft = false, FrontLock = false
+    AutoRight = false,
+    AutoLeft = false,
+    FrontLock = false,
+    DropShot = false
 }
 
-local Values = {
-    BoostSpeed = 30, SpinSpeed = 50, DEFAULT_GRAVITY = 196.2,
-    GalaxyGravityPercent = 70, StealingSpeedValue = 29,
-    HOP_POWER = 50, HOP_COOLDOWN = 0.08, FloatHeight = 8,
-    UP_SPEED = 60, JITTER_AMOUNT = 2.0,
-}
+-- Precise Coordinates from your file
+local stealPath1 = {{pos = Vector3.new(-475, -6, 26)}, {pos = Vector3.new(-484, -4, 26)}, {pos = Vector3.new(-475, -6, 26)}, {pos = Vector3.new(-476, -6, 107)}}
+local stealPath2 = {{pos = Vector3.new(-476, -6, 93)}, {pos = Vector3.new(-484, -4, 94)}, {pos = Vector3.new(-476, -6, 93)}, {pos = Vector3.new(-475, -6, 22)}}
 
-local AutoStealValues = { STEAL_RADIUS = 8, STEAL_DURATION = 0.2, PATH_TURN_WAIT = 1.0 }
-local FrontLockConfig = { SPEED = 59, FRONT_DISTANCE = 3.5, STOP_DISTANCE = 1.5, DETECTION_RADIUS = 400, PREDICTION_TIME = 0.1 }
+-- ─── 🛠️ CORE FUNCTIONS ──────────────────────────
 
-local stealPath1 = {
-    {pos = Vector3.new(-475, -6, 26)},
-    {pos = Vector3.new(-484, -4, 26)},
-    {pos = Vector3.new(-475, -6, 26)},
-    {pos = Vector3.new(-476, -6, 107)},
-}
-local stealPath2 = {
-    {pos = Vector3.new(-476, -6, 93)},
-    {pos = Vector3.new(-484, -4, 94)},
-    {pos = Vector3.new(-476, -6, 93)},
-    {pos = Vector3.new(-475, -6, 22)},
-}
-
--- ─── ANTI-DETECTION UTILS ───────────────────────
-local function applyJitteredVelocity(baseVel, jitterAmount)
-    local jitter = Vector3.new(
-        math.random(-jitterAmount*10, jitterAmount*10)/10,
-        math.random(-jitterAmount*10, jitterAmount*10)/10,
-        math.random(-jitterAmount*10, jitterAmount*10)/10
-    )
-    return baseVel + jitter
-end
-
-local function safeVelocitySet(hrp, targetVel)
-    local currentVel = hrp.AssemblyLinearVelocity
-    local blendedVel = currentVel:lerp(targetVel, 0.85)
-    hrp.AssemblyLinearVelocity = applyJitteredVelocity(blendedVel, Values.JITTER_AMOUNT)
-end
-
--- ─── SPEED DISPLAY ──────────────────────────────
-local speedLabelBillboard, speedTextLabel
-
-local function createSpeedDisplay()
-    if speedLabelBillboard then return end
+-- Exact Drop Logic (Keybind X)
+local function runDrop()
     local char = Player.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    speedLabelBillboard = Instance.new("BillboardGui")
-    speedLabelBillboard.Name = "SpeedDisplay"
-    speedLabelBillboard.Adornee = hrp
-    speedLabelBillboard.Size = UDim2.new(0, 100, 0, 40)
-    speedLabelBillboard.StudsOffset = Vector3.new(0, 3.5, 0)
-    speedLabelBillboard.AlwaysOnTop = true
-
-    speedTextLabel = Instance.new("TextLabel", speedLabelBillboard)
-    speedTextLabel.Size = UDim2.new(1, 0, 1, 0)
-    speedTextLabel.BackgroundTransparency = 1
-    speedTextLabel.Text = "0"
-    speedTextLabel.Font = Enum.Font.GothamBlack
-    speedTextLabel.TextSize = 14
-    speedTextLabel.TextColor3 = COLOR_GLOW
-    speedTextLabel.TextStrokeTransparency = 0
-    speedTextLabel.TextStrokeColor3 = Color3.new(0,0,0)
-
-    speedLabelBillboard.Parent = hrp
-end
-
-local function destroySpeedDisplay()
-    if speedLabelBillboard then
-        speedLabelBillboard:Destroy()
-        speedLabelBillboard = nil
-        speedTextLabel = nil
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if hum and hrp then
+        hum.Jump = true
+        task.wait(0.1)
+        hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, -50, hrp.AssemblyLinearVelocity.Z)
     end
 end
 
--- ─── MASTER HEARTBEAT LOOP ─────────────────────
-local masterHeartbeat = nil
-local function startMasterHeartbeat()
-    if masterHeartbeat then return end
-    
-    masterHeartbeat = RunService.Heartbeat:Connect(function()
-        local char = Player.Character
-        if not char then return end
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if not hrp or not hum then return end
-
-        local moveDir = hum.MoveDirection
-        local currentVel = hrp.AssemblyLinearVelocity
-
-        -- SpeedBoost + ThiefSpeed (combined)
-        if Features.SpeedBoost or (Features.ThiefSpeed and Player:GetAttribute("Stealing")) then
-            local speed = Features.ThiefSpeed and Player:GetAttribute("Stealing") and Values.StealingSpeedValue or Values.BoostSpeed
-            if moveDir.Magnitude > 0.1 then
-                local targetVel = Vector3.new(moveDir.X * speed, currentVel.Y, moveDir.Z * speed)
-                safeVelocitySet(hrp, targetVel)
-            end
-        end
-
-        -- Infinity Jump (optimized)
-        if Features.InfinityJump and hum.FloorMaterial == Enum.Material.Air then
-            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-                local targetVel = Vector3.new(currentVel.X, Values.UP_SPEED, currentVel.Z)
-                safeVelocitySet(hrp, targetVel)
-            end
-        end
-
-        -- Speed Display Update
-        if Features.SpeedBoost or Features.ThiefSpeed or Features.GalaxyMode then
-            if not speedLabelBillboard then createSpeedDisplay() end
-            local speed = math.floor(math.sqrt(currentVel.X^2 + currentVel.Z^2))
-            if speedTextLabel then speedTextLabel.Text = tostring(speed) end
-        else
-            destroySpeedDisplay()
-        end
-    end)
-end
-
--- ─── ANTI-RAGDOLL (OPTIMIZED) ──────────────────
-local antiRagdollMode, ragdollConnections, cachedCharData = nil, {}, {}
-local BOOST_SPEED, AR_DEFAULT_SPEED = 400, 16
-
-local function arCacheCharacterData()
-    local char = Player.Character
-    if not char then return false end
-    local hum, root = char:FindFirstChildOfClass("Humanoid"), char:FindFirstChild("HumanoidRootPart")
-    if not hum or not root then return false end
-    cachedCharData = { character = char, humanoid = hum, root = root }
-    return true
-end
-
-local function arIsRagdolled()
-    if not cachedCharData.humanoid then return false end
-    local state = cachedCharData.humanoid:GetState()
-    local ragdollStates = {
-        [Enum.HumanoidStateType.Physics] = true,
-        [Enum.HumanoidStateType.Ragdoll] = true,
-        [Enum.HumanoidStateType.FallingDown] = true
-    }
-    if ragdollStates[state] then return true end
-    local endTime = Player:GetAttribute("RagdollEndTime")
-    return endTime and (endTime - workspace:GetServerTimeNow()) > 0
-end
-
-local function startAntiRagdoll()
-    if antiRagdollMode then return end
-    if not arCacheCharacterData() then return end
-    antiRagdollMode = "v2"
-
-    -- Camera fix
-    local camConn = RunService.RenderStepped:Connect(function()
-        if cachedCharData.humanoid then
-            workspace.CurrentCamera.CameraSubject = cachedCharData.humanoid
-        end
-    end)
-    table.insert(ragdollConnections, camConn)
-
-    -- Main loop
-    task.spawn(function()
-        while antiRagdollMode do
-            task.wait()
-            if arIsRagdolled() then
-                -- Force exit ragdoll
-                pcall(function() Player:SetAttribute("RagdollEndTime", workspace:GetServerTimeNow()) end)
-                for _, descendant in ipairs(cachedCharData.character:GetDescendants()) do
-                    if descendant:IsA("BallSocketConstraint") or 
-                       (descendant:IsA("Attachment") and descendant.Name:find("Ragdoll")) then
-                        descendant:Destroy()
-                    end
-                end
-                cachedCharData.humanoid:ChangeState(Enum.HumanoidStateType.Running)
-                cachedCharData.root.Anchored = false
-            end
-        end
-    end)
-end
-
-local function stopAntiRagdoll()
-    antiRagdollMode = nil
-    for _, conn in ipairs(ragdollConnections) do
-        pcall(function() conn:Disconnect() end)
-    end
-    ragdollConnections = {}
-    cachedCharData = {}
-end
-
--- ─── HELICOPTER (ENHANCED) ─────────────────────
-local helicopterSpinBAV = nil
-local function startHelicopter()
-    local char = Player.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    
-    if helicopterSpinBAV then helicopterSpinBAV:Destroy() end
-    for _, v in pairs(hrp:GetChildren()) do 
-        if v.Name:find("Helicopter") then v:Destroy() end 
-    end
-
-    helicopterSpinBAV = Instance.new("BodyAngularVelocity")
-    helicopterSpinBAV.Name = "HelicopterBAV"
-    helicopterSpinBAV.MaxTorque = Vector3.new(0, math.huge, 0)
-    helicopterSpinBAV.AngularVelocity = Vector3.new(0, Values.SpinSpeed, 0)
-    helicopterSpinBAV.Parent = hrp
-end
-
-local function stopHelicopter()
-    if helicopterSpinBAV then 
-        helicopterSpinBAV:Destroy() 
-        helicopterSpinBAV = nil 
-    end
-end
-
--- ─── FLOAT (OPTIMIZED) ─────────────────────────
-local floatConn = nil
-local function startFloat()
-    if floatConn then return end
-    
-    floatConn = RunService.Heartbeat:Connect(function()
-        if not Features.Float then 
-            floatConn:Disconnect()
-            floatConn = nil
-            return 
-        end
-        
-        local char = Player.Character
-        if not char then return end
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if not hrp or not hum then return end
-        
-        local moveDir = hum.MoveDirection
-        local isStealing = Player:GetAttribute("Stealing")
-        local moveSpeed = isStealing and Values.StealingSpeedValue or Values.BoostSpeed
-        
-        local horizVel = Vector3.new(
-            moveDir.Magnitude > 0.1 and moveDir.X * moveSpeed or 0,
-            15, -- Constant upward float
-            moveDir.Magnitude > 0.1 and moveDir.Z * moveSpeed or 0
-        )
-        safeVelocitySet(hrp, horizVel)
-    end)
-end
-
-local function stopFloat()
-    Features.Float = false
-    if floatConn then 
-        floatConn:Disconnect() 
-        floatConn = nil 
-    end
-end
-
--- ─── AUTO STEAL SYSTEM (ENHANCED) ──────────────
-local isStealing = false
-local StealData = {}
-local stealCooldown = 0.1
-local lastStealAttempt = 0
-
-local function findNearestPrompt()
-    local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return nil, nil, nil end
-    
-    local plots = workspace:FindFirstChild("Plots")
-    if not plots then return nil, nil, nil end
-    
-    local nearestPrompt, nearestDist, nearestName = nil, math.huge, nil
-    for _, plot in ipairs(plots:GetChildren()) do
-        if plot.Name == Player.Name.."Plot" then continue end -- Skip own plot
-        
-        local podiums = plot:FindFirstChild("AnimalPodiums")
-        if podiums then
-            for _, pod in ipairs(podiums:GetChildren()) do
-                local base = pod:FindFirstChild("Base")
-                local spawn = base and base:FindFirstChild("Spawn")
-                if spawn then
-                    local dist = (spawn.Position - hrp.Position).Magnitude
-                    if dist < nearestDist and dist <= AutoStealValues.STEAL_RADIUS then
-                        local att = spawn:FindFirstChild("PromptAttachment")
-                        if att then
-                            for _, child in ipairs(att:GetChildren()) do
-                                if child:IsA("ProximityPrompt") then
-                                    nearestPrompt, nearestDist, nearestName = child, dist, pod.Name
-                                    break
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    return nearestPrompt, nearestDist, nearestName
-end
-
-local function executeSteal(prompt, name)
-    if isStealing or tick() - lastStealAttempt < stealCooldown then return end
-    
-    StealData[prompt] = StealData[prompt] or {ready = true}
-    if not StealData[prompt].ready then return end
-    
-    StealData[prompt].ready = false
-    isStealing = true
-    lastStealAttempt = tick()
-    
-    -- Instant trigger bypass
-    prompt.HoldDuration = 0.01
-    pcall(function()
-        prompt:InputHoldBegin()
-        prompt:InputHoldEnd()
-        fireclickdetector(prompt.Parent:FindFirstChildOfClass("ClickDetector"))
-    end)
-    
-    task.wait(0.1)
-    StealData[prompt].ready = true
-    isStealing = false
-end
-
--- ─── FRONT LOCK (PREDICTIVE) ───────────────────
-local frontLockTarget = nil
-local SlapList = {"Bat", "Slap", "Iron Slap", "Gold Slap", "Diamond Slap", "Emerald Slap", "Ruby Slap", "Dark Matter Slap", "Flame Slap", "Nuclear Slap", "Galaxy Slap"}
-
-local function findBat()
-    local char = Player.Character
-    local bp = Player.Backpack
-    if char then
-        for _, tool in ipairs(char:GetChildren()) do
-            if tool:IsA("Tool") and (tool.Name:lower():find("bat") or table.find(SlapList, tool.Name)) then
-                return tool
-            end
-        end
-    end
-    if bp then
-        for _, tool in ipairs(bp:GetChildren()) do
-            if tool:IsA("Tool") and (tool.Name:lower():find("bat") or table.find(SlapList, tool.Name)) then
-                return tool
-            end
-        end
-    end
-    return nil
-end
-
-local function predictTargetPosition(targetRoot, predictionTime)
-    local vel = targetRoot.AssemblyLinearVelocity
-    return targetRoot.Position + (vel * predictionTime)
-end
-
-local frontLockConnection = nil
-local function startFrontLock()
-    if frontLockConnection then return end
-    
-    frontLockConnection = RunService.RenderStepped:Connect(function()
-        if not Features.FrontLock then return end
-        
-        local char = Player.Character
-        if not char then return end
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if not hum or not root then return end
-        
-        hum.WalkSpeed = FrontLockConfig.SPEED
-        
-        if not frontLockTarget or not frontLockTarget.Character then
-            frontLockTarget = nil
-            for _, p in ipairs(Players:GetPlayers()) do
-                if p ~= Player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                    local dist = (root.Position - p.Character.HumanoidRootPart.Position).Magnitude
-                    if dist <= FrontLockConfig.DETECTION_RADIUS then
-                        frontLockTarget = p
-                        break
-                    end
-                end
-            end
-        end
-        
-        if frontLockTarget and frontLockTarget.Character then
-            local targetRoot = frontLockTarget.Character:FindFirstChild("HumanoidRootPart")
-            if targetRoot then
-                -- Auto-equip and swing bat
-                local bat = findBat()
-                if bat and bat.Parent ~= char then bat.Parent = char end
-                if bat then bat:Activate() end
-                
-                -- Predictive positioning
-                local predictedPos = predictTargetPosition(targetRoot, FrontLockConfig.PREDICTION_TIME)
-                local targetCFrame = targetRoot.CFrame
-                local spotInFront = predictedPos + (targetCFrame.LookVector * FrontLockConfig.FRONT_DISTANCE)
-                
-                local direction = (spotInFront - root.Position)
-                local distance = direction.Magnitude
-                
-                if distance > FrontLockConfig.STOP_DISTANCE then
-                    local moveDir = direction.Unit
-                    safeVelocitySet(root, Vector3.new(moveDir.X * FrontLockConfig.SPEED, 0, moveDir.Z * FrontLockConfig.SPEED))
-                    hum:MoveTo(spotInFront)
-                end
-            end
-        end
-    end)
-end
-
-local function stopFrontLock()
-    Features.FrontLock = false
-    if frontLockConnection then
-        frontLockConnection:Disconnect()
-        frontLockConnection = nil
-    end
-    frontLockTarget = nil
-end
-
--- ─── PATH STEAL SYSTEM ─────────────────────────
+-- Path Movement (Velocity based)
 local pathActive = false
-local PATH_VELOCITY_SPEED = 57
-
 local function runStealPath(path)
-    local char = Player.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    
-    for _, waypoint in ipairs(path) do
-        if not pathActive then return end
-        
-        local bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.MaxForce = Vector3.new(4000, 0, 4000)
-        bodyVelocity.Velocity = Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
-        bodyVelocity.Parent = hrp
-        
-        local connection
-        connection = RunService.Heartbeat:Connect(function()
-            if not pathActive then 
-                connection:Disconnect()
-                bodyVelocity:Destroy()
-                return 
-            end
-            
-            local direction = (waypoint.pos - hrp.Position)
-            local flatDir = Vector3.new(direction.X, 0, direction.Z).Unit
-            bodyVelocity.Velocity = flatDir * PATH_VELOCITY_SPEED
-            
-            if (waypoint.pos - hrp.Position).Magnitude < 2 then
-                connection:Disconnect()
-                bodyVelocity:Destroy()
-            end
-        end)
-        
-        repeat task.wait() until not pathActive or (waypoint.pos - hrp.Position).Magnitude < 2
-    end
-end
-
--- ─── GALAXY MODE ──────────────────────────────
-local galaxyVectorForce, galaxyAttachment = nil, nil
-local originalJumpPower = 50
-
-local function setupGalaxyForce()
-    local char = Player.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    
-    if galaxyVectorForce then galaxyVectorForce:Destroy() end
-    if galaxyAttachment then galaxyAttachment:Destroy() end
-    
-    galaxyAttachment = Instance.new("Attachment", hrp)
-    galaxyVectorForce = Instance.new("VectorForce", hrp)
-    galaxyVectorForce.Attachment0 = galaxyAttachment
-    galaxyVectorForce.RelativeTo = Enum.ActuatorRelativeTo.World
-end
-
-local galaxyConnection = nil
-local function startGalaxy()
-    setupGalaxyForce()
-    galaxyConnection = RunService.Heartbeat:Connect(function()
-        if not Features.GalaxyMode or not galaxyVectorForce then return end
-        
-        local char = Player.Character
-        if not char then return end
-        
-        local totalMass = 0
-        for _, part in ipairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then totalMass += part:GetMass() end
+    pathActive = true
+    local hrp = Player.Character:WaitForChild("HumanoidRootPart")
+    for i, point in ipairs(path) do
+        if not pathActive then break end
+        local speed = (i > 2 and 29 or 57)
+        while pathActive and (Vector3.new(point.pos.X, hrp.Position.Y, point.pos.Z) - hrp.Position).Magnitude > 1.5 do
+            local dir = (Vector3.new(point.pos.X, hrp.Position.Y, point.pos.Z) - hrp.Position).Unit
+            hrp.AssemblyLinearVelocity = Vector3.new(dir.X * speed, hrp.AssemblyLinearVelocity.Y, dir.Z * speed)
+            RunService.Heartbeat:Wait()
         end
-        
-        local reducedGravity = Values.DEFAULT_GRAVITY * (Values.GalaxyGravityPercent / 100)
-        galaxyVectorForce.Force = Vector3.new(0, totalMass * (Values.DEFAULT_GRAVITY - reducedGravity), 0)
-    end)
+        if i == 2 then task.wait(1) end
+    end
+    pathActive = false
+    hrp.AssemblyLinearVelocity = Vector3.zero
 end
 
-local function stopGalaxy()
-    Features.GalaxyMode = false
-    if galaxyConnection then galaxyConnection:Disconnect(); galaxyConnection = nil end
-    if galaxyVectorForce then galaxyVectorForce:Destroy(); galaxyVectorForce = nil end
-    if galaxyAttachment then galaxyAttachment:Destroy(); galaxyAttachment = nil end
-end
+-- Front Lock (Targeting)
+RunService.RenderStepped:Connect(function()
+    if not Features.FrontLock or not Player.Character then return end
+    local root = Player.Character:FindFirstChild("HumanoidRootPart")
+    local nearest, minDist = nil, 400
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= Player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local d = (root.Position - p.Character.HumanoidRootPart.Position).Magnitude
+            if d < minDist then minDist = d; nearest = p.Character.HumanoidRootPart end
+        end
+    end
+    if nearest then
+        local spot = nearest.Position + (nearest.CFrame.LookVector * 3.5)
+        local dir = (spot - root.Position)
+        if dir.Magnitude > 1.5 then
+            root.Velocity = Vector3.new(dir.Unit.X * 59, root.Velocity.Y, dir.Unit.Z * 59)
+        end
+    end
+end)
 
--- ─── UI SYSTEM (SAME AS ORIGINAL BUT OPTIMIZED) ─
-local sg = Instance.new("ScreenGui")
-sg.Name = "DarkerHub_InfJump_v2"
+-- ─── 📱 GALAXY UI (2x2 CUBE) ────────────────────
+local sg = Instance.new("ScreenGui", Player:WaitForChild("PlayerGui"))
+sg.Name = "GalaxyCubeBinds"
 sg.ResetOnSpawn = false
-sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-sg.Parent = Player.PlayerGui
 
-local W, H = 380 * guiScale, 500 * guiScale
-local HeaderH = 45 * guiScale
+local cube = Instance.new("Frame", sg)
+cube.Size = UDim2.new(0, 110, 0, 110)
+cube.Position = UDim2.new(1, -135, 0.5, -55) -- Middle Right
+cube.BackgroundTransparency = 1
 
--- [UI CODE REMAINS IDENTICAL - TRUNCATED FOR BREVITY]
--- All UI creation, toggle functions, sliders, config save/load remain exactly as original
--- Only key differences shown below
+local grid = Instance.new("UIGridLayout", cube)
+grid.CellSize = UDim2.new(0, 50, 0, 50)
+grid.CellPadding = UDim2.new(0, 8, 0, 8)
 
-local toggleSliderOrder = 0
-local scriptActive = true
--- ... (all UI builder functions same as original)
-
--- ─── CONFIG SYSTEM ─────────────────────────────
-local ConfigFileName = "DarkerHub_v2.json"
-local function SaveConfig()
-    if not writefile then return end
-    local config = {
-        version = CONFIG_VERSION,
-        features = Features,
-        values = Values,
-        autosteal = AutoStealValues,
-        keybinds = {
-            SpeedBoost = Keybinds.SpeedBoost.Name,
-            AntiRagdoll = Keybinds.AntiRagdoll.Name,
-            InfinityJump = Keybinds.InfinityJump.Name,
-            Helicopter = Keybinds.Helicopter.Name,
-            FrontLock = Keybinds.FrontLock.Name,
-        }
-    }
-    writefile(ConfigFileName, HttpService:JSONEncode(config))
+local function createGalaxyBtn(text, color)
+    local b = Instance.new("TextButton", cube)
+    b.Text = text
+    b.BackgroundColor3 = Color3.fromRGB(10, 10, 25)
+    b.TextColor3 = color
+    b.Font = Enum.Font.GothamMedium
+    b.TextSize = 9
+    
+    local corner = Instance.new("UICorner", b)
+    corner.CornerRadius = UDim.new(0, 10)
+    
+    local stroke = Instance.new("UIStroke", b)
+    stroke.Thickness = 2
+    stroke.Color = color
+    
+    task.spawn(function()
+        while task.wait(0.1) do
+            stroke.Transparency = 0.3 + (math.sin(tick() * 3) * 0.3)
+        end
+    end)
+    return b
 end
 
-local function LoadConfig()
-    if not isfile(ConfigFileName) then return end
-    local success, data = pcall(HttpService.JSONDecode, HttpService, readfile(ConfigFileName))
-    if success and data.version == CONFIG_VERSION then
-        for k, v in pairs(data.features or {}) do Features[k] = v end
-        for k, v in pairs(data.values or {}) do Values[k] = v end
-        for k, v in pairs(data.autosteal or {}) do AutoStealValues[k] = v end
-    end
-end
-LoadConfig()
+local lockB  = createGalaxyBtn("LOCK", Color3.fromRGB(180, 0, 255))
+local rightB = createGalaxyBtn("RIGHT", Color3.fromRGB(0, 255, 255))
+local leftB  = createGalaxyBtn("LEFT", Color3.fromRGB(0, 150, 255))
+local dropB  = createGalaxyBtn("DROP", Color3.fromRGB(255, 0, 150))
 
--- ─── FEATURE TOGGLES (OPTIMIZED) ───────────────
-local function toggleFeature(name, startFunc, stopFunc)
-    Features[name] = not Features[name]
-    if Features[name] then startFunc() else stopFunc() end
-    SaveConfig()
-end
-
--- ─── PATH STEAL TOGGLES ───────────────────────
-local function toggleAutoRight()
-    if Features.AutoRight then
-        pathActive = false
-        Features.AutoRight = false
-    else
-        if Features.AutoLeft then Features.AutoLeft = false end
-        Features.AutoRight = true
-        pathActive = true
-        task.spawn(runStealPath, stealPath1)
-    end
-    SaveConfig()
-end
-
-local function toggleAutoLeft()
-    if Features.AutoLeft then
-        pathActive = false
-        Features.AutoLeft = false
-    else
-        if Features.AutoRight then Features.AutoRight = false end
-        Features.AutoLeft = true
-        pathActive = true
-        task.spawn(runStealPath, stealPath2)
-    end
-    SaveConfig()
-end
-
--- ─── MAIN INITIALIZATION ──────────────────────
-Player.CharacterAdded:Connect(function()
-    task.wait(0.5)
-    -- Restart active features
-    if Features.SpeedBoost or Features.ThiefSpeed then startMasterHeartbeat() end
-    if Features.InfinityJump then startMasterHeartbeat() end
-    if Features.FrontLock then startFrontLock() end
-    if Features.Helicopter then startHelicopter() end
+-- ─── 🔗 CONNECTIONS ─────────────────────────────
+lockB.MouseButton1Click:Connect(function()
+    Features.FrontLock = not Features.FrontLock
+    lockB.BackgroundColor3 = Features.FrontLock and Color3.fromRGB(180, 0, 255) or Color3.fromRGB(10, 10, 25)
+    lockB.TextColor3 = Features.FrontLock and Color3.new(1,1,1) or Color3.fromRGB(180, 0, 255)
 end)
 
--- Start core systems
-startMasterHeartbeat()
-
--- AutoSteal heartbeat
-local autoStealConn = RunService.Heartbeat:Connect(function()
-    if Features.AutoSteal and not isStealing then
-        local prompt, _, name = findNearestPrompt()
-        if prompt then executeSteal(prompt, name) end
-    end
+rightB.MouseButton1Click:Connect(function()
+    if pathActive then pathActive = false return end
+    task.spawn(function() runStealPath(stealPath2) end)
 end)
 
-print("[DarkerHub v2] Production build loaded - Rivals Pentest Ready")
-print("Hold SPACE to fly | Anti-detection active | Predictive FrontLock enabled")
+leftB.MouseButton1Click:Connect(function()
+    if pathActive then pathActive = false return end
+    task.spawn(function() runStealPath(stealPath1) end)
+end)
+
+dropB.MouseButton1Click:Connect(runDrop)
