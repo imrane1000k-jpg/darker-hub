@@ -1,5 +1,5 @@
--- Darker Hub | Ultimate Edition + Mobile Grid & Speed Counter
--- UPDATED: Mobile 2x2 Cube Layout (Drop/Lock Top - Auto L/R Bottom), Personal Speed Counter added above head. Fixed PC Keybinds.
+-- Darker Hub | Ultimate Edition + Mobile Grid & Pure Text Speed Counter
+-- UPDATED: Removed Hit Circle UI, merged Auto-Attack into Front Lock. Speed Counter is pure text. Mobile buttons on left.
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -53,7 +53,7 @@ local HeaderH = 45 * guiScale
 local Features = {
     SpeedBoost = false, AntiRagdoll = false, InfinityJump = false, Float = false,
     Helicopter = false, ThiefSpeed = false, AutoSteal = false, SpamBat = false,
-    HitCircle = false, GalaxyMode = false, Unwalk = false, Optimizer = false,
+    GalaxyMode = false, Unwalk = false, Optimizer = false,
     XRay = false, EnemyTimer = false, AutoRight = false, AutoLeft = false, FrontLock = false
 }
 
@@ -69,13 +69,6 @@ local AutoStealValues = { STEAL_RADIUS = 8, STEAL_DURATION = 0.2, PATH_TURN_WAIT
 -- FRONT LOCK CONFIGURATION
 local FrontLockConfig = { SPEED = 59, FRONT_DISTANCE = 3.5, STOP_DISTANCE = 1.5, DETECTION_RADIUS = 400 }
 
--- TP Coordinates & Routes
-local TP_RIGHT_POS = Vector3.new(-484, -4, 22)
-local TP_LEFT_POS = Vector3.new(-483, -4, 97)
-local detectA = Vector3.new(-466.51,-7.81,113.79)
-local detectB = Vector3.new(-466.43,-7.89,6.55)
-local routeA = { Vector3.new(-432.87,-7.98,54.04), Vector3.new(-461.95,-7.98,97.28), Vector3.new(-483.72,-6.08,94.77) }
-local routeB = { Vector3.new(-447.12,-7.98,61.52), Vector3.new(-463.56,-7.98,25.78), Vector3.new(-486.73,-5.51,23.99) }
 local chosenRoute = nil
 local dropRunning = false
 
@@ -84,8 +77,6 @@ task.spawn(function()
         local char = Player.Character
         if char and char:FindFirstChild("HumanoidRootPart") then
             local pos = char.HumanoidRootPart.Position
-            if (pos - detectA).Magnitude < 5 then chosenRoute = routeB
-            elseif (pos - detectB).Magnitude < 5 then chosenRoute = routeA end
         end
     end
 end)
@@ -100,8 +91,8 @@ local function SaveConfig()
         Optimizer = Features.Optimizer, SpeedBoost = Features.SpeedBoost, AntiRagdoll = Features.AntiRagdoll,
         InfinityJump = Features.InfinityJump, Float = Features.Float, Helicopter = Features.Helicopter,
         ThiefSpeed = Features.ThiefSpeed, AutoSteal = Features.AutoSteal, SpamBat = Features.SpamBat,
-        HitCircle = Features.HitCircle, GalaxyMode = Features.GalaxyMode, Unwalk = Features.Unwalk,
-        XRay = Features.XRay, EnemyTimer = Features.EnemyTimer, FrontLock = Features.FrontLock,
+        GalaxyMode = Features.GalaxyMode, Unwalk = Features.Unwalk, XRay = Features.XRay, 
+        EnemyTimer = Features.EnemyTimer, FrontLock = Features.FrontLock,
         BoostSpeed = Values.BoostSpeed, SpinSpeed = Values.SpinSpeed, GalaxyGravityPercent = Values.GalaxyGravityPercent,
         StealingSpeedValue = Values.StealingSpeedValue, HOP_POWER = Values.HOP_POWER, HOP_COOLDOWN = Values.HOP_COOLDOWN,
         DEFAULT_GRAVITY = Values.DEFAULT_GRAVITY, STEAL_RADIUS = AutoStealValues.STEAL_RADIUS,
@@ -164,7 +155,7 @@ local function performDrop()
     dropRunning = false
 end
 
--- ─── ✨ PERSONAL SPEED COUNTER (ABOVE HEAD) ──────────
+-- ─── ✨ PERSONAL SPEED COUNTER (PURE TEXT, NO BG) ──────────
 local speedCounterGui = nil
 local function createSpeedCounter(char)
     if not char then return end
@@ -178,26 +169,16 @@ local function createSpeedCounter(char)
     speedCounterGui.StudsOffset = Vector3.new(0, 3.5, 0) -- Above head
     speedCounterGui.AlwaysOnTop = true
     
-    local bg = Instance.new("Frame", speedCounterGui)
-    bg.Size = UDim2.new(1, 0, 1, 0)
-    bg.BackgroundColor3 = COLOR_BG_MAIN
-    bg.BackgroundTransparency = 0.2
-    bg.BorderSizePixel = 0
-    Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 10)
-    
-    local s = Instance.new("UIStroke", bg)
-    s.Color = COLOR_GLOW
-    s.Thickness = 1.5
-    s.Transparency = 0.4
-    
-    local txt = Instance.new("TextLabel", bg)
+    -- Pure text only, absolutely no background frame
+    local txt = Instance.new("TextLabel", speedCounterGui)
     txt.Size = UDim2.new(1, 0, 1, 0)
     txt.BackgroundTransparency = 1
     txt.Text = "0.0"
     txt.TextColor3 = COLOR_GLOW
     txt.Font = Enum.Font.GothamBlack
-    txt.TextSize = 18
-    txt.TextStrokeTransparency = 0.5
+    txt.TextSize = 20
+    txt.TextStrokeTransparency = 0.3
+    txt.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
     
     speedCounterGui.Parent = hrp
 end
@@ -206,13 +187,10 @@ RunService.Heartbeat:Connect(function()
     if speedCounterGui and speedCounterGui.Parent then
         local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
         if hrp then
-            -- Calculate X/Z speed (ignoring falling/jumping velocity for accurate walkspeed display)
             local vel = hrp.Velocity
             local speed = Vector3.new(vel.X, 0, vel.Z).Magnitude
             local label = speedCounterGui:FindFirstChildWhichIsA("TextLabel")
-            if label then
-                label.Text = string.format("%.1f", speed)
-            end
+            if label then label.Text = string.format("%.1f", speed) end
         end
     end
 end)
@@ -392,10 +370,6 @@ listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 local Connections = {}
 local rainbowElements = {}
 local scriptActive = true
-local VisualSetters = {}
-local SliderSetters = {}
-local waitingForKeybind = nil
-local KeyBindBtns = {}
 local spaceHeld = false
 
 local function getMovementDirection()
@@ -668,57 +642,6 @@ local function stopAutoSteal()
     isStealing = false; resetProgressBar()
 end
 
--- Hit Circle
-local Cebo = { Conn = nil, Circle = nil, Align = nil, Attach = nil }
-local function startMeleeAimbot()
-    local char = Player.Character or Player.CharacterAdded:Wait()
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    Cebo.Attach = Instance.new("Attachment", hrp)
-    Cebo.Align = Instance.new("AlignOrientation", hrp)
-    Cebo.Align.Attachment0 = Cebo.Attach
-    Cebo.Align.Mode = Enum.OrientationAlignmentMode.OneAttachment
-    Cebo.Align.RigidityEnabled = true
-    Cebo.Circle = Instance.new("Part")
-    Cebo.Circle.Shape = Enum.PartType.Cylinder
-    Cebo.Circle.Material = Enum.Material.Neon
-    Cebo.Circle.Size = Vector3.new(0.05, 8.0, 8.0)
-    Cebo.Circle.Color = COLOR_ACCENT
-    Cebo.Circle.CanCollide = false
-    Cebo.Circle.Massless = true
-    Cebo.Circle.Parent = workspace
-    local weld = Instance.new("Weld")
-    weld.Part0 = hrp; weld.Part1 = Cebo.Circle
-    weld.C0 = CFrame.new(0, -1, 0) * CFrame.Angles(0, 0, math.rad(90))
-    weld.Parent = Cebo.Circle
-    Cebo.Conn = RunService.RenderStepped:Connect(function()
-        if not scriptActive then return end
-        local target, dmin = nil, 7.25
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= Player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                local d = (p.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
-                if d <= dmin then target, dmin = p.Character.HumanoidRootPart, d end
-            end
-        end
-        if target then
-            char.Humanoid.AutoRotate = false
-            Cebo.Align.Enabled = true
-            Cebo.Align.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(target.Position.X, hrp.Position.Y, target.Position.Z))
-            local t = char:FindFirstChild("Bat") or char:FindFirstChild("Medusa")
-            if t then t:Activate() end
-        else
-            Cebo.Align.Enabled = false
-            if char:FindFirstChild("Humanoid") then char.Humanoid.AutoRotate = true end
-        end
-    end)
-end
-local function stopMeleeAimbot()
-    if Cebo.Conn then Cebo.Conn:Disconnect(); Cebo.Conn = nil end
-    if Cebo.Circle then Cebo.Circle:Destroy(); Cebo.Circle = nil end
-    if Cebo.Align then Cebo.Align:Destroy(); Cebo.Align = nil end
-    if Cebo.Attach then Cebo.Attach:Destroy(); Cebo.Attach = nil end
-    if Player.Character and Player.Character:FindFirstChild("Humanoid") then Player.Character.Humanoid.AutoRotate = true end
-end
-
 -- Spam Bat
 local lastBatSwing = 0
 local SlapList = { "Bat", "Slap", "Iron Slap", "Gold Slap", "Diamond Slap", "Emerald Slap", "Ruby Slap", "Dark Matter Slap", "Flame Slap", "Nuclear Slap", "Galaxy Slap", "Glitched Slap" }
@@ -976,7 +899,7 @@ local function updateEnemyTimers()
 end
 RunService.Heartbeat:Connect(updateEnemyTimers)
 
--- ================= FRONT LOCK LOGIC =================
+-- ================= FRONT LOCK LOGIC + INTEGRATED AUTO ATTACK =================
 local frontLockTarget = nil
 local frontLockOriginalSpeed = 16
 local function findNearestPlayerForFrontLock()
@@ -996,7 +919,9 @@ local function findNearestPlayerForFrontLock()
     end
     return nearestPlayer
 end
-local function startFrontLock() frontLockOriginalSpeed = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid") and Player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed or 16 end
+local function startFrontLock() 
+    frontLockOriginalSpeed = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid") and Player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed or 16 
+end
 local function stopFrontLock()
     local char = Player.Character
     if char then
@@ -1028,8 +953,17 @@ RunService.RenderStepped:Connect(function()
             if horizontalDir.Magnitude == 0 then horizontalDir = Vector3.new(1,0,0) end
             local verticalVel = 0
             if math.abs(heightDiff) > 2 then verticalVel = (heightDiff > 0 and FrontLockConfig.SPEED * 0.8) or (-FrontLockConfig.SPEED * 0.8) end
-            if distance > FrontLockConfig.STOP_DISTANCE then root.Velocity = Vector3.new(horizontalDir.X * FrontLockConfig.SPEED, verticalVel, horizontalDir.Z * FrontLockConfig.SPEED); hum:MoveTo(spotInFront)
-            else root.Velocity = Vector3.new(0, 0, 0); hum:MoveTo(myPos) end
+            if distance > FrontLockConfig.STOP_DISTANCE then 
+                root.Velocity = Vector3.new(horizontalDir.X * FrontLockConfig.SPEED, verticalVel, horizontalDir.Z * FrontLockConfig.SPEED); 
+                hum:MoveTo(spotInFront)
+            else 
+                root.Velocity = Vector3.new(0, 0, 0); hum:MoveTo(myPos) 
+            end
+            
+            -- INTEGRATED AUTO ATTACK (Replaces Hit Circle)
+            char.Humanoid.AutoRotate = false
+            local t = char:FindFirstChild("Bat") or char:FindFirstChild("Medusa")
+            if t then pcall(function() t:Activate() end) end
         else frontLockTarget = nil end
     else frontLockTarget = nil end
 end)
@@ -1274,12 +1208,6 @@ do
 end
 
 do
-    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Hit Circle", "HitCircle", false, nil, false)
-    btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); if on then startMeleeAimbot() else stopMeleeAimbot() end; SaveConfig() end)
-    if Features.HitCircle then setVisual(true); startMeleeAimbot() end
-end
-
-do
     local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Spam Bat", "SpamBat", false, nil, false)
     btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.SpamBat = on; if on then startSpamBat() else stopSpamBat() end; SaveConfig() end)
     if Features.SpamBat then setVisual(true); startSpamBat() end
@@ -1341,7 +1269,7 @@ end
 createSlider(scrollFrame, "Path Turn Speed (Wait)", 0.0, 1.0, "PATH_TURN_WAIT", function(v) AutoStealValues.PATH_TURN_WAIT = v end)
 
 do
-    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Front Lock [" .. Keybinds.FrontLock.Name .. "]", "FrontLock", true, Keybinds.FrontLock, false)
+    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Front Lock + Auto Hit [" .. Keybinds.FrontLock.Name .. "]", "FrontLock", true, Keybinds.FrontLock, false)
     btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.FrontLock = on; if on then startFrontLock() else stopFrontLock() end; SaveConfig() end)
     if Features.FrontLock then setVisual(true); startFrontLock() end
 end
@@ -1402,7 +1330,7 @@ end)
 
 -- FIXED CLOSE BUTTON LOGIC
 closeBtn.MouseButton1Click:Connect(function()
-    scriptActive = false; stopSpeedBoost(); stopAntiRagdoll(); stopFloat(); stopHelicopter(); stopSpeedWhileStealing(); stopAutoSteal(); stopMeleeAimbot(); stopSpamBat(); stopGalaxy(); stopUnwalk(); disableOptimizer(); stopStealPath(); stopFrontLock()
+    scriptActive = false; stopSpeedBoost(); stopAntiRagdoll(); stopFloat(); stopHelicopter(); stopSpeedWhileStealing(); stopAutoSteal(); stopSpamBat(); stopGalaxy(); stopUnwalk(); disableOptimizer(); stopStealPath(); stopFrontLock()
     for p, data in pairs(enemyTimers) do if data.Connection then data.Connection:Disconnect() end; if data.Gui then data.Gui:Destroy() end end
     enemyTimers = {}; sg:Destroy()
 end)
@@ -1411,7 +1339,7 @@ hideBtn.MouseButton1Click:Connect(function() TweenService:Create(main, TweenInfo
 header.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then if main.Size.Y.Offset <= HeaderH + 5 then TweenService:Create(main, TweenInfo.new(0.2), {Size = UDim2.new(0, W, 0, H)}):Play() end end end)
 
 
--- ─── [UPDATED] MOBILE 2x2 CUBE GRID BUTTONS ─────────────────────────────
+-- ─── [UPDATED] MOBILE 2x2 CUBE GRID BUTTONS (LEFT SIDE) ─────────────────────────────
 if isMobile then
     local mobileFrame = Instance.new("Frame")
     mobileFrame.Name = "MobileCubeGrid"
@@ -1420,7 +1348,7 @@ if isMobile then
     local totalSize = (btnSize * 2) + (pad * 3)
     
     mobileFrame.Size = UDim2.new(0, totalSize, 0, totalSize)
-    mobileFrame.Position = UDim2.new(0, 12 * guiScale, 0.5, -totalSize / 2)
+    mobileFrame.Position = UDim2.new(0, 12 * guiScale, 0.5, -totalSize / 2) -- Positioned securely to the Left
     mobileFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 30)
     mobileFrame.BackgroundTransparency = 0.15
     mobileFrame.Visible = true
