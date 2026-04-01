@@ -1,5 +1,5 @@
 -- Darker Hub | Ultimate Edition + Mobile Grid & Pure Text Speed Counter
--- UPDATED: Removed Hit Circle UI, merged Auto-Attack into Front Lock. Speed Counter is pure text. Mobile buttons on left.
+-- FIXED: True Hit Circle System (Circle Visual + AlignOrientation Snap + Auto Swing) fully merged into Front Lock.
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -71,15 +71,6 @@ local FrontLockConfig = { SPEED = 59, FRONT_DISTANCE = 3.5, STOP_DISTANCE = 1.5,
 
 local chosenRoute = nil
 local dropRunning = false
-
-task.spawn(function()
-    while task.wait(0.1) do
-        local char = Player.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            local pos = char.HumanoidRootPart.Position
-        end
-    end
-end)
 
 local SliderReferences = {}
 local ConfigFileName = "DarkerHub_Config.json"
@@ -166,10 +157,9 @@ local function createSpeedCounter(char)
     speedCounterGui.Name = "MySpeedCounter"
     speedCounterGui.Adornee = hrp
     speedCounterGui.Size = UDim2.new(0, 100, 0, 40)
-    speedCounterGui.StudsOffset = Vector3.new(0, 3.5, 0) -- Above head
+    speedCounterGui.StudsOffset = Vector3.new(0, 3.5, 0)
     speedCounterGui.AlwaysOnTop = true
     
-    -- Pure text only, absolutely no background frame
     local txt = Instance.new("TextLabel", speedCounterGui)
     txt.Size = UDim2.new(1, 0, 1, 0)
     txt.BackgroundTransparency = 1
@@ -549,6 +539,12 @@ local function stopSpeedWhileStealing() if speedWhileStealingConn then speedWhil
 -- Advanced Auto Grab
 local isStealing = false
 local StealData = {}
+local pathActive = false
+local lastFlatVel = Vector3.zero
+local PATH_VELOCITY_SPEED, PATH_SECOND_SPEED = 57, 29
+local PATH_BASE_STOP, PATH_MIN_STOP = 1.35, 0.65
+local PATH_NEXT_POINT_BIAS, PATH_SMOOTH_FACTOR = 0.45, 0.12
+
 local function isMyPlotByName(plotName)
     local plots = workspace:FindFirstChild("Plots"); if not plots then return false end
     local plot = plots:FindFirstChild(plotName); if not plot then return false end
@@ -760,19 +756,12 @@ local function disableOptimizer()
 end
 
 -- Path Steal Logic
-local pathActive = false
-local lastFlatVel = Vector3.zero
-local PATH_VELOCITY_SPEED, PATH_SECOND_SPEED = 57, 29
-local PATH_BASE_STOP, PATH_MIN_STOP = 1.35, 0.65
-local PATH_NEXT_POINT_BIAS, PATH_SMOOTH_FACTOR = 0.45, 0.12
-
 local stealPath1 = {
     {pos = Vector3.new(-476, -6, 27)},
     {pos = Vector3.new(-483, -4, 27)},
     {pos = Vector3.new(-476, -6, 27)},
     {pos = Vector3.new(-474, -6, 94)},
 }
-
 local stealPath2 = {
     {pos = Vector3.new(-476, -6, 93)},
     {pos = Vector3.new(-483, -4, 95)},
@@ -899,9 +888,11 @@ local function updateEnemyTimers()
 end
 RunService.Heartbeat:Connect(updateEnemyTimers)
 
--- ================= FRONT LOCK LOGIC + INTEGRATED AUTO ATTACK =================
+-- ================= TRUE FRONT LOCK + HIT CIRCLE SYSTEM =================
+local Cebo = { Circle = nil, Align = nil, Attach = nil }
 local frontLockTarget = nil
 local frontLockOriginalSpeed = 16
+
 local function findNearestPlayerForFrontLock()
     local nearestDist = math.huge; local nearestPlayer = nil
     local char = Player.Character; if not char then return nil end
@@ -919,18 +910,55 @@ local function findNearestPlayerForFrontLock()
     end
     return nearestPlayer
 end
-local function startFrontLock() 
-    frontLockOriginalSpeed = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid") and Player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed or 16 
+
+local function startFrontLock()
+    frontLockOriginalSpeed = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid") and Player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed or 16
+    local c = Player.Character
+    if c then
+        local hrp = c:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            -- Clean up old parts
+            if Cebo.Attach then Cebo.Attach:Destroy() end
+            if Cebo.Align then Cebo.Align:Destroy() end
+            if Cebo.Circle then Cebo.Circle:Destroy() end
+            
+            -- Create Hit Circle Components
+            Cebo.Attach = Instance.new("Attachment", hrp)
+            Cebo.Align = Instance.new("AlignOrientation", hrp)
+            Cebo.Align.Attachment0 = Cebo.Attach
+            Cebo.Align.Mode = Enum.OrientationAlignmentMode.OneAttachment
+            Cebo.Align.RigidityEnabled = true
+            
+            Cebo.Circle = Instance.new("Part")
+            Cebo.Circle.Shape = Enum.PartType.Cylinder
+            Cebo.Circle.Material = Enum.Material.Neon
+            Cebo.Circle.Size = Vector3.new(0.05, 8.0, 8.0)
+            Cebo.Circle.Color = COLOR_ACCENT
+            Cebo.Circle.CanCollide = false
+            Cebo.Circle.Massless = true
+            Cebo.Circle.Parent = workspace
+            
+            local weld = Instance.new("Weld")
+            weld.Part0 = hrp; weld.Part1 = Cebo.Circle
+            weld.C0 = CFrame.new(0, -1, 0) * CFrame.Angles(0, 0, math.rad(90))
+            weld.Parent = Cebo.Circle
+        end
+    end
 end
+
 local function stopFrontLock()
     local char = Player.Character
     if char then
         local hum = char:FindFirstChildOfClass("Humanoid")
         local root = char:FindFirstChild("HumanoidRootPart")
-        if hum then hum.WalkSpeed = frontLockOriginalSpeed end
+        if hum then hum.WalkSpeed = frontLockOriginalSpeed; hum.AutoRotate = true end
         if root then root.Velocity = Vector3.new(0, 0, 0); hum:MoveTo(root.Position) end
     end
     frontLockTarget = nil
+    -- Destroy Hit Circle Components
+    if Cebo.Circle then Cebo.Circle:Destroy(); Cebo.Circle = nil end
+    if Cebo.Align then Cebo.Align:Destroy(); Cebo.Align = nil end
+    if Cebo.Attach then Cebo.Attach:Destroy(); Cebo.Attach = nil end
 end
 
 RunService.RenderStepped:Connect(function()
@@ -940,7 +968,11 @@ RunService.RenderStepped:Connect(function()
     local root = char:FindFirstChild("HumanoidRootPart")
     if not hum or not root then return end
     if hum.WalkSpeed ~= FrontLockConfig.SPEED then hum.WalkSpeed = FrontLockConfig.SPEED end
-    if not frontLockTarget or not frontLockTarget.Character or not frontLockTarget.Character:FindFirstChild("HumanoidRootPart") then frontLockTarget = findNearestPlayerForFrontLock() end
+    
+    if not frontLockTarget or not frontLockTarget.Character or not frontLockTarget.Character:FindFirstChild("HumanoidRootPart") then 
+        frontLockTarget = findNearestPlayerForFrontLock() 
+    end
+    
     if frontLockTarget and frontLockTarget.Character then
         local targetRoot = frontLockTarget.Character:FindFirstChild("HumanoidRootPart")
         if targetRoot then
@@ -953,6 +985,7 @@ RunService.RenderStepped:Connect(function()
             if horizontalDir.Magnitude == 0 then horizontalDir = Vector3.new(1,0,0) end
             local verticalVel = 0
             if math.abs(heightDiff) > 2 then verticalVel = (heightDiff > 0 and FrontLockConfig.SPEED * 0.8) or (-FrontLockConfig.SPEED * 0.8) end
+            
             if distance > FrontLockConfig.STOP_DISTANCE then 
                 root.Velocity = Vector3.new(horizontalDir.X * FrontLockConfig.SPEED, verticalVel, horizontalDir.Z * FrontLockConfig.SPEED); 
                 hum:MoveTo(spotInFront)
@@ -960,14 +993,29 @@ RunService.RenderStepped:Connect(function()
                 root.Velocity = Vector3.new(0, 0, 0); hum:MoveTo(myPos) 
             end
             
-            -- INTEGRATED AUTO ATTACK (Replaces Hit Circle)
+            -- TRUE HIT CIRCLE SYSTEM (Align + Auto Swing)
             char.Humanoid.AutoRotate = false
+            if Cebo.Align then
+                Cebo.Align.Enabled = true
+                Cebo.Align.CFrame = CFrame.lookAt(myPos, Vector3.new(targetPos.X, myPos.Y, targetPos.Z))
+            end
+            
             local t = char:FindFirstChild("Bat") or char:FindFirstChild("Medusa")
             if t then pcall(function() t:Activate() end) end
         else frontLockTarget = nil end
-    else frontLockTarget = nil end
+    else 
+        frontLockTarget = nil
+        if Cebo.Align then Cebo.Align.Enabled = false end
+        if char:FindFirstChild("Humanoid") then char.Humanoid.AutoRotate = true end
+    end
 end)
-Player.CharacterAdded:Connect(function(newChar) if Features.FrontLock then task.wait(0.05); local hum = newChar:FindFirstChildOfClass("Humanoid"); if hum then hum.WalkSpeed = FrontLockConfig.SPEED end; frontLockTarget = nil end end)
+
+Player.CharacterAdded:Connect(function(newChar) 
+    if Features.FrontLock then 
+        task.wait(0.05)
+        startFrontLock()
+    end 
+end)
 
 -- UI Builders
 local toggleSliderOrder = 0
@@ -1161,7 +1209,7 @@ local function createSlider(parent, labelText, minVal, maxVal, valueKey, onChang
     return container
 end
 
--- Features Implementation
+-- Features UI Implementation
 do
     local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Speed Boost [" .. Keybinds.SpeedBoost.Name .. "]", "SpeedBoost", true, Keybinds.SpeedBoost, false)
     btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.SpeedBoost = on; if on then startSpeedBoost() else stopSpeedBoost() end; SaveConfig() end)
@@ -1269,7 +1317,7 @@ end
 createSlider(scrollFrame, "Path Turn Speed (Wait)", 0.0, 1.0, "PATH_TURN_WAIT", function(v) AutoStealValues.PATH_TURN_WAIT = v end)
 
 do
-    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Front Lock + Auto Hit [" .. Keybinds.FrontLock.Name .. "]", "FrontLock", true, Keybinds.FrontLock, false)
+    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Front Lock + Circle [" .. Keybinds.FrontLock.Name .. "]", "FrontLock", true, Keybinds.FrontLock, false)
     btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.FrontLock = on; if on then startFrontLock() else stopFrontLock() end; SaveConfig() end)
     if Features.FrontLock then setVisual(true); startFrontLock() end
 end
