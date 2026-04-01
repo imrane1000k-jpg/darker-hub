@@ -1,5 +1,5 @@
--- Darker Hub | Ultimate Edition + Front Lock Integrated
--- UPDATED: Mobile 2x2 Cube Grid added for Drop, Auto Left, Auto Right, and Front Lock.
+-- Darker Hub | Ultimate Edition + Mobile Grid & Speed Counter
+-- UPDATED: Mobile 2x2 Cube Layout (Drop/Lock Top - Auto L/R Bottom), Personal Speed Counter added above head. Fixed PC Keybinds.
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -163,6 +163,65 @@ local function performDrop()
     hrp.CFrame = startCF
     dropRunning = false
 end
+
+-- ─── ✨ PERSONAL SPEED COUNTER (ABOVE HEAD) ──────────
+local speedCounterGui = nil
+local function createSpeedCounter(char)
+    if not char then return end
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    if speedCounterGui then speedCounterGui:Destroy() end
+    
+    speedCounterGui = Instance.new("BillboardGui")
+    speedCounterGui.Name = "MySpeedCounter"
+    speedCounterGui.Adornee = hrp
+    speedCounterGui.Size = UDim2.new(0, 100, 0, 40)
+    speedCounterGui.StudsOffset = Vector3.new(0, 3.5, 0) -- Above head
+    speedCounterGui.AlwaysOnTop = true
+    
+    local bg = Instance.new("Frame", speedCounterGui)
+    bg.Size = UDim2.new(1, 0, 1, 0)
+    bg.BackgroundColor3 = COLOR_BG_MAIN
+    bg.BackgroundTransparency = 0.2
+    bg.BorderSizePixel = 0
+    Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 10)
+    
+    local s = Instance.new("UIStroke", bg)
+    s.Color = COLOR_GLOW
+    s.Thickness = 1.5
+    s.Transparency = 0.4
+    
+    local txt = Instance.new("TextLabel", bg)
+    txt.Size = UDim2.new(1, 0, 1, 0)
+    txt.BackgroundTransparency = 1
+    txt.Text = "0.0"
+    txt.TextColor3 = COLOR_GLOW
+    txt.Font = Enum.Font.GothamBlack
+    txt.TextSize = 18
+    txt.TextStrokeTransparency = 0.5
+    
+    speedCounterGui.Parent = hrp
+end
+
+RunService.Heartbeat:Connect(function()
+    if speedCounterGui and speedCounterGui.Parent then
+        local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            -- Calculate X/Z speed (ignoring falling/jumping velocity for accurate walkspeed display)
+            local vel = hrp.Velocity
+            local speed = Vector3.new(vel.X, 0, vel.Z).Magnitude
+            local label = speedCounterGui:FindFirstChildWhichIsA("TextLabel")
+            if label then
+                label.Text = string.format("%.1f", speed)
+            end
+        end
+    end
+end)
+
+Player.CharacterAdded:Connect(function(char)
+    task.wait(1)
+    createSpeedCounter(char)
+end)
+if Player.Character then createSpeedCounter(Player.Character) end
 
 -- ─── ✨ PROGRESS BAR (MOVED TO TOP) ──────────
 local ProgressBarFill, ProgressLabel, ProgressPercentLabel, progressConn, stealStartTime
@@ -1299,6 +1358,7 @@ task.spawn(function()
     end
 end)
 
+-- ─── ROBUST KEYBIND HANDLER ───────────────────────────────
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.KeyCode == Keybinds.ToggleMenu then
@@ -1313,21 +1373,29 @@ UserInputService.InputBegan:Connect(function(input, gpe)
         if not noSave then SaveConfig() end
     end
 
-    if _G["GetKeybind_SpeedBoost"] and input.KeyCode == _G["GetKeybind_SpeedBoost"]() then local s = not Features.SpeedBoost; syncToggle("SpeedBoost", s, false); if s then startSpeedBoost() else stopSpeedBoost() end; return end
-    if _G["GetKeybind_AntiRagdoll"] and input.KeyCode == _G["GetKeybind_AntiRagdoll"]() then local s = not Features.AntiRagdoll; syncToggle("AntiRagdoll", s, false); if s then startAntiRagdoll() else stopAntiRagdoll() end; return end
-    if _G["GetKeybind_InfinityJump"] and input.KeyCode == _G["GetKeybind_InfinityJump"]() then syncToggle("InfinityJump", not Features.InfinityJump, false); return end
-    if _G["GetKeybind_Helicopter"] and input.KeyCode == _G["GetKeybind_Helicopter"]() then local s = not Features.Helicopter; syncToggle("Helicopter", s, false); if s then startHelicopter() else stopHelicopter() end; return end
-    if _G["GetKeybind_AutoRight"] and input.KeyCode == _G["GetKeybind_AutoRight"]() then
+    if input.KeyCode == Keybinds.SpeedBoost then 
+        local s = not Features.SpeedBoost; syncToggle("SpeedBoost", s, false); if s then startSpeedBoost() else stopSpeedBoost() end; return 
+    end
+    if input.KeyCode == Keybinds.AntiRagdoll then 
+        local s = not Features.AntiRagdoll; syncToggle("AntiRagdoll", s, false); if s then startAntiRagdoll() else stopAntiRagdoll() end; return 
+    end
+    if input.KeyCode == Keybinds.InfinityJump then 
+        syncToggle("InfinityJump", not Features.InfinityJump, false); return 
+    end
+    if input.KeyCode == Keybinds.Helicopter then 
+        local s = not Features.Helicopter; syncToggle("Helicopter", s, false); if s then startHelicopter() else stopHelicopter() end; return 
+    end
+    if input.KeyCode == Keybinds.AutoRightSteal then
         local s = not Features.AutoRight
         if s then if Features.AutoLeft then Features.AutoLeft = false; if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end end end
         syncToggle("AutoRight", s, true); if s then stopStealPath(); startStealPath(stealPath1) else stopStealPath() end; return
     end
-    if _G["GetKeybind_AutoLeft"] and input.KeyCode == _G["GetKeybind_AutoLeft"]() then
+    if input.KeyCode == Keybinds.AutoLeftSteal then
         local s = not Features.AutoLeft
         if s then if Features.AutoRight then Features.AutoRight = false; if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end end end
         syncToggle("AutoLeft", s, true); if s then stopStealPath(); startStealPath(stealPath2) else stopStealPath() end; return
     end
-    if _G["GetKeybind_FrontLock"] and input.KeyCode == _G["GetKeybind_FrontLock"]() then
+    if input.KeyCode == Keybinds.FrontLock then
         local s = not Features.FrontLock; syncToggle("FrontLock", s, false); if s then startFrontLock() else stopFrontLock() end; return
     end
 end)
@@ -1343,11 +1411,10 @@ hideBtn.MouseButton1Click:Connect(function() TweenService:Create(main, TweenInfo
 header.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then if main.Size.Y.Offset <= HeaderH + 5 then TweenService:Create(main, TweenInfo.new(0.2), {Size = UDim2.new(0, W, 0, H)}):Play() end end end)
 
 
--- ─── [NEW] MOBILE 2x2 CUBE GRID BUTTONS ─────────────────────────────
+-- ─── [UPDATED] MOBILE 2x2 CUBE GRID BUTTONS ─────────────────────────────
 if isMobile then
     local mobileFrame = Instance.new("Frame")
     mobileFrame.Name = "MobileCubeGrid"
-    -- Size adjusts based on a 2x2 grid of buttons + padding
     local btnSize = 55 * guiScale
     local pad = 6 * guiScale
     local totalSize = (btnSize * 2) + (pad * 3)
@@ -1366,7 +1433,6 @@ if isMobile then
     boxStroke.Transparency = 0.3
     mobileFrame.Parent = sg
 
-    -- Grid Layout
     local gridLayout = Instance.new("UIGridLayout", mobileFrame)
     gridLayout.CellSize = UDim2.new(0, btnSize, 0, btnSize)
     gridLayout.CellPadding = UDim2.new(0, pad, 0, pad)
@@ -1395,27 +1461,22 @@ if isMobile then
                 local newState = not Features[featureKey]
                 Features[featureKey] = newState
                 
-                -- Exclusive check for Left/Right Steal
                 if featureKey == "AutoRight" and newState then
                     Features.AutoLeft = false
                     if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
                     stopStealPath(); startStealPath(stealPath1)
-                elseif featureKey == "AutoRight" and not newState then
-                    stopStealPath()
+                elseif featureKey == "AutoRight" and not newState then stopStealPath()
                 elseif featureKey == "AutoLeft" and newState then
                     Features.AutoRight = false
                     if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end
                     stopStealPath(); startStealPath(stealPath2)
-                elseif featureKey == "AutoLeft" and not newState then
-                    stopStealPath()
+                elseif featureKey == "AutoLeft" and not newState then stopStealPath()
                 elseif featureKey == "FrontLock" then
                     if newState then startFrontLock() else stopFrontLock() end
                 end
                 
-                -- Sync GUI visual in main menu
                 if _G["UpdateVisual_"..featureKey] then _G["UpdateVisual_"..featureKey](newState) end
                 
-                -- Button Visual Feedback
                 if newState then
                     TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = COLOR_ACCENT, TextColor3 = COLOR_TEXT}):Play()
                     stroke.Color = COLOR_GLOW
@@ -1425,7 +1486,6 @@ if isMobile then
                 end
             end)
         else
-            -- Drop button logic (non-toggle)
             btn.MouseButton1Click:Connect(function()
                 performDrop()
                 TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = COLOR_GLOW}):Play()
@@ -1440,10 +1500,10 @@ if isMobile then
 
     -- Top Left: Drop
     createCubeButton("Drop", "DropShot", false)
-    -- Top Right: Auto Right
-    createCubeButton("Auto R", "AutoRight", true)
-    -- Bottom Left: Auto Left
-    createCubeButton("Auto L", "AutoLeft", true)
-    -- Bottom Right: Front Lock
+    -- Top Right: Lock
     createCubeButton("Lock", "FrontLock", true)
+    -- Bottom Left: Auto L
+    createCubeButton("Auto L", "AutoLeft", true)
+    -- Bottom Right: Auto R
+    createCubeButton("Auto R", "AutoRight", true)
 end
