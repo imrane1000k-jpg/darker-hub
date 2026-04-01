@@ -1,5 +1,6 @@
--- 🔒 Darker Hub | ULTRA GALAXY CUBE EDITION
--- Replaces Keybinds with Galaxy Cube Buttons.
+-- 🔒 Darker Hub | ULTRA GALAXY CUBE EDITION (MOBILE OPTIMIZED)
+-- Removed Keyboard Keybinds.
+-- Added Large Mobile Touch Buttons in the GUI List.
 -- Includes Fixed Drop Logic, Vibrant Colors, and Clean UI.
 
 task.wait(0.1)
@@ -14,7 +15,7 @@ local Lighting = game:GetService("Lighting")
 local Player = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
 
--- ─── 📱 AUTO SCALE ────────────────────────
+-- ─── 📱 AUTO SCALE & MOBILE DETECTION ────────────────────────
 local isMobile = UserInputService.TouchEnabled
 local screenSize = workspace.CurrentCamera.ViewportSize
 local scaleFactor = math.clamp(screenSize.Y / 1000, 0.8, 1.2) 
@@ -53,7 +54,7 @@ local function createGalaxyBackground(parent)
     })
     grad.Rotation = 45
 
-    for i = 1, 50 do
+    for i = 1, 30 do -- Reduced stars slightly for mobile performance
         local star = Instance.new("Frame", galaxyFrame)
         local size = math.random(2, 5) * guiScale
         star.Size = UDim2.new(0, size, 0, size)
@@ -86,7 +87,7 @@ sg.ResetOnSpawn = false
 sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 sg.Parent = Player.PlayerGui
 
-local W, H = 360 * guiScale, 480 * guiScale
+local W, H = 380 * guiScale, 500 * guiScale -- Slightly wider for mobile buttons
 local HeaderH = 50 * guiScale
 
 local Features = {
@@ -303,7 +304,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Other Helpers (Speed, AntiRag, etc - Simplified for brevity but functional)
+-- Other Helpers
 local Connections = {}
 local function startSpeedBoost()
     if Connections.speed then return end
@@ -324,7 +325,8 @@ local function stopSpeedBoost()
     if Connections.speed then Connections.speed:Disconnect(); Connections.speed = nil end
 end
 
-local antiRagdollMode, ragdollConnections, cachedCharData, isBoosting = nil, {}, {}, false
+local antiRagdollMode = nil
+local cachedCharData = {}
 local function arCacheCharacterData()
     local char = Player.Character
     if not char then return false end
@@ -356,6 +358,19 @@ end
 local infinityJumpEnabled = false
 local function startInfinityJump()
     infinityJumpEnabled = true
+    -- Simple infinite jump loop for toggle
+    task.spawn(function()
+        while infinityJumpEnabled do
+            local char = Player.Character
+            if char then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum and hum.FloorMaterial ~= Enum.Material.Air then
+                     hum.Jump = true
+                end
+            end
+            task.wait(0.1)
+        end
+    end)
 end
 local function stopInfinityJump()
     infinityJumpEnabled = false
@@ -461,7 +476,7 @@ local rainbowElements = {}
 local SliderReferences = {}
 local scriptActive = true
 
--- Toggle Builder (Clean, No Keybind Text)
+-- Toggle Builder
 local function makeToggleHeader(parent, labelText, featureName)
     local frame = Instance.new("Frame", parent)
     frame.Size = UDim2.new(1, -10 * guiScale, 0, 40 * guiScale)
@@ -610,7 +625,7 @@ local function createSlider(parent, labelText, minVal, maxVal, valueKey, onChang
     return container
 end
 
--- ─── FEATURE BLOCKS (CONNECTED TO CUBE) ─────────────────────
+-- ─── FEATURE BLOCKS ─────────────────────────────────────────────
 
 -- Speed Boost
 do
@@ -653,7 +668,6 @@ do
         local on = not getState()
         setVisual(on)
         Features.Helicopter = on
-        -- Simple Heli Logic
         if on then
             local c = Player.Character
             if c then
@@ -670,7 +684,7 @@ do
 end
 createSlider(scrollFrame, "Spin", 5, 50, "SpinSpeed")
 
--- Auto Right Steal (CONNECTED)
+-- Auto Right Steal
 do
     local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Auto Right", "AutoRight")
     local function toggleRight()
@@ -687,7 +701,7 @@ do
     _G["ToggleAutoRight"] = toggleRight
 end
 
--- Auto Left Steal (CONNECTED)
+-- Auto Left Steal
 do
     local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Auto Left", "AutoLeft")
     local function toggleLeft()
@@ -706,7 +720,7 @@ end
 
 createSlider(scrollFrame, "Turn Wait", 0, 100, "PATH_TURN_WAIT", function(v) AutoStealValues.PATH_TURN_WAIT = v/100 end)
 
--- Front Lock (CONNECTED)
+-- Front Lock
 do
     local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Front Lock", "FrontLock")
     local function toggleLock()
@@ -718,6 +732,79 @@ do
     btn.MouseButton1Click:Connect(toggleLock)
     _G["ToggleFrontLock"] = toggleLock
 end
+
+-- ─── 📱 MOBILE CONTROL BUTTONS (NEW SECTION) ─────────────────────
+-- Added specifically for mobile users to tap directly in the GUI
+local mobileSectionLabel = Instance.new("TextLabel", scrollFrame)
+mobileSectionLabel.Size = UDim2.new(1, -10 * guiScale, 0, 30 * guiScale)
+mobileSectionLabel.BackgroundTransparency = 1
+mobileSectionLabel.Text = "--- MOBILE CONTROLS ---"
+mobileSectionLabel.TextColor3 = COLOR_GLOW
+mobileSectionLabel.Font = Enum.Font.GothamBold
+mobileSectionLabel.TextSize = 14 * guiScale
+mobileSectionLabel.LayoutOrder = toggleSliderOrder
+toggleSliderOrder = toggleSliderOrder + 1
+
+local function createMobileActionBtn(parent, text, color, actionFunc, featureKey)
+    local frame = Instance.new("Frame", parent)
+    frame.Size = UDim2.new(1, -10 * guiScale, 0, 50 * guiScale)
+    frame.BackgroundColor3 = COLOR_BG_ROW
+    frame.BackgroundTransparency = 0.3
+    frame.BorderSizePixel = 0
+    frame.LayoutOrder = toggleSliderOrder
+    toggleSliderOrder = toggleSliderOrder + 1
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10 * guiScale)
+    
+    local stroke = Instance.new("UIStroke", frame)
+    stroke.Thickness = 2 * guiScale
+    stroke.Color = color
+    
+    local btn = Instance.new("TextButton", frame)
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = text
+    btn.TextColor3 = color
+    btn.Font = Enum.Font.GothamBlack
+    btn.TextSize = 16 * guiScale
+    
+    local isActive = false
+    
+    btn.MouseButton1Click:Connect(function()
+        if actionFunc then
+            actionFunc()
+        end
+        
+        -- Visual feedback for toggles
+        if featureKey then
+            isActive = not isActive
+            Features[featureKey] = isActive
+            if isActive then
+                btn.TextColor3 = COLOR_TEXT
+                frame.BackgroundTransparency = 0.1
+                stroke.Color = COLOR_TEXT
+            else
+                btn.TextColor3 = color
+                frame.BackgroundTransparency = 0.3
+                stroke.Color = color
+            end
+            -- Sync with main toggle if exists
+            if _G["UpdateVisual_"..featureKey] then _G["UpdateVisual_"..featureKey](isActive) end
+        else
+            -- Instant action flash
+            btn.TextColor3 = COLOR_TEXT
+            task.wait(0.1)
+            btn.TextColor3 = color
+        end
+    end)
+    
+    return btn
+end
+
+-- Mobile Buttons
+createMobileActionBtn(scrollFrame, "⬅️ AUTO LEFT", GALAXY_LEFT, function() if _G["ToggleAutoLeft"] then _G["ToggleAutoLeft"]() end end, "AutoLeft")
+createMobileActionBtn(scrollFrame, "➡️ AUTO RIGHT", GALAXY_RIGHT, function() if _G["ToggleAutoRight"] then _G["ToggleAutoRight"]() end end, "AutoRight")
+createMobileActionBtn(scrollFrame, "🔒 FRONT LOCK", GALAXY_LOCK, function() if _G["ToggleFrontLock"] then _G["ToggleFrontLock"]() end end, "FrontLock")
+createMobileActionBtn(scrollFrame, "💥 DROP", GALAXY_DROP, performDrop, nil)
 
 listLayout.Changed:Connect(function()
     scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 10 * guiScale)
@@ -750,113 +837,3 @@ hideBtn.MouseButton1Click:Connect(function()
         TweenService:Create(main, TweenInfo.new(0.2), {Size = UDim2.new(0, W, 0, H)}):Play()
     end
 end)
-
--- ─── 🌌 GALAXY CUBE BUTTONS (REPLACING KEYBINDS) ─────────────────────
-local cubeContainer = Instance.new("Frame", sg)
-cubeContainer.Name = "GalaxyCubeButtons"
-cubeContainer.Size = UDim2.new(0, 140 * guiScale, 0, 140 * guiScale)
-cubeContainer.Position = UDim2.new(1, -(160 * guiScale) - W - 20, 0.5, -70 * guiScale)
-cubeContainer.BackgroundColor3 = COLOR_BG_MAIN
-cubeContainer.BackgroundTransparency = 0.1
-cubeContainer.Active = true
-cubeContainer.Draggable = true
-Instance.new("UICorner", cubeContainer).CornerRadius = UDim.new(0, 15 * guiScale)
-local cubeStroke = Instance.new("UIStroke", cubeContainer)
-cubeStroke.Color = COLOR_ACCENT
-cubeStroke.Thickness = 2.5 * guiScale
-
-local cubeGrid = Instance.new("UIGridLayout", cubeContainer)
-cubeGrid.CellSize = UDim2.new(0, 60 * guiScale, 0, 60 * guiScale)
-cubeGrid.CellPadding = UDim2.new(0, 10 * guiScale, 0, 10 * guiScale)
-cubeGrid.HorizontalAlignment = Enum.HorizontalAlignment.Center
-cubeGrid.VerticalAlignment = Enum.VerticalAlignment.Center
-
-local function createGalaxyBtn(text, colorOff, featureKey)
-    local b = Instance.new("TextButton", cubeContainer)
-    b.Text = text
-    b.BackgroundColor3 = COLOR_BG_MAIN
-    b.TextColor3 = colorOff
-    b.Font = Enum.Font.GothamBlack
-    b.TextSize = 11 * guiScale
-    b.AutoButtonColor = false
-    
-    local btnCorner = Instance.new("UICorner", b)
-    btnCorner.CornerRadius = UDim.new(0, 12 * guiScale)
-    
-    local btnStroke = Instance.new("UIStroke", b)
-    btnStroke.Thickness = 2.5 * guiScale
-    btnStroke.Color = colorOff
-    
-    task.spawn(function()
-        while b.Parent do
-            local isActive = Features[featureKey]
-            local targetTrans = isActive and 0 or 0.3
-            local pulse = math.sin(tick() * 5) * 0.1
-            btnStroke.Transparency = targetTrans + pulse
-            task.wait(0.03)
-        end
-    end)
-    
-    return b, btnStroke
-end
-
--- CREATE BUTTONS
-local leftB, leftS = createGalaxyBtn("LEFT", GALAXY_LEFT, "AutoLeft")
-local rightB, rightS = createGalaxyBtn("RIGHT", GALAXY_RIGHT, "AutoRight")
-local dropB, dropS = createGalaxyBtn("DROP", GALAXY_DROP, nil)
-local lockB, lockS = createGalaxyBtn("LOCK", GALAXY_LOCK, "FrontLock")
-
--- CONNECT LOGIC
-leftB.MouseButton1Click:Connect(function()
-    if _G["ToggleAutoLeft"] then _G["ToggleAutoLeft"]() end
-    leftB.TextColor3 = Features.AutoLeft and COLOR_TEXT or GALAXY_LEFT
-    leftB.Text = Features.AutoLeft and "GO" or "LEFT"
-end)
-
-rightB.MouseButton1Click:Connect(function()
-    if _G["ToggleAutoRight"] then _G["ToggleAutoRight"]() end
-    rightB.TextColor3 = Features.AutoRight and COLOR_TEXT or GALAXY_RIGHT
-    rightB.Text = Features.AutoRight and "GO" or "RIGHT"
-end)
-
-lockB.MouseButton1Click:Connect(function()
-    if _G["ToggleFrontLock"] then _G["ToggleFrontLock"]() end
-    lockB.TextColor3 = Features.FrontLock and COLOR_TEXT or GALAXY_LOCK
-    lockB.Text = Features.FrontLock and "ON" or "LOCK"
-end)
-
-dropB.MouseButton1Click:Connect(function()
-    dropB.TextColor3 = COLOR_TEXT
-    dropB.Text = "BOOM"
-    dropS.Transparency = 0
-    performDrop()
-    task.wait(0.15)
-    dropB.TextColor3 = GALAXY_DROP
-    dropB.Text = "DROP"
-    dropS.Transparency = 0.3
-end)
-
--- Sync Visuals
-local function syncCubeVisuals()
-    leftB.TextColor3 = Features.AutoLeft and COLOR_TEXT or GALAXY_LEFT
-    leftB.Text = Features.AutoLeft and "GO" or "LEFT"
-    
-    rightB.TextColor3 = Features.AutoRight and COLOR_TEXT or GALAXY_RIGHT
-    rightB.Text = Features.AutoRight and "GO" or "RIGHT"
-    
-    lockB.TextColor3 = Features.FrontLock and COLOR_TEXT or GALAXY_LOCK
-    lockB.Text = Features.FrontLock and "ON" or "LOCK"
-end
-
-if _G["UpdateVisual_AutoLeft"] then
-    local orig = _G["UpdateVisual_AutoLeft"]
-    _G["UpdateVisual_AutoLeft"] = function(s) orig(s); syncCubeVisuals() end
-end
-if _G["UpdateVisual_AutoRight"] then
-    local orig = _G["UpdateVisual_AutoRight"]
-    _G["UpdateVisual_AutoRight"] = function(s) orig(s); syncCubeVisuals() end
-end
-if _G["UpdateVisual_FrontLock"] then
-    local orig = _G["UpdateVisual_FrontLock"]
-    _G["UpdateVisual_FrontLock"] = function(s) orig(s); syncCubeVisuals() end
-end
