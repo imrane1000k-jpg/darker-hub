@@ -1,4 +1,4 @@
--- Darker Hub | Ultimate Edition + ULTRA NoTex FPS Booster + Mobile Spam Jump + Behind Lock [FINAL]
+-- Darker Hub | Ultimate Edition + NATURAL NoTex FPS Booster + Mobile Jump Button + Behind Lock [FINAL FIX]
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
 
@@ -9,6 +9,7 @@ local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local Player = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
+local GuiService = game:GetService("GuiService")
 
 local Keybinds = {
     ToggleMenu = Enum.KeyCode.RightShift,
@@ -433,67 +434,210 @@ local function stopAntiRagdoll()
 end
 
 -- ╔═══════════════════════════════════════════════════════════════╗
--- ║  📱 MOBILE AUTO-SPAM INFINITY JUMP                            ║
--- ║  - MOBILE: Constant auto-spam (no hold needed)               ║
--- ║  - PC: Hold space to fly up                                  ║
+-- ║  📱 MOBILE CUSTOM JUMP BUTTON SYSTEM                          ║
+-- ║  - Replaces jump button when InfJump enabled                 ║
+-- ║  - HOLD to fly up, RELEASE to fall                          ║
+-- ║  - Toggle off = Original jump returns                       ║
 -- ╚═══════════════════════════════════════════════════════════════╝
 local infinityJumpEnabled = false
 local JUMP_BOOST_FORCE = 65
-local mobileJumpSpamming = false
-local lastMobileJumpTime = 0
+local customJumpButton = nil
+local originalJumpButton = nil
+local mobileJumpHeld = false
 
+-- Find the default jump button
+local function findJumpButton()
+    -- Try to find the mobile jump button
+    local playerGui = Player:FindFirstChild("PlayerGui")
+    if not playerGui then return nil end
+    
+    -- Search for jump button in common locations
+    for _, screenGui in ipairs(playerGui:GetChildren()) do
+        if screenGui:IsA("ScreenGui") then
+            -- Look for button with "Jump" in name or check TouchGui
+            for _, desc in ipairs(screenGui:GetDescendants()) do
+                if desc:IsA("GuiButton") then
+                    local name = desc.Name:lower()
+                    if name:find("jump") or name:find("mobilejumpbutton") then
+                        return desc
+                    end
+                end
+            end
+        end
+    end
+    
+    -- Fallback: Check TouchGui
+    local touchGui = playerGui:FindFirstChild("TouchGui")
+    if touchGui then
+        local touchFrame = touchGui:FindFirstChild("TouchControlFrame")
+        if touchFrame then
+            local jumpButton = touchFrame:FindFirstChild("JumpButton")
+            if jumpButton then return jumpButton end
+        end
+    end
+    
+    return nil
+end
+
+-- Create custom jump button that looks like original
+local function createCustomJumpButton(originalButton)
+    if not originalButton then return nil end
+    
+    -- Hide original
+    originalButton.Visible = false
+    
+    -- Create clone
+    local customBtn = Instance.new("TextButton")
+    customBtn.Name = "DarkerHub_CustomJump"
+    customBtn.Size = originalButton.Size
+    customBtn.Position = originalButton.Position
+    customBtn.AnchorPoint = originalButton.AnchorPoint
+    customBtn.BackgroundColor3 = originalButton.BackgroundColor3
+    customBtn.BackgroundTransparency = originalButton.BackgroundTransparency
+    customBtn.BorderSizePixel = originalButton.BorderSizePixel
+    customBtn.Text = originalButton.Text
+    customBtn.TextColor3 = originalButton.TextColor3
+    customBtn.Font = originalButton.Font
+    customBtn.TextSize = originalButton.TextSize
+    customBtn.AutoButtonColor = originalButton.AutoButtonColor
+    customBtn Modal = false
+    customBtn.ZIndex = originalButton.ZIndex + 100
+    customBtn.Parent = originalButton.Parent
+    
+    -- Copy UI Stroke if exists
+    if originalButton:FindFirstChildWhichIsA("UIStroke") then
+        local stroke = Instance.new("UIStroke", customBtn)
+        stroke.Color = COLOR_GLOW
+        stroke.Thickness = 2
+        stroke.Transparency = 0.3
+    end
+    
+    -- Copy UICorner if exists
+    if originalButton:FindFirstChildWhichIsA("UICorner") then
+        local corner = Instance.new("UICorner", customBtn)
+        corner.CornerRadius = UDim.new(0, 8)
+    end
+    
+    -- Input handling for HOLD to fly
+    customBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            mobileJumpHeld = true
+            -- Visual feedback
+            TweenService:Create(customBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(100, 100, 255)}):Play()
+        end
+    end)
+    
+    customBtn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            mobileJumpHeld = false
+            -- Visual feedback
+            TweenService:Create(customBtn, TweenInfo.new(0.1), {BackgroundColor3 = originalButton.BackgroundColor3}):Play()
+        end
+    end)
+    
+    return customBtn
+end
+
+-- Show/hide custom jump button
+local function showCustomJumpButton()
+    if not isMobile then return end
+    
+    originalJumpButton = findJumpButton()
+    if originalJumpButton then
+        customJumpButton = createCustomJumpButton(originalJumpButton)
+    else
+        -- If we can't find it, create our own floating button
+        warn("[DarkerHub] Could not find original jump button, creating fallback")
+        
+        customJumpButton = Instance.new("TextButton")
+        customJumpButton.Name = "DarkerHub_FallbackJump"
+        customJumpButton.Size = UDim2.new(0, 70, 0, 70)
+        customJumpButton.Position = UDim2.new(0.5, -35, 0.85, -35)
+        customJumpButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        customJumpButton.BackgroundTransparency = 0.7
+        customJumpButton.Text = "⬆️"
+        customJumpButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+        customJumpButton.Font = Enum.Font.GothamBold
+        customJumpButton.TextSize = 32
+        customJumpButton.BorderSizePixel = 0
+        customJumpButton.ZIndex = 999
+        Instance.new("UICorner", customJumpButton).CornerRadius = UDim.new(1, 0)
+        local btnStroke = Instance.new("UIStroke", customJumpButton)
+        btnStroke.Color = COLOR_GLOW
+        btnStroke.Thickness = 2
+        customJumpButton.Parent = sg
+        
+        customJumpButton.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch then
+                mobileJumpHeld = true
+                TweenService:Create(customJumpButton, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(148, 50, 255)}):Play()
+            end
+        end)
+        
+        customJumpButton.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch then
+                mobileJumpHeld = false
+                TweenService:Create(customJumpButton, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+            end
+        end)
+    end
+end
+
+local function hideCustomJumpButton()
+    mobileJumpHeld = false
+    
+    if customJumpButton then
+        customJumpButton:Destroy()
+        customJumpButton = nil
+    end
+    
+    if originalJumpButton then
+        originalJumpButton.Visible = true
+        originalJumpButton = nil
+    end
+end
+
+-- PC: Normal space hold
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
         spaceHeld = true
-        -- Mobile: Start spamming when jump pressed
-        if isMobile and infinityJumpEnabled then
-            mobileJumpSpamming = true
-        end
     end
 end)
 
 UserInputService.InputEnded:Connect(function(input, gpe)
     if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
         spaceHeld = false
-        mobileJumpSpamming = false
     end
 end)
 
-UserInputService.JumpRequest:Connect(function()
-    if not scriptActive or not infinityJumpEnabled then return end
-    -- MOBILE: Auto-spam trigger
-    if isMobile then
-        mobileJumpSpamming = true
-        -- Keep spamming for a while
-        delay(0.2, function()
-            if isMobile and infinityJumpEnabled then
-                mobileJumpSpamming = true  -- Continue spamming
-            else
-                mobileJumpSpamming = false
-            end
-        end)
-    end
-end)
-
+-- Main infinity jump loop
 TrackHB(function()
     if not scriptActive or not infinityJumpEnabled then return end
     local char = Player.Character; if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart"); if not hrp then return end
     
-    -- 📱 MOBILE: AUTO SPAM MODE (constant jumping without holding)
-    if isMobile and infinityJumpEnabled then
-        local now = tick()
-        -- Spam every 0.05 seconds (super fast)
-        if now - lastMobileJumpTime >= 0.05 then
-            lastMobileJumpTime = now
-            hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, JUMP_BOOST_FORCE, hrp.AssemblyLinearVelocity.Z)
-        end
-    -- 💻 PC: Hold space to fly
-    elseif spaceHeld then
+    -- 📱 MOBILE: Use custom jump button hold
+    if isMobile and mobileJumpHeld then
+        hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, JUMP_BOOST_FORCE, hrp.AssemblyLinearVelocity.Z)
+    -- 💻 PC: Use space hold
+    elseif not isMobile and spaceHeld then
         hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, JUMP_BOOST_FORCE, hrp.AssemblyLinearVelocity.Z)
     end
 end)
+
+-- Toggle function for infinity jump
+local function setInfinityJump(enabled)
+    infinityJumpEnabled = enabled
+    
+    if isMobile then
+        if enabled then
+            showCustomJumpButton()
+        else
+            hideCustomJumpButton()
+        end
+    end
+end
 
 local helicopterSpinBAV = nil
 local function applyHelicopterSpeed() if helicopterSpinBAV then helicopterSpinBAV.AngularVelocity = Vector3.new(0, Values.SpinSpeed, 0) end end
@@ -766,21 +910,17 @@ end
 local function stopUnwalk() local c = Player.Character; if c and savedAnimations.Animate then savedAnimations.Animate:Clone().Parent = c; savedAnimations.Animate = nil end end
 
 -- ╔═══════════════════════════════════════════════════════════════╗
--- ║  🚀 ULTRA OPTIMIZER - GRAY MODE + NO VFX + MAX FPS          ║
--- ║  ✅ All parts → Gray Plastic                                 ║
--- ║  ✅ All textures removed                                     ║
--- ║  ✅ All VFX destroyed (particles, trails, beams, etc)         ║
--- ║  ✅ Shadows off                                              ║
--- ║  ✅ Maximum performance                                      ║
+-- ║  🌿 NATURAL NO TEXTURE OPTIMIZER                             ║
+-- ║  ✅ Removes textures ONLY (keeps original colors!)             ║
+-- ║  ✅ Removes VFX (particles, trails, beams)                   ║
+-- ║  ✅ Does NOT force gray color                                ║
+-- ║  ✅ Does NOT change materials to plastic                    ║
+-- ║  ✅ Natural look preserved                                  ║
 -- ╚═══════════════════════════════════════════════════════════════╝
 local optimizerConn = nil
 local optimizerSlowSweep = nil
 local optimizedCache = setmetatable({}, {__mode = "kv"})
 local optimizationCount = 0
-
--- Gray color for all parts
-local GRAY_COLOR = Color3.fromRGB(128, 128, 128)
-local GRAY_MATERIAL = Enum.Material.SmoothPlastic
 
 local function stripObject(obj)
     if optimizedCache[obj] then return end
@@ -788,44 +928,47 @@ local function stripObject(obj)
     optimizationCount = optimizationCount + 1
     
     pcall(function()
-        -- 🔥 DESTROY ALL VFX EFFECTS (Biggest FPS killers)
+        -- 🔥 DESTROY ALL VFX EFFECTS (FPS killers)
         if obj:IsA("ParticleEmitter") or 
            obj:IsA("Trail") or 
            obj:IsA("Beam") or 
            obj:IsA("Fire") or 
            obj:IsA("Smoke") or 
-           obj:IsA("Sparkles") or
-           obj:IsA("PointLight") or
-           obj:IsA("SpotLight") or
-           obj:IsA("SurfaceLight") then
+           obj:IsA("Sparkles") then
             obj:Destroy()
             return
         end
         
-        -- 🎨 Destroy all textures and decals
+        -- 💡 Remove lights (except on player)
+        if obj:IsA("PointLight") or 
+           obj:IsA("SpotLight") or 
+           obj:IsA("SurfaceLight") then
+            if not obj:IsDescendantOf(Player.Character) then 
+                obj:Destroy() 
+            end
+            return
+        end
+        
+        -- 🎨 Destroy decals and surface textures
         if obj:IsA("Decal") or obj:IsA("Texture") then
             obj:Destroy()
             return
         end
         
-        -- 🧱 Handle BaseParts (Make them GRAY)
+        -- 🧱 Handle BaseParts - REMOVE TEXTURES ONLY (keep colors!)
         if obj:IsA("BasePart") then
-            -- Disable shadows (HUGE FPS boost)
+            -- Disable shadows (FPS boost)
             obj.CastShadow = false
             obj.ReceiveShadow = false
             
-            -- Force GRAY material (cheapest to render)
-            obj.Material = GRAY_MATERIAL
-            
-            -- Make it GRAY color
-            obj.Color = GRAY_COLOR
-            
-            -- MeshPart specific: Remove texture ID
+            -- MeshPart: Clear texture ID but KEEP COLOR
             if obj:IsA("MeshPart") then
-                obj.TextureID = ""  -- Remove texture
+                if obj.TextureID ~= "" then
+                    obj.TextureID = ""  -- Remove texture only
+                end
             end
             
-            -- Clear any child decals/textures on this part
+            -- Clear child decals/textures on this part
             for _, child in ipairs(obj:GetChildren()) do
                 if child:IsA("Decal") or child:IsA("Texture") then
                     optimizedCache[child] = true
@@ -833,7 +976,7 @@ local function stripObject(obj)
                 end
             end
             
-            -- Remove SurfaceGuis (except important ones)
+            -- Remove unnecessary SurfaceGuis
             for _, child in ipairs(obj:GetChildren()) do
                 if child:IsA("SurfaceGui") and not obj:IsDescendantOf(Player.Character) then
                     local n = child.Name:lower()
@@ -845,10 +988,9 @@ local function stripObject(obj)
             end
         end
         
-        -- 🗑️ Clean up BillboardGuis (remove visual clutter)
+        -- Clean up BillboardGuis (remove clutter)
         if obj:IsA("BillboardGui") and not obj:IsDescendantOf(Player.Character) then
             local n = obj.Name:lower()
-            -- Keep essential UI
             if n:find("timer") or n:find("speed") or n:find("ragdoll") then 
                 return 
             end
@@ -858,7 +1000,7 @@ local function stripObject(obj)
             obj:Destroy()
         end
         
-        -- 🔇 Mute sounds (optional FPS boost)
+        -- Mute distant sounds
         if obj:IsA("Sound") and not obj:IsDescendantOf(Player.Character) then
             obj.Volume = 0
         end
@@ -892,68 +1034,53 @@ local function enableOptimizer()
     if getgenv and getgenv().OPTIMIZER_ACTIVE then return end
     if getgenv then getgenv().OPTIMIZER_ACTIVE = true end
 
-    -- ⚡ ULTRA AGGRESSIVE RENDERING SETTINGS
+    -- ⚡ OPTIMIZED RENDERING SETTINGS (keep natural look)
     pcall(function()
-        -- Lowest possible quality
         settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
         settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level01
         
-        -- Minimum texture quality
         pcall(function() 
             settings().Rendering.TextureQuality = Enum.TextureQuality.Level01 
         end)
         
-        -- Disable expensive effects
         pcall(function() settings().Rendering.EmissiveStrength = 0 end)
         
-        -- 🌟 LIGHTING OPTIMIZATIONS (MASSIVE FPS BOOST)
+        -- Lighting optimizations (keep it looking natural)
         local Lighting = game:GetService("Lighting")
         
-        -- Disable shadows completely
-        Lighting.GlobalShadows = false
+        -- Softer shadows instead of removing completely
+        Lighting.GlobalShadows = false  -- Off for max FPS
         
-        -- Bright lighting (no need for dynamic lights)
-        Lighting.Brightness = 4
-        Lighting.EnvironmentBrightness = 1
+        -- Bright but natural lighting
+        Lighting.Brightness = 2.5
+        Lighting.EnvironmentBrightness = 0.8
         
-        -- Remove fog
+        -- Extended view distance
         Lighting.FogEnd = 999999
         
-        -- Flat ambient light (cheapest)
-        Lighting.Ambient = Color3.fromRGB(200, 200, 200)
-        Lighting.OutdoorAmbient = Color3.fromRGB(200, 200, 200)
+        -- Soft ambient light
+        Lighting.Ambient = Color3.fromRGB(180, 180, 180)
+        Lighting.OutdoorAmbient = Color3.fromRGB(180, 180, 180)
         
-        -- Disable expensive lighting features
-        Lighting.EnvironmentDiffuseScale = 0
-        Lighting.EnvironmentSpecularScale = 0
-        Lighting.ClockTime = 14  -- Brightest time of day
+        -- Reduce expensive calculations
+        Lighting.EnvironmentDiffuseScale = 0.5
+        Lighting.EnvironmentSpecularScale = 0.3
+        Lighting.ClockTime = 14
         
-        -- Use cheapest technology
+        -- Use compatible technology
         pcall(function()
             Lighting.Technology = Enum.Technology.Compatibility
         end)
-        
-        -- No shadow softness
-        pcall(function()
-            Lighting.ShadowSoftness = 0
-        end)
-        
-        -- Remove extra lighting effects
-        for _, effect in ipairs(Lighting:GetChildren()) do
-            if effect:IsA("PostEffect") then
-                effect:Destroy()
-            end
-        end
     end)
 
-    print("[DarkerHub] 🚀 Starting ULTRA Optimization...")
+    print("[DarkerHub] Starting Natural Optimization...")
     
-    -- Initial comprehensive sweep
+    -- Initial sweep
     sweepWorkspace()
     
-    print("[DarkerHub] ✅ Optimization complete! Processed " .. optimizationCount .. " objects")
+    print("[DarkerHub] ✓ Optimization complete! Processed " .. optimizationCount .. " objects")
 
-    -- Real-time listener for new objects
+    -- Real-time listener
     if optimizerConn then optimizerConn:Disconnect() end
     optimizerConn = workspace.DescendantAdded:Connect(function(obj)
         if not scriptActive or not Features.Optimizer then return end
@@ -972,7 +1099,7 @@ local function enableOptimizer()
         end
     end)
     
-    print("[DarkerHub] ✅ ULTRA Optimizer ENABLED - Gray Mode Active!")
+    print("[DarkerHub] ✓ Natural NoTex Optimizer ENABLED!")
 end
 
 local function disableOptimizer()
@@ -985,7 +1112,7 @@ local function disableOptimizer()
         pcall(function() task.cancel(optimizerSlowSweep) end)
         optimizerSlowSweep = nil 
     end
-    print("[DarkerHub] ❌ Optimizer DISABLED")
+    print("[DarkerHub] Optimizer DISABLED")
 end
 
 local stealPath1 = {
@@ -1391,8 +1518,17 @@ end
 
 do
     local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Infinity Jump [" .. Keybinds.InfinityJump.Name .. "]", "InfinityJump", true, Keybinds.InfinityJump, false)
-    btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.InfinityJump = on; infinityJumpEnabled = on; SaveConfig() end)
-    if Features.InfinityJump then setVisual(true); infinityJumpEnabled = true end
+    btn.MouseButton1Click:Connect(function() 
+        local on = not getState() 
+        setVisual(on) 
+        Features.InfinityJump = on
+        setInfinityJump(on)  -- Use new function!
+        SaveConfig() 
+    end)
+    if Features.InfinityJump then 
+        setVisual(true) 
+        setInfinityJump(true)
+    end
 end
 
 do
@@ -1441,7 +1577,7 @@ do
 end
 
 do
-    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "⚡ NoTex + Gray Mode", "Optimizer", false, nil, false)
+    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "🌿 NoTex (Natural)", "Optimizer", false, nil, false)
     btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.Optimizer = on; if on then enableOptimizer() else disableOptimizer() end; SaveConfig() end)
     if Features.Optimizer then setVisual(true); enableOptimizer() end
 end
@@ -1502,7 +1638,10 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     if input.KeyCode == Keybinds.DropShot then performDrop(); return end
     local function syncToggle(featureName, newState, noSave)
         Features[featureName] = newState
-        if featureName == "InfinityJump" then infinityJumpEnabled = newState end
+        if featureName == "InfinityJump" then 
+            infinityJumpEnabled = newState
+            setInfinityJump(newState)
+        end
         if _G["UpdateVisual_"..featureName] then _G["UpdateVisual_"..featureName](newState) end
         if not noSave then SaveConfig() end
     end
@@ -1528,7 +1667,8 @@ end)
 -- ║  ✅ CLOSE BUTTON — STOPS ABSOLUTELY EVERYTHING                    ║
 -- ╚════════════════════════════════════════════════════════════════════╝
 closeBtn.MouseButton1Click:Connect(function()
-    scriptActive = false; infinityJumpEnabled = false; spaceHeld = false; mobileJumpSpamming = false
+    scriptActive = false; infinityJumpEnabled = false; spaceHeld = false; mobileJumpHeld = false
+    setInfinityJump(false)  -- Restore original jump button
     pcall(stopSpeedBoost); pcall(stopAntiRagdoll); pcall(stopFloat); pcall(stopHelicopter)
     pcall(stopSpeedWhileStealing); pcall(stopAutoSteal); pcall(stopSpamBat); pcall(stopGalaxy)
     pcall(stopUnwalk); pcall(disableOptimizer); pcall(stopStealPath); pcall(stopFrontLock)
@@ -1619,6 +1759,12 @@ if isMobile then
                 if featureKey == "AutoRight" and newState then Features.AutoLeft = false; stopStealPath(); if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
                 elseif featureKey == "AutoLeft" and newState then Features.AutoRight = false; stopStealPath(); if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end end
                 Features[featureKey] = newState
+                
+                -- Special handling for Infinity Jump
+                if featureKey == "InfinityJump" then
+                    setInfinityJump(newState)
+                end
+                
                 if featureKey == "Float" then if newState then startFloat() else stopFloat() end
                 elseif featureKey == "Helicopter" then if newState then startHelicopter() else stopHelicopter() end
                 elseif featureKey == "FrontLock" then if newState then startFrontLock() else stopFrontLock() end
