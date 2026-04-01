@@ -1,6 +1,6 @@
--- 🔒 Darker Hub | GALAXY KEYBIND EDITION
--- Replaces standard keybinds with Galaxy Cube Buttons.
--- Includes Fixed Drop Logic and Full Darker Hub Features.
+-- 🔒 Darker Hub | ULTRA GALAXY EDITION
+-- Fully Colorful, Cleaned UI, Fixed Drop, Connected Cube Buttons.
+-- Based on your requested script structure.
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -20,23 +20,23 @@ local screenSize = workspace.CurrentCamera.ViewportSize
 local scaleFactor = math.clamp(screenSize.Y / 1000, 0.8, 1.2) 
 local guiScale = isMobile and scaleFactor or 1.0
 
--- ─── 🎨 COLORS (Original Dark Style + Galaxy Accents) ────────────────────────
-local COLOR_BG_MAIN = Color3.fromRGB(10, 10, 20)
-local COLOR_BG_ROW = Color3.fromRGB(20, 20, 45)
+-- ─── 🎨 VIBRANT COLORS ────────────────────────
+local COLOR_BG_MAIN = Color3.fromRGB(5, 5, 15)
+local COLOR_BG_ROW = Color3.fromRGB(20, 10, 40)
 local COLOR_ACCENT = Color3.fromRGB(138, 43, 226)
 local COLOR_GLOW = Color3.fromRGB(0, 255, 255)
 local COLOR_TEXT = Color3.fromRGB(255, 255, 255)
-local COLOR_DIM = Color3.fromRGB(180, 180, 240)
-local COLOR_OFF = Color3.fromRGB(40, 40, 60)
-local COLOR_CLOSE = Color3.fromRGB(80, 20, 20)
+local COLOR_DIM = Color3.fromRGB(200, 200, 255)
+local COLOR_OFF = Color3.fromRGB(30, 30, 50)
+local COLOR_CLOSE = Color3.fromRGB(255, 50, 50)
 
--- GALAXY BUTTON COLORS
-local GALAXY_LOCK = Color3.fromRGB(180, 0, 255)   -- Purple
-local GALAXY_RIGHT = Color3.fromRGB(0, 255, 255)  -- Cyan
-local GALAXY_LEFT = Color3.fromRGB(0, 150, 255)   -- Blue
-local GALAXY_DROP = Color3.fromRGB(255, 50, 100)  -- Pink/Red
+-- GALAXY CUBE SPECIFIC COLORS
+local GALAXY_LOCK = Color3.fromRGB(200, 0, 255)   -- Bright Purple
+local GALAXY_RIGHT = Color3.fromRGB(0, 255, 200)  -- Bright Cyan/Green
+local GALAXY_LEFT = Color3.fromRGB(0, 100, 255)   -- Deep Blue
+local GALAXY_DROP = Color3.fromRGB(255, 50, 100)  -- Hot Pink/Red
 
--- ─── 🌌 GALAXY BACKGROUND (Behind GUI only) ────────────────────────
+-- ─── 🌌 DYNAMIC GALAXY BACKGROUND ────────────────────────
 local function createGalaxyBackground(parent)
     local galaxyFrame = Instance.new("Frame", parent)
     galaxyFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -44,20 +44,23 @@ local function createGalaxyBackground(parent)
     galaxyFrame.BorderSizePixel = 0
     galaxyFrame.ZIndex = 0
     
+    -- Vibrant Gradient
     local grad = Instance.new("UIGradient", galaxyFrame)
     grad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 5, 20)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(30, 10, 60)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 5, 20))
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 0, 30)),
+        ColorSequenceKeypoint.new(0.3, Color3.fromRGB(40, 10, 60)),
+        ColorSequenceKeypoint.new(0.6, Color3.fromRGB(10, 0, 40)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 0, 20))
     })
     grad.Rotation = 45
 
-    for i = 1, 40 do
+    -- Animated Stars
+    for i = 1, 50 do
         local star = Instance.new("Frame", galaxyFrame)
-        local size = math.random(2, 4) * guiScale
+        local size = math.random(2, 5) * guiScale
         star.Size = UDim2.new(0, size, 0, size)
         star.Position = UDim2.new(math.random(), 0, math.random(), 0)
-        star.BackgroundColor3 = Color3.new(1, 1, 1)
+        star.BackgroundColor3 = Color3.fromHSV(math.random(), 0.5, 1) -- Rainbow stars
         star.BackgroundTransparency = math.random(4, 9) / 10
         star.BorderSizePixel = 0
         star.ZIndex = 1
@@ -66,7 +69,10 @@ local function createGalaxyBackground(parent)
         
         task.spawn(function()
             while star.Parent do
-                local t = TweenService:Create(star, TweenInfo.new(math.random(1, 3), Enum.EasingStyle.Sine), {BackgroundTransparency = math.random(2, 8)/10})
+                local t = TweenService:Create(star, TweenInfo.new(math.random(1, 4), Enum.EasingStyle.Sine), {
+                    BackgroundTransparency = math.random(2, 8)/10,
+                    Size = UDim2.new(0, size * math.random(0.8, 1.2), 0, size * math.random(0.8, 1.2))
+                })
                 t:Play()
                 t.Completed:Wait()
             end
@@ -77,13 +83,13 @@ end
 
 -- ─── SETUP GUI ──────────────────────────────────
 local sg = Instance.new("ScreenGui")
-sg.Name = "DarkerHub_GalaxyBinds"
+sg.Name = "DarkerHub_UltraGalaxy"
 sg.ResetOnSpawn = false
 sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 sg.Parent = Player.PlayerGui
 
-local W, H = 380 * guiScale, 500 * guiScale
-local HeaderH = 45 * guiScale
+local W, H = 360 * guiScale, 480 * guiScale
+local HeaderH = 50 * guiScale
 
 local Features = {
 SpeedBoost = false, AntiRagdoll = false, InfinityJump = false, Float = false,
@@ -111,7 +117,7 @@ local stealPath2 = {
 {pos = Vector3.new(-476, -6, 93)}, {pos = Vector3.new(-475, -6, 22)},
 }
 
--- ─── SPEED DISPLAY ─────────────────────────────────────────
+-- ─── SPEED DISPLAY (Cleaned) ─────────────────────────────────────────
 local speedLabelBillboard = nil
 local speedTextLabel = nil
 
@@ -168,7 +174,7 @@ task.wait(0.5)
 if (Features.SpeedBoost or Features.ThiefSpeed or Features.GalaxyMode) then createSpeedDisplay() end
 end)
 
--- ─── FEATURE LOGIC (UNCHANGED) ─────────────────────────────────────────────
+-- ─── FEATURE LOGIC (UNCHANGED CORE) ─────────────────────────────────────────────
 
 -- 1. Speed Boost
 local Connections = {}
@@ -272,12 +278,10 @@ arDisconnectAll()
 cachedCharData = {}
 end
 
--- 3. ✅ INFINITY JUMP (PC STYLE ON MOBILE)
+-- 3. ✅ INFINITY JUMP
 local infinityJumpEnabled = false
 local jumpLoopConnection = nil
 local isTouchingJump = false
-
--- Global functions for mobile touch
 function StartTouchJump() isTouchingJump = true end
 function StopTouchJump() isTouchingJump = false end
 
@@ -291,10 +295,7 @@ if not char then return end
 local hrp = char:FindFirstChild("HumanoidRootPart")
 local hum = char:FindFirstChildOfClass("Humanoid")
 if not hrp or not hum then return end
-
--- Logic: Hold Space OR Hold Touch
 local shouldFly = UserInputService:IsKeyDown(Enum.KeyCode.Space) or isTouchingJump
-
 if hum.FloorMaterial == Enum.Material.Air then
 if shouldFly then
 local currentVel = hrp.AssemblyLinearVelocity
@@ -1033,7 +1034,7 @@ end
 end
 RunService.Heartbeat:Connect(updateEnemyTimers)
 
--- ─── UI BUILDERS (ORIGINAL STYLE) ───────────────────────────────────────────────
+-- ─── UI BUILDERS (COLORFUL & CLEAN) ───────────────────────────────────────────────
 local toggleSliderOrder = 0
 local scriptActive = true
 local SliderReferences = {}
@@ -1102,10 +1103,10 @@ main.BorderSizePixel = 0
 main.Active = true
 main.Draggable = true
 main.ClipsDescendants = true
-Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10 * guiScale)
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 12 * guiScale)
 local mainStroke = Instance.new("UIStroke", main)
 mainStroke.Color = COLOR_ACCENT
-mainStroke.Thickness = 2 * guiScale
+mainStroke.Thickness = 2.5 * guiScale
 mainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
 -- Create Galaxy Background INSIDE Main
@@ -1115,45 +1116,47 @@ createGalaxyBackground(main)
 local header = Instance.new("Frame", main)
 header.Size = UDim2.new(1, 0, 0, HeaderH)
 header.BackgroundColor3 = COLOR_BG_ROW
-header.BackgroundTransparency = 0.3
+header.BackgroundTransparency = 0.4
 header.BorderSizePixel = 0
 header.ZIndex = 4
 header.Active = true
-Instance.new("UICorner", header).CornerRadius = UDim.new(0, 10 * guiScale)
+Instance.new("UICorner", header).CornerRadius = UDim.new(0, 12 * guiScale)
 local title = Instance.new("TextLabel", header)
 title.Size = UDim2.new(1, 0, 1, 0)
 title.BackgroundTransparency = 1
-title.Text = "Darker Hub (Galaxy Binds)"
+title.Text = "DARKER HUB"
 title.Font = Enum.Font.GothamBlack
-title.TextSize = 16 * guiScale
+title.TextSize = 18 * guiScale
 title.ZIndex = 6
 title.TextColor3 = COLOR_GLOW
+title.TextStrokeTransparency = 0.5
+title.TextStrokeColor3 = Color3.new(0,0,0)
 
 -- CLOSE BUTTON (X)
 local closeBtn = Instance.new("TextButton", header)
-closeBtn.Size = UDim2.new(0, 28 * guiScale, 0, 28 * guiScale)
-closeBtn.Position = UDim2.new(1, -32 * guiScale, 0.5, -14 * guiScale)
+closeBtn.Size = UDim2.new(0, 30 * guiScale, 0, 30 * guiScale)
+closeBtn.Position = UDim2.new(1, -35 * guiScale, 0.5, -15 * guiScale)
 closeBtn.BackgroundColor3 = COLOR_CLOSE
-closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
+closeBtn.Text = "✕"
+closeBtn.TextColor3 = Color3.new(1,1,1)
 closeBtn.Font = Enum.Font.GothamBlack
-closeBtn.TextSize = 14 * guiScale
+closeBtn.TextSize = 16 * guiScale
 closeBtn.BorderSizePixel = 0
 closeBtn.ZIndex = 7
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6 * guiScale)
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 8 * guiScale)
 
 -- HIDE BUTTON
 local hideBtn = Instance.new("TextButton", header)
-hideBtn.Size = UDim2.new(0, 28 * guiScale, 0, 28 * guiScale)
-hideBtn.Position = UDim2.new(1, -64 * guiScale, 0.5, -14 * guiScale)
+hideBtn.Size = UDim2.new(0, 30 * guiScale, 0, 30 * guiScale)
+hideBtn.Position = UDim2.new(1, -70 * guiScale, 0.5, -15 * guiScale)
 hideBtn.BackgroundColor3 = COLOR_BG_ROW
-hideBtn.Text = "_"
+hideBtn.Text = "−"
 hideBtn.TextColor3 = COLOR_GLOW
 hideBtn.Font = Enum.Font.GothamBlack
-hideBtn.TextSize = 16 * guiScale
+hideBtn.TextSize = 20 * guiScale
 hideBtn.BorderSizePixel = 0
 hideBtn.ZIndex = 7
-Instance.new("UICorner", hideBtn).CornerRadius = UDim.new(0, 6 * guiScale)
+Instance.new("UICorner", hideBtn).CornerRadius = UDim.new(0, 8 * guiScale)
 
 -- Drag Logic
 do
@@ -1187,12 +1190,12 @@ scrollFrame.Size = UDim2.new(1, -10 * guiScale, 1, -10 * guiScale)
 scrollFrame.Position = UDim2.new(0, 5 * guiScale, 0, 5 * guiScale)
 scrollFrame.BackgroundTransparency = 1
 scrollFrame.BorderSizePixel = 0
-scrollFrame.ScrollBarThickness = 4 * guiScale
+scrollFrame.ScrollBarThickness = 5 * guiScale
 scrollFrame.ScrollBarImageColor3 = COLOR_ACCENT
 scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 scrollFrame.ZIndex = 3
 local listLayout = Instance.new("UIListLayout", scrollFrame)
-listLayout.Padding = UDim.new(0, 6 * guiScale)
+listLayout.Padding = UDim.new(0, 8 * guiScale)
 listLayout.FillDirection = Enum.FillDirection.Vertical
 listLayout.SortOrder = Enum.SortOrder.LayoutOrder
 listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -1203,39 +1206,40 @@ local SliderSetters = {}
 local waitingForKeybind = nil
 local KeyBindBtns = {}
 
--- NOTE: Removed Keybind Buttons from Toggles as requested. Using Galaxy Cube instead.
+-- NOTE: Removed Keybind Buttons from Toggles. Using Galaxy Cube instead.
 local function makeToggleHeader(parent, labelText, featureName, hasKeybind, defaultKeycode, noSave)
 local frame = Instance.new("Frame", parent)
-frame.Size = UDim2.new(1, -8 * guiScale, 0, 36 * guiScale)
+frame.Size = UDim2.new(1, -10 * guiScale, 0, 40 * guiScale)
 frame.BackgroundColor3 = COLOR_BG_ROW
-frame.BackgroundTransparency = 0.4
+frame.BackgroundTransparency = 0.5
 frame.BorderSizePixel = 0
 frame.LayoutOrder = toggleSliderOrder
 toggleSliderOrder = toggleSliderOrder + 1
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6 * guiScale)
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8 * guiScale)
 local fStroke = Instance.new("UIStroke", frame)
-fStroke.Thickness = 1.5 * guiScale
+fStroke.Thickness = 2 * guiScale
 fStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 fStroke.Color = COLOR_ACCENT
 table.insert(rainbowElements, fStroke)
 local lbl = Instance.new("TextLabel", frame)
-lbl.Size = UDim2.new(0.8, 0, 1, 0) -- Wider label since no keybind button
+lbl.Size = UDim2.new(0.7, 0, 1, 0)
 lbl.BackgroundTransparency = 1
 lbl.Text = labelText
 lbl.TextColor3 = COLOR_DIM
 lbl.Font = Enum.Font.GothamBold
-lbl.TextSize = 11 * guiScale
+lbl.TextSize = 12 * guiScale
 lbl.TextXAlignment = Enum.TextXAlignment.Left
+lbl.TextStrokeTransparency = 0.5
 local bg = Instance.new("Frame", frame)
-bg.Size = UDim2.new(0, 38 * guiScale, 0, 18 * guiScale)
-bg.Position = UDim2.new(1, -44 * guiScale, 0.5, -9 * guiScale)
+bg.Size = UDim2.new(0, 45 * guiScale, 0, 22 * guiScale)
+bg.Position = UDim2.new(1, -50 * guiScale, 0.5, -11 * guiScale)
 bg.BackgroundColor3 = COLOR_OFF
 bg.ZIndex = 4
 Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
 local circle = Instance.new("Frame", bg)
-circle.Size = UDim2.new(0, 14 * guiScale, 0, 14 * guiScale)
-circle.Position = UDim2.new(0, 2 * guiScale, 0.5, -7 * guiScale)
-circle.BackgroundColor3 = Color3.new(0.8, 0.8, 0.9)
+circle.Size = UDim2.new(0, 18 * guiScale, 0, 18 * guiScale)
+circle.Position = UDim2.new(0, 2 * guiScale, 0.5, -9 * guiScale)
+circle.BackgroundColor3 = Color3.new(1, 1, 1)
 circle.ZIndex = 5
 Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
 local btn = Instance.new("TextButton", frame)
@@ -1250,11 +1254,11 @@ local function updateVisual(state)
 if state ~= nil then isOn = state end
 if isOn then
 TweenService:Create(bg, TweenInfo.new(0.2), {BackgroundColor3 = COLOR_ACCENT}):Play()
-TweenService:Create(circle, TweenInfo.new(0.2), {Position = UDim2.new(1,-16*guiScale,0.5,-7*guiScale)}):Play()
+TweenService:Create(circle, TweenInfo.new(0.2), {Position = UDim2.new(1,-20*guiScale,0.5,-9*guiScale)}):Play()
 lbl.TextColor3 = COLOR_GLOW
 else
 TweenService:Create(bg, TweenInfo.new(0.2), {BackgroundColor3 = COLOR_OFF}):Play()
-TweenService:Create(circle, TweenInfo.new(0.2), {Position = UDim2.new(0,2*guiScale,0.5,-7*guiScale)}):Play()
+TweenService:Create(circle, TweenInfo.new(0.2), {Position = UDim2.new(0,2*guiScale,0.5,-9*guiScale)}):Play()
 lbl.TextColor3 = COLOR_DIM
 end
 lbl.Text = labelText -- No keybind text
@@ -1268,48 +1272,48 @@ end
 
 local function createSlider(parent, labelText, minVal, maxVal, valueKey, onChange)
 local container = Instance.new("Frame", parent)
-container.Size = UDim2.new(1, -8 * guiScale, 0, 40 * guiScale)
+container.Size = UDim2.new(1, -10 * guiScale, 0, 45 * guiScale)
 container.BackgroundColor3 = COLOR_BG_ROW
-container.BackgroundTransparency = 0.4
+container.BackgroundTransparency = 0.5
 container.BorderSizePixel = 0
 container.LayoutOrder = toggleSliderOrder
 toggleSliderOrder = toggleSliderOrder + 1
-Instance.new("UICorner", container).CornerRadius = UDim.new(0, 6 * guiScale)
+Instance.new("UICorner", container).CornerRadius = UDim.new(0, 8 * guiScale)
 local cStroke = Instance.new("UIStroke", container)
-cStroke.Thickness = 1.5 * guiScale
+cStroke.Thickness = 2 * guiScale
 cStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 cStroke.Color = COLOR_ACCENT
 table.insert(rainbowElements, cStroke)
 local label = Instance.new("TextLabel", container)
-label.Size = UDim2.new(1, 0, 0, 14 * guiScale)
+label.Size = UDim2.new(1, 0, 0, 16 * guiScale)
 label.BackgroundTransparency = 1
 label.Text = labelText
 label.TextColor3 = COLOR_DIM
 label.Font = Enum.Font.GothamBold
-label.TextSize = 10 * guiScale
+label.TextSize = 11 * guiScale
 label.TextXAlignment = Enum.TextXAlignment.Left
 local sliderBg = Instance.new("Frame", container)
-sliderBg.Size = UDim2.new(1, 0, 0, 5 * guiScale)
-sliderBg.Position = UDim2.new(0, 0, 0, 20 * guiScale)
-sliderBg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+sliderBg.Size = UDim2.new(1, 0, 0, 6 * guiScale)
+sliderBg.Position = UDim2.new(0, 0, 0, 22 * guiScale)
+sliderBg.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
 Instance.new("UICorner", sliderBg).CornerRadius = UDim.new(1, 0)
 local sliderFill = Instance.new("Frame", sliderBg)
 sliderFill.Size = UDim2.new(0.5, 0, 1, 0)
-sliderFill.BackgroundColor3 = COLOR_ACCENT
+sliderFill.BackgroundColor3 = COLOR_GLOW
 Instance.new("UICorner", sliderFill).CornerRadius = UDim.new(1, 0)
 local thumb = Instance.new("Frame", sliderBg)
-thumb.Size = UDim2.new(0, 10 * guiScale, 0, 10 * guiScale)
-thumb.Position = UDim2.new(0.5, -5 * guiScale, 0.5, -5 * guiScale)
-thumb.BackgroundColor3 = COLOR_GLOW
+thumb.Size = UDim2.new(0, 12 * guiScale, 0, 12 * guiScale)
+thumb.Position = UDim2.new(0.5, -6 * guiScale, 0.5, -6 * guiScale)
+thumb.BackgroundColor3 = COLOR_TEXT
 Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
 local valueLabel = Instance.new("TextLabel", container)
-valueLabel.Size = UDim2.new(0, 35 * guiScale, 0, 14 * guiScale)
-valueLabel.Position = UDim2.new(1, -38 * guiScale, 0, 0)
+valueLabel.Size = UDim2.new(0, 40 * guiScale, 0, 16 * guiScale)
+valueLabel.Position = UDim2.new(1, -45 * guiScale, 0, 0)
 valueLabel.BackgroundTransparency = 1
 valueLabel.Text = tostring(Values[valueKey] or AutoStealValues[valueKey])
 valueLabel.TextColor3 = COLOR_GLOW
 valueLabel.Font = Enum.Font.GothamBold
-valueLabel.TextSize = 10 * guiScale
+valueLabel.TextSize = 11 * guiScale
 local dragging = false
 local function updateSliderVisual(value)
 local relative = (value - minVal) / (maxVal - minVal)
@@ -1320,7 +1324,7 @@ else
 valueLabel.Text = tostring(value)
 end
 sliderFill.Size = UDim2.new(relative, 0, 1, 0)
-thumb.Position = UDim2.new(relative, -5 * guiScale, 0.5, -5 * guiScale)
+thumb.Position = UDim2.new(relative, -6 * guiScale, 0.5, -6 * guiScale)
 if onChange then onChange(value) end
 end
 SliderReferences[valueKey] = { func = updateSliderVisual }
@@ -1439,10 +1443,8 @@ setVisual(on)
 Features.InfinityJump = on
 if on then
 startInfinityJump()
-print("[InfJump] ENABLED! Hold SPACE or Touch to fly.")
 else
 stopInfinityJump()
-print("[InfJump] DISABLED.")
 end
 SaveConfig()
 end)
@@ -1626,14 +1628,14 @@ end)
 
 -- Rainbow Effect
 task.spawn(function()
-local hue = 260
+local hue = 0
 while scriptActive and main.Parent do
-hue = (hue + 0.8) % 360
+hue = (hue + 1) % 360
 local col = Color3.fromHSV(hue / 360, 0.8, 1)
 for _, elem in ipairs(rainbowElements) do
 elem.Color = col
 end
-task.wait(0.04)
+task.wait(0.03)
 end
 end)
 
@@ -1675,7 +1677,6 @@ end
 enemyTimers = {}
 destroySpeedDisplay()
 sg:Destroy()
-print("GUI Closed Completely. All features stopped.")
 end)
 
 -- Hide/Show Logic
@@ -1703,8 +1704,7 @@ cubeContainer.Draggable = true
 Instance.new("UICorner", cubeContainer).CornerRadius = UDim.new(0, 15 * guiScale)
 local cubeStroke = Instance.new("UIStroke", cubeContainer)
 cubeStroke.Color = COLOR_ACCENT
-cubeStroke.Thickness = 2 * guiScale
-cubeStroke.Transparency = 0.5
+cubeStroke.Thickness = 2.5 * guiScale
 
 local cubeGrid = Instance.new("UIGridLayout", cubeContainer)
 cubeGrid.CellSize = UDim2.new(0, 60 * guiScale, 0, 60 * guiScale)
@@ -1718,22 +1718,22 @@ local function createGalaxyBtn(text, colorOff, featureKey)
 	b.BackgroundColor3 = COLOR_BG_MAIN
 	b.TextColor3 = colorOff
 	b.Font = Enum.Font.GothamBlack
-	b.TextSize = 10 * guiScale
+	b.TextSize = 11 * guiScale
 	b.AutoButtonColor = false
 	
 	local btnCorner = Instance.new("UICorner", b)
 	btnCorner.CornerRadius = UDim.new(0, 12 * guiScale)
 	
 	local btnStroke = Instance.new("UIStroke", b)
-	btnStroke.Thickness = 2 * guiScale
+	btnStroke.Thickness = 2.5 * guiScale
 	btnStroke.Color = colorOff
 	
 	-- Pulsing Animation
 	task.spawn(function()
 		while b.Parent do
 			local isActive = Features[featureKey]
-			local targetTrans = isActive and 0 or 0.4
-			local pulse = math.sin(tick() * 4) * 0.1
+			local targetTrans = isActive and 0 or 0.3
+			local pulse = math.sin(tick() * 5) * 0.1
 			btnStroke.Transparency = targetTrans + pulse
 			task.wait(0.03)
 		end
@@ -1752,7 +1752,7 @@ local dropB, dropS = createGalaxyBtn("DROP", GALAXY_DROP, nil) -- Drop is instan
 lockB.MouseButton1Click:Connect(function()
 	Features.FrontLock = not Features.FrontLock
 	lockB.TextColor3 = Features.FrontLock and COLOR_TEXT or GALAXY_LOCK
-	lockB.Text = Features.FrontLock and "LOCK\nON" or "LOCK"
+	lockB.Text = Features.FrontLock and "ON" or "LOCK"
 end)
 
 rightB.MouseButton1Click:Connect(function()
@@ -1770,7 +1770,7 @@ rightB.MouseButton1Click:Connect(function()
 	end
 	Features.AutoRight = true
 	rightB.TextColor3 = COLOR_TEXT
-	rightB.Text = "RUN\nNING"
+	rightB.Text = "GO"
 	task.spawn(function() runStealPath(stealPath1) end)
 	while Features.AutoRight and pathActive do task.wait(0.1) end
 	if not pathActive and Features.AutoRight then
@@ -1795,7 +1795,7 @@ leftB.MouseButton1Click:Connect(function()
 	end
 	Features.AutoLeft = true
 	leftB.TextColor3 = COLOR_TEXT
-	leftB.Text = "RUN\nNING"
+	leftB.Text = "GO"
 	task.spawn(function() runStealPath(stealPath2) end)
 	while Features.AutoLeft and pathActive do task.wait(0.1) end
 	if not pathActive and Features.AutoLeft then
@@ -1809,7 +1809,7 @@ end)
 dropB.MouseButton1Click:Connect(function()
 	-- Visual Feedback
 	dropB.TextColor3 = COLOR_TEXT
-	dropB.Text = "DRO\nPPED"
+	dropB.Text = "BOOM"
 	dropS.Transparency = 0
 	
 	-- Execute Fixed Drop
@@ -1824,10 +1824,8 @@ dropB.MouseButton1Click:Connect(function()
 		end
 	end
 	
-	task.wait(0.2)
+	task.wait(0.15)
 	dropB.TextColor3 = GALAXY_DROP
 	dropB.Text = "DROP"
-	dropS.Transparency = 0.4
+	dropS.Transparency = 0.3
 end)
-
-print("[Darker Hub] Loaded! Galaxy Keybinds Active. Drop Fixed.")
