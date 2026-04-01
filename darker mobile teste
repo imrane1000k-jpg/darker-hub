@@ -1,5 +1,4 @@
--- Darker Hub | Ultimate Edition + Fixed NoTex + Pure InfJump + Behind Lock
--- FIXED: NoTex loops, InfJump pure hold boost, Front Lock follows from BACK
+-- Darker Hub | Ultimate Edition + REAL NoTex FPS Booster + Pure InfJump + Behind Lock
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -434,9 +433,9 @@ local function stopAntiRagdoll()
     isBoosting = false; arDisconnectAll(); cachedCharData = {}
 end
 
--- ╔═══════════════════════════════════════════════════════════════════╗
--- ║  ✅ PURE INFINITY JUMP — Hold jump = constant Y boost, no grav  ║
--- ╚═══════════════════════════════════════════════════════════════════╝
+-- ╔═══════════════════════════════════════════════════════════════╗
+-- ║  PURE INFINITY JUMP — Hold jump = constant Y boost           ║
+-- ╚═══════════════════════════════════════════════════════════════╝
 local infinityJumpEnabled = false
 local JUMP_BOOST_FORCE = 65
 
@@ -452,7 +451,6 @@ UserInputService.InputEnded:Connect(function(input, gpe)
     end
 end)
 
--- Mobile: tap jump button sets spaceHeld true briefly
 UserInputService.JumpRequest:Connect(function()
     if not scriptActive or not infinityJumpEnabled then return end
     if isMobile then
@@ -461,17 +459,13 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
--- Pure boost: while held, force Y velocity up every frame
 TrackHB(function()
     if not scriptActive or not infinityJumpEnabled then return end
     local char = Player.Character; if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart"); if not hrp then return end
-    
     if spaceHeld then
-        -- Just blast Y velocity up, ignore gravity entirely
         hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, JUMP_BOOST_FORCE, hrp.AssemblyLinearVelocity.Z)
     end
-    -- When not held, let normal gravity take over — no clamping
 end)
 
 local helicopterSpinBAV = nil
@@ -744,62 +738,115 @@ local function startUnwalk()
 end
 local function stopUnwalk() local c = Player.Character; if c and savedAnimations.Animate then savedAnimations.Animate:Clone().Parent = c; savedAnimations.Animate = nil end end
 
--- ╔═══════════════════════════════════════════════════════════════════╗
--- ║  ✅ FIXED OPTIMIZER + NO TEXTURE — Loops to catch everything    ║
--- ╚═══════════════════════════════════════════════════════════════════╝
-local optimizerHBConn = nil
+-- ╔═══════════════════════════════════════════════════════════════╗
+-- ║  ✅ REAL NO TEXTURE FPS BOOSTER                               ║
+-- ║  - One-time heavy sweep (not every frame = no lag)            ║
+-- ║  - DescendantAdded listener catches new objects                ║
+-- ║  - Slow 5s safety sweep catches leftovers                      ║
+-- ╚═══════════════════════════════════════════════════════════════╝
+local optimizerConn = nil
+local optimizerSlowSweep = nil
+local optimizedCache = setmetatable({}, {__mode = "kv"})
+
+local function stripObject(obj)
+    if optimizedCache[obj] then return end
+    optimizedCache[obj] = true
+    pcall(function()
+        -- Destroy expensive effects
+        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
+            obj:Destroy(); return
+        end
+        -- Destroy ALL lights except ones on player
+        if obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
+            if not obj:IsDescendantOf(Player.Character) then obj:Destroy() end; return
+        end
+        -- Destroy decals and textures
+        if obj:IsA("Decal") or obj:IsA("Texture") then
+            obj:Destroy(); return
+        end
+        -- Strip parts
+        if obj:IsA("BasePart") then
+            obj.CastShadow = false
+            obj.ReceiveShadow = false
+            if obj.Material ~= Enum.Material.Plastic then
+                obj.Material = Enum.Material.Plastic
+            end
+            -- MeshPart texture removal
+            if obj:IsA("MeshPart") then
+                if obj.TextureID ~= "" then obj.TextureID = "" end
+            end
+            -- Clear any child decals/textures on this part
+            for _, child in ipairs(obj:GetChildren()) do
+                if child:IsA("Decal") or child:IsA("Texture") then
+                    optimizedCache[child] = true
+                    child:Destroy()
+                end
+            end
+        end
+        -- BillboardGuis and SurfaceGuis on non-player objects (visual clutter)
+        if (obj:IsA("BillboardGui") or obj:IsA("SurfaceGui")) and not obj:IsDescendantOf(Player.Character) then
+            -- Only destroy non-essential ones (keep plot signs etc by checking name)
+            local n = obj.Name:lower()
+            if n:find("ragdoll") or n:find("timer") or n:find("speed") then return end
+            if n:find("yourbase") or n:find("plot") or n:find("name") or n:find("owner") then return end
+            obj:Destroy()
+        end
+    end)
+end
+
+local function sweepWorkspace()
+    pcall(function()
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            stripObject(obj)
+        end
+    end)
+end
+
 local function enableOptimizer()
     if getgenv and getgenv().OPTIMIZER_ACTIVE then return end
     if getgenv then getgenv().OPTIMIZER_ACTIVE = true end
-    -- Set rendering settings
+
+    -- Aggressive rendering settings
     pcall(function()
         settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+        settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level01
+        pcall(function() settings().Rendering.TextureQuality = Enum.TextureQuality.Level01 end)
+        pcall(function() settings().Rendering.EmissiveStrength = 0 end)
         game:GetService("Lighting").GlobalShadows = false
         game:GetService("Lighting").Brightness = 3
         game:GetService("Lighting").FogEnd = 9e9
+        game:GetService("Lighting").Ambient = Color3.fromRGB(178, 178, 178)
+        game:GetService("Lighting").OutdoorAmbient = Color3.fromRGB(178, 178, 178)
+        game:GetService("Lighting").EnvironmentDiffuseScale = 0
+        game:GetService("Lighting").EnvironmentSpecularScale = 0
+        game:GetService("Lighting").ClockTime = 14
     end)
-    -- Loop every frame to catch newly loaded parts
-    if optimizerHBConn then optimizerHBConn:Disconnect() end
-    optimizerHBConn = TrackHB(function()
+
+    -- Initial heavy sweep
+    sweepWorkspace()
+
+    -- Light listener for new objects (zero cost when nothing spawns)
+    if optimizerConn then optimizerConn:Disconnect() end
+    optimizerConn = workspace.DescendantAdded:Connect(function(obj)
         if not scriptActive or not Features.Optimizer then return end
-        pcall(function()
-            for _, obj in ipairs(workspace:GetDescendants()) do
-                pcall(function()
-                    -- Destroy visual junk
-                    if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
-                        obj.Enabled = false
-                        obj:Destroy()
-                    elseif obj:IsA("Decal") or obj:IsA("Texture") then
-                        obj:Destroy()
-                    elseif obj:IsA("BasePart") then
-                        obj.CastShadow = false
-                        obj.ReceiveShadow = false
-                        -- Force plastic material
-                        if obj.Material ~= Enum.Material.Plastic then
-                            obj.Material = Enum.Material.Plastic
-                        end
-                        -- Remove textures from MeshParts
-                        if obj:IsA("MeshPart") then
-                            if obj.TextureID ~= "" then
-                                obj.TextureID = ""
-                            end
-                        end
-                    end
-                    -- Surface textures
-                    if obj:IsA("BasePart") then
-                        for _, face in ipairs(Enum.NormalId:GetEnumItems()) do
-                            local decal = obj:FindFirstChildWhichIsA("Decal")
-                            if decal then decal:Destroy() end
-                        end
-                    end
-                end)
-            end
-        end)
+        stripObject(obj)
+    end)
+
+    -- Slow safety sweep every 5 seconds (catches reparented/missed stuff)
+    if optimizerSlowSweep then optimizerSlowSweep:Disconnect() end
+    optimizerSlowSweep = task.spawn(function()
+        while scriptActive and Features.Optimizer do
+            task.wait(5)
+            if not scriptActive or not Features.Optimizer then break end
+            sweepWorkspace()
+        end
     end)
 end
+
 local function disableOptimizer()
     if getgenv then getgenv().OPTIMIZER_ACTIVE = false end
-    if optimizerHBConn then optimizerHBConn:Disconnect(); optimizerHBConn = nil end
+    if optimizerConn then optimizerConn:Disconnect(); optimizerConn = nil end
+    optimizerSlowSweep = nil
 end
 
 local stealPath1 = {
@@ -928,9 +975,9 @@ local function updateEnemyTimers()
 end
 TrackHB(updateEnemyTimers)
 
--- ╔═══════════════════════════════════════════════════════════════════╗
--- ║  ✅ BEHIND LOCK — Follows from BACK, not front                  ║
--- ╚═══════════════════════════════════════════════════════════════════╝
+-- ╔═══════════════════════════════════════════════════════════════╗
+-- ║  BEHIND LOCK — Follows from BACK                               ║
+-- ╚═══════════════════════════════════════════════════════════════╝
 local Cebo = { Circle = nil, Align = nil, Attach = nil }
 local frontLockTarget = nil
 local frontLockOriginalSpeed = 16
@@ -995,45 +1042,32 @@ TrackRS(function()
     local hum = char:FindFirstChildOfClass("Humanoid"); local root = char:FindFirstChild("HumanoidRootPart")
     if not hum or not root then return end
     if hum.WalkSpeed ~= FrontLockConfig.SPEED then hum.WalkSpeed = FrontLockConfig.SPEED end
-    
     if not frontLockTarget or not frontLockTarget.Character or not frontLockTarget.Character:FindFirstChild("HumanoidRootPart") then
         frontLockTarget = findNearestPlayerForFrontLock(); frontLockEquippedBat = false
     end
-    
     if frontLockTarget and frontLockTarget.Character then
         local targetRoot = frontLockTarget.Character:FindFirstChild("HumanoidRootPart")
         if targetRoot then
-            local targetPos = targetRoot.Position
-            local myPos = root.Position
-            local targetCFrame = targetRoot.CFrame
+            local targetPos = targetRoot.Position; local myPos = root.Position; local targetCFrame = targetRoot.CFrame
             local lookVector = targetCFrame.LookVector
-            
-            -- 🔙 BEHIND: subtract lookVector instead of adding
             local spotBehind = targetPos - (lookVector * FrontLockConfig.BEHIND_DISTANCE)
-            
-            local directionVector = spotBehind - myPos
-            local distance = directionVector.Magnitude
+            local directionVector = spotBehind - myPos; local distance = directionVector.Magnitude
             local heightDiff = targetPos.Y - myPos.Y
             local horizontalDir = Vector3.new(directionVector.X, 0, directionVector.Z).Unit
             if horizontalDir.Magnitude == 0 then horizontalDir = Vector3.new(1,0,0) end
-            
             local verticalVel = 0
             if math.abs(heightDiff) > 2 then verticalVel = (heightDiff > 0 and FrontLockConfig.SPEED * 0.8) or (-FrontLockConfig.SPEED * 0.8) end
-            
             if distance > FrontLockConfig.STOP_DISTANCE then
                 root.Velocity = Vector3.new(horizontalDir.X * FrontLockConfig.SPEED, verticalVel, horizontalDir.Z * FrontLockConfig.SPEED)
                 hum:MoveTo(spotBehind)
             else
                 root.Velocity = Vector3.new(0, 0, 0); hum:MoveTo(myPos)
             end
-            
             char.Humanoid.AutoRotate = false
             if Cebo.Align then
                 Cebo.Align.Enabled = true
-                -- Look AT the target so you face their back from behind
                 Cebo.Align.CFrame = CFrame.lookAt(myPos, Vector3.new(targetPos.X, myPos.Y, targetPos.Z))
             end
-            
             if not frontLockEquippedBat then
                 local backpack = Player:FindFirstChildOfClass("Backpack")
                 local bat = char:FindFirstChild("Bat") or char:FindFirstChild("Medusa") or (backpack and (backpack:FindFirstChild("Bat") or backpack:FindFirstChild("Medusa")))
@@ -1229,7 +1263,7 @@ do
 end
 
 do
-    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Optimize+NoTex", "Optimizer", false, nil, false)
+    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "No Texture + FPS", "Optimizer", false, nil, false)
     btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.Optimizer = on; if on then enableOptimizer() else disableOptimizer() end; SaveConfig() end)
     if Features.Optimizer then setVisual(true); enableOptimizer() end
 end
@@ -1265,7 +1299,7 @@ end
 createSlider(scrollFrame, "Path Turn Wait", 0.0, 1.0, "PATH_TURN_WAIT", function(v) AutoStealValues.PATH_TURN_WAIT = v end)
 
 do
-    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Behind Lock + Circle [" .. Keybinds.FrontLock.Name .. "]", "FrontLock", true, Keybinds.FrontLock, false)
+    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Behind Lock [" .. Keybinds.FrontLock.Name .. "]", "FrontLock", true, Keybinds.FrontLock, false)
     btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.FrontLock = on; if on then startFrontLock() else stopFrontLock() end; SaveConfig() end)
     if Features.FrontLock then setVisual(true); startFrontLock() end
 end
