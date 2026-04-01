@@ -2,6 +2,8 @@
 -- UPDATED: Front Lock added (Key F), Progress Bar moved to Top, Simultaneous Modes enabled.
 -- MODIFIED: Removed Auto Grab Sliders (Hardcoded), Removed Auto TP Ragdoll & Smart TP.
 -- PATH UPDATE: Steal Paths updated to match uploaded text files exactly.
+-- MOBILE UPDATE: Added circular buttons for Drop, Auto Left, Auto Right, Front Lock in a single box
+
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
 local Players = game:GetService("Players")
@@ -1128,6 +1130,7 @@ end
 end
 end
 end
+end
 RunService.Heartbeat:Connect(updateEnemyTimers)
 -- ================= FRONT LOCK LOGIC (INTEGRATED) =================
 local frontLockTarget = nil
@@ -1796,70 +1799,117 @@ TweenService:Create(main, TweenInfo.new(0.2), {Size = UDim2.new(0, W, 0, H)}):Pl
 end
 end
 end)
--- ─── [FIXED] MOBILE CIRCULAR TOGGLES (LEFT SIDE) ─────────────────────────────
-local mobileTogglesFrame = Instance.new("Frame")
-mobileTogglesFrame.Name = "MobileToggles"
-mobileTogglesFrame.Size = UDim2.new(0, 60 * guiScale, 0, 180 * guiScale)
-mobileTogglesFrame.Position = UDim2.new(0, 10 * guiScale, 0.5, -90 * guiScale)
-mobileTogglesFrame.BackgroundTransparency = 1
-mobileTogglesFrame.Visible = isMobile
-mobileTogglesFrame.ZIndex = 50
-mobileTogglesFrame.Parent = sg
-local listLayoutMobile = Instance.new("UIListLayout")
-listLayoutMobile.Padding = UDim.new(0, 10 * guiScale)
-listLayoutMobile.HorizontalAlignment = Enum.HorizontalAlignment.Center
-listLayoutMobile.SortOrder = Enum.SortOrder.LayoutOrder
-listLayoutMobile.Parent = mobileTogglesFrame
-local function createCircularToggle(parent, labelText, featureKey, keybindName)
+-- ─── [FIXED] MOBILE BUTTONS IN A SINGLE BOX (LEFT SIDE) ─────────────────────────────
+local mobileButtonsBox = Instance.new("Frame")
+mobileButtonsBox.Name = "MobileButtonsBox"
+mobileButtonsBox.Size = UDim2.new(0, 75 * guiScale, 0, 200 * guiScale)
+mobileButtonsBox.Position = UDim2.new(0, 10 * guiScale, 0.5, -100 * guiScale)
+mobileButtonsBox.BackgroundColor3 = COLOR_BG_MAIN
+mobileButtonsBox.BackgroundTransparency = 0.15
+mobileButtonsBox.BorderSizePixel = 0
+mobileButtonsBox.Visible = isMobile
+mobileButtonsBox.ZIndex = 50
+mobileButtonsBox.Parent = sg
+
+local boxCorner = Instance.new("UICorner", mobileButtonsBox)
+boxCorner.CornerRadius = UDim.new(0, 15 * guiScale)
+
+local boxStroke = Instance.new("UIStroke", mobileButtonsBox)
+boxStroke.Color = COLOR_ACCENT
+boxStroke.Thickness = 2 * guiScale
+boxStroke.Transparency = 0.3
+
+local boxLayout = Instance.new("UIListLayout", mobileButtonsBox)
+boxLayout.Padding = UDim.new(0, 8 * guiScale)
+boxLayout.FillDirection = Enum.FillDirection.Vertical
+boxLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+boxLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+local function createMobileButton(parent, labelText, buttonColor, featureKey, isToggle, keybindCode)
 local btnContainer = Instance.new("Frame")
-btnContainer.Size = UDim2.new(0, 60 * guiScale, 0, 60 * guiScale)
+btnContainer.Size = UDim2.new(0, 65 * guiScale, 0, 65 * guiScale)
 btnContainer.BackgroundTransparency = 1
 btnContainer.LayoutOrder = #parent:GetChildren()
 btnContainer.Parent = parent
+
 local circleBtn = Instance.new("TextButton")
-circleBtn.Size = UDim2.new(0, 60 * guiScale, 0, 60 * guiScale)
+circleBtn.Size = UDim2.new(0, 65 * guiScale, 0, 65 * guiScale)
 circleBtn.Position = UDim2.new(0, 0, 0, 0)
-circleBtn.BackgroundColor3 = COLOR_BG_MAIN
+circleBtn.BackgroundColor3 = buttonColor
 circleBtn.Text = labelText
-circleBtn.TextColor3 = COLOR_GLOW
+circleBtn.TextColor3 = COLOR_TEXT
 circleBtn.Font = Enum.Font.GothamBlack
-circleBtn.TextSize = 10 * guiScale
+circleBtn.TextSize = 12 * guiScale
 circleBtn.BorderSizePixel = 0
 circleBtn.ZIndex = 55
 circleBtn.Parent = btnContainer
-local corner = Instance.new("UICorner", circleBtn)
-corner.CornerRadius = UDim.new(1, 0)
-local stroke = Instance.new("UIStroke", circleBtn)
-stroke.Color = COLOR_ACCENT
-stroke.Thickness = 3 * guiScale
+
+local btnCorner = Instance.new("UICorner", circleBtn)
+btnCorner.CornerRadius = UDim.new(1, 0)
+
+local btnStroke = Instance.new("UIStroke", circleBtn)
+btnStroke.Color = COLOR_GLOW
+btnStroke.Thickness = 2 * guiScale
+btnStroke.Transparency = 0.3
+
+local isActive = false
+
 circleBtn.MouseButton1Click:Connect(function()
 if featureKey == "AutoRight" then
-local newState = not Features.AutoRight
-Features.AutoRight = newState
-if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](newState) end
-if newState then stopStealPath(); startStealPath(stealPath1) else stopStealPath() end
-if newState then
-circleBtn.BackgroundColor3 = COLOR_ACCENT
-circleBtn.TextColor3 = COLOR_TEXT
-stroke.Color = COLOR_GLOW
+isActive = not isActive
+if isActive then
+if Features.AutoLeft then
+Features.AutoLeft = false
+if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
+-- Update left button visual if exists
+local leftBtn = mobileButtonsBox:FindFirstChild("LeftButtonContainer")
+if leftBtn and leftBtn:FindFirstChild("CircleButton") then
+leftBtn.CircleButton.BackgroundColor3 = Color3.fromRGB(148, 50, 255)
+leftBtn.CircleButton.TextColor3 = COLOR_TEXT
+end
+end
+Features.AutoRight = true
+if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](true) end
+stopStealPath()
+startStealPath(stealPath1)
+circleBtn.BackgroundColor3 = COLOR_GLOW
+circleBtn.TextColor3 = COLOR_BG_MAIN
+btnStroke.Color = COLOR_ACCENT
 else
-circleBtn.BackgroundColor3 = COLOR_BG_MAIN
-circleBtn.TextColor3 = COLOR_GLOW
-stroke.Color = COLOR_ACCENT
+Features.AutoRight = false
+if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end
+stopStealPath()
+circleBtn.BackgroundColor3 = buttonColor
+circleBtn.TextColor3 = COLOR_TEXT
+btnStroke.Color = COLOR_GLOW
 end
 elseif featureKey == "AutoLeft" then
-local newState = not Features.AutoLeft
-Features.AutoLeft = newState
-if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](newState) end
-if newState then stopStealPath(); startStealPath(stealPath2) else stopStealPath() end
-if newState then
-circleBtn.BackgroundColor3 = COLOR_ACCENT
-circleBtn.TextColor3 = COLOR_TEXT
-stroke.Color = COLOR_GLOW
+isActive = not isActive
+if isActive then
+if Features.AutoRight then
+Features.AutoRight = false
+if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end
+-- Update right button visual if exists
+local rightBtn = mobileButtonsBox:FindFirstChild("RightButtonContainer")
+if rightBtn and rightBtn:FindFirstChild("CircleButton") then
+rightBtn.CircleButton.BackgroundColor3 = Color3.fromRGB(148, 50, 255)
+rightBtn.CircleButton.TextColor3 = COLOR_TEXT
+end
+end
+Features.AutoLeft = true
+if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](true) end
+stopStealPath()
+startStealPath(stealPath2)
+circleBtn.BackgroundColor3 = COLOR_GLOW
+circleBtn.TextColor3 = COLOR_BG_MAIN
+btnStroke.Color = COLOR_ACCENT
 else
-circleBtn.BackgroundColor3 = COLOR_BG_MAIN
-circleBtn.TextColor3 = COLOR_GLOW
-stroke.Color = COLOR_ACCENT
+Features.AutoLeft = false
+if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
+stopStealPath()
+circleBtn.BackgroundColor3 = buttonColor
+circleBtn.TextColor3 = COLOR_TEXT
+btnStroke.Color = COLOR_GLOW
 end
 elseif featureKey == "DropShot" then
 performDrop()
@@ -1867,12 +1917,35 @@ local oldColor = circleBtn.BackgroundColor3
 circleBtn.BackgroundColor3 = COLOR_GLOW
 task.wait(0.1)
 circleBtn.BackgroundColor3 = oldColor
+elseif featureKey == "FrontLock" then
+isActive = not isActive
+Features.FrontLock = isActive
+if _G["UpdateVisual_FrontLock"] then _G["UpdateVisual_FrontLock"](isActive) end
+if isActive then
+startFrontLock()
+circleBtn.BackgroundColor3 = COLOR_FRONT_LOCK
+circleBtn.TextColor3 = COLOR_BG_MAIN
+btnStroke.Color = COLOR_GLOW
+else
+stopFrontLock()
+circleBtn.BackgroundColor3 = buttonColor
+circleBtn.TextColor3 = COLOR_TEXT
+btnStroke.Color = COLOR_GLOW
+end
 end
 end)
+
+-- Store reference to the button for potential updates
+btnContainer.CircleButton = circleBtn
+btnContainer.Name = featureKey .. "ButtonContainer"
+
 return circleBtn
 end
+
 if isMobile then
-createCircularToggle(mobileTogglesFrame, "Auto R", "AutoRight", "V")
-createCircularToggle(mobileTogglesFrame, "Auto L", "AutoLeft", "C")
-createCircularToggle(mobileTogglesFrame, "Drop", "DropShot", "X")
+-- Create all 4 buttons in a single box
+createMobileButton(mobileButtonsBox, "AUTO\nR", Color3.fromRGB(148, 50, 255), "AutoRight", true)
+createMobileButton(mobileButtonsBox, "AUTO\nL", Color3.fromRGB(148, 50, 255), "AutoLeft", true)
+createMobileButton(mobileButtonsBox, "DROP", Color3.fromRGB(200, 50, 50), "DropShot", false)
+createMobileButton(mobileButtonsBox, "FRONT\nLOCK", Color3.fromRGB(0, 100, 50), "FrontLock", true)
 end
