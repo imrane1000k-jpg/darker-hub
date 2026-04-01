@@ -1,4 +1,4 @@
--- Darker Hub | Ultimate Edition + REAL NoTex FPS Booster + Pure InfJump + Behind Lock [UNIFIED FIX]
+-- Darker Hub | Ultimate Edition + ULTRA NoTex FPS Booster + Mobile Spam Jump + Behind Lock [FINAL]
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
 
@@ -75,7 +75,6 @@ local Values = {
 }
 
 local AutoStealValues = { STEAL_RADIUS = 8, STEAL_DURATION = 0.2, PATH_TURN_WAIT = 0.2 }
--- 🔒 UNIFIED CONFIG: Speed 57, Follows from BEHIND on BOTH platforms
 local FrontLockConfig = { SPEED = 57, BEHIND_DISTANCE = 4, STOP_DISTANCE = 1.5, DETECTION_RADIUS = 400 }
 
 local chosenRoute = nil
@@ -434,19 +433,20 @@ local function stopAntiRagdoll()
 end
 
 -- ╔═══════════════════════════════════════════════════════════════╗
--- ║  🚀 PLATFORM-SPECIFIC INFINITY JUMP                           ║
--- ║  - MOBILE: Auto-spams jump (no hold needed)                  ║
+-- ║  📱 MOBILE AUTO-SPAM INFINITY JUMP                            ║
+-- ║  - MOBILE: Constant auto-spam (no hold needed)               ║
 -- ║  - PC: Hold space to fly up                                  ║
 -- ╚═══════════════════════════════════════════════════════════════╝
 local infinityJumpEnabled = false
 local JUMP_BOOST_FORCE = 65
 local mobileJumpSpamming = false
+local lastMobileJumpTime = 0
 
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
         spaceHeld = true
-        -- Mobile auto-spam trigger
+        -- Mobile: Start spamming when jump pressed
         if isMobile and infinityJumpEnabled then
             mobileJumpSpamming = true
         end
@@ -462,15 +462,14 @@ end)
 
 UserInputService.JumpRequest:Connect(function()
     if not scriptActive or not infinityJumpEnabled then return end
-    -- Mobile: auto-spam on jump request
+    -- MOBILE: Auto-spam trigger
     if isMobile then
-        spaceHeld = true
         mobileJumpSpamming = true
-        task.delay(0.15, function()
+        -- Keep spamming for a while
+        delay(0.2, function()
             if isMobile and infinityJumpEnabled then
-                -- Continue spamming
+                mobileJumpSpamming = true  -- Continue spamming
             else
-                spaceHeld = false
                 mobileJumpSpamming = false
             end
         end)
@@ -482,10 +481,15 @@ TrackHB(function()
     local char = Player.Character; if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart"); if not hrp then return end
     
-    -- MOBILE: Always apply boost when enabled (auto-spam)
+    -- 📱 MOBILE: AUTO SPAM MODE (constant jumping without holding)
     if isMobile and infinityJumpEnabled then
-        hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, JUMP_BOOST_FORCE, hrp.AssemblyLinearVelocity.Z)
-    -- PC: Only when holding space
+        local now = tick()
+        -- Spam every 0.05 seconds (super fast)
+        if now - lastMobileJumpTime >= 0.05 then
+            lastMobileJumpTime = now
+            hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, JUMP_BOOST_FORCE, hrp.AssemblyLinearVelocity.Z)
+        end
+    -- 💻 PC: Hold space to fly
     elseif spaceHeld then
         hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, JUMP_BOOST_FORCE, hrp.AssemblyLinearVelocity.Z)
     end
@@ -762,12 +766,21 @@ end
 local function stopUnwalk() local c = Player.Character; if c and savedAnimations.Animate then savedAnimations.Animate:Clone().Parent = c; savedAnimations.Animate = nil end end
 
 -- ╔═══════════════════════════════════════════════════════════════╗
--- ║  ✅ ENHANCED NO TEXTURE FPS BOOSTER [OPTIMIZED]              ║
+-- ║  🚀 ULTRA OPTIMIZER - GRAY MODE + NO VFX + MAX FPS          ║
+-- ║  ✅ All parts → Gray Plastic                                 ║
+-- ║  ✅ All textures removed                                     ║
+-- ║  ✅ All VFX destroyed (particles, trails, beams, etc)         ║
+-- ║  ✅ Shadows off                                              ║
+-- ║  ✅ Maximum performance                                      ║
 -- ╚═══════════════════════════════════════════════════════════════╝
 local optimizerConn = nil
 local optimizerSlowSweep = nil
 local optimizedCache = setmetatable({}, {__mode = "kv"})
 local optimizationCount = 0
+
+-- Gray color for all parts
+local GRAY_COLOR = Color3.fromRGB(128, 128, 128)
+local GRAY_MATERIAL = Enum.Material.SmoothPlastic
 
 local function stripObject(obj)
     if optimizedCache[obj] then return end
@@ -775,40 +788,44 @@ local function stripObject(obj)
     optimizationCount = optimizationCount + 1
     
     pcall(function()
-        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or 
-           obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
-            obj:Destroy(); return
-        end
-        
-        if obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
-            if not obj:IsDescendantOf(Player.Character) then 
-                obj:Destroy() 
-            end
+        -- 🔥 DESTROY ALL VFX EFFECTS (Biggest FPS killers)
+        if obj:IsA("ParticleEmitter") or 
+           obj:IsA("Trail") or 
+           obj:IsA("Beam") or 
+           obj:IsA("Fire") or 
+           obj:IsA("Smoke") or 
+           obj:IsA("Sparkles") or
+           obj:IsA("PointLight") or
+           obj:IsA("SpotLight") or
+           obj:IsA("SurfaceLight") then
+            obj:Destroy()
             return
         end
         
+        -- 🎨 Destroy all textures and decals
         if obj:IsA("Decal") or obj:IsA("Texture") then
-            obj:Destroy(); return
+            obj:Destroy()
+            return
         end
         
+        -- 🧱 Handle BaseParts (Make them GRAY)
         if obj:IsA("BasePart") then
+            -- Disable shadows (HUGE FPS boost)
             obj.CastShadow = false
             obj.ReceiveShadow = false
             
-            if obj.Material ~= Enum.Material.Plastic then
-                obj.Material = Enum.Material.Plastic
-            end
+            -- Force GRAY material (cheapest to render)
+            obj.Material = GRAY_MATERIAL
             
+            -- Make it GRAY color
+            obj.Color = GRAY_COLOR
+            
+            -- MeshPart specific: Remove texture ID
             if obj:IsA("MeshPart") then
-                if obj.TextureID ~= "" then 
-                    obj.TextureID = "" 
-                end
-                
-                if obj.TextureID == "" and obj:FindFirstChild("Texture") then
-                    obj.Texture:Destroy()
-                end
+                obj.TextureID = ""  -- Remove texture
             end
             
+            -- Clear any child decals/textures on this part
             for _, child in ipairs(obj:GetChildren()) do
                 if child:IsA("Decal") or child:IsA("Texture") then
                     optimizedCache[child] = true
@@ -816,6 +833,7 @@ local function stripObject(obj)
                 end
             end
             
+            -- Remove SurfaceGuis (except important ones)
             for _, child in ipairs(obj:GetChildren()) do
                 if child:IsA("SurfaceGui") and not obj:IsDescendantOf(Player.Character) then
                     local n = child.Name:lower()
@@ -827,8 +845,10 @@ local function stripObject(obj)
             end
         end
         
+        -- 🗑️ Clean up BillboardGuis (remove visual clutter)
         if obj:IsA("BillboardGui") and not obj:IsDescendantOf(Player.Character) then
             local n = obj.Name:lower()
+            -- Keep essential UI
             if n:find("timer") or n:find("speed") or n:find("ragdoll") then 
                 return 
             end
@@ -838,8 +858,18 @@ local function stripObject(obj)
             obj:Destroy()
         end
         
+        -- 🔇 Mute sounds (optional FPS boost)
         if obj:IsA("Sound") and not obj:IsDescendantOf(Player.Character) then
             obj.Volume = 0
+        end
+        
+        -- Remove post-processing effects
+        if obj:IsA("BloomEffect") or 
+           obj:IsA("BlurEffect") or 
+           obj:IsA("ColorCorrectionEffect") or
+           obj:IsA("SunRaysEffect") or
+           obj:IsA("DepthOfFieldEffect") then
+            obj:Destroy()
         end
     end)
 end
@@ -849,7 +879,9 @@ local function sweepWorkspace()
         local descendants = workspace:GetDescendants()
         for i = 1, #descendants do
             stripObject(descendants[i])
-            if i % 500 == 0 then
+            
+            -- Yield every 1000 objects to prevent timeout
+            if i % 1000 == 0 then
                 task.wait()
             end
         end
@@ -860,57 +892,87 @@ local function enableOptimizer()
     if getgenv and getgenv().OPTIMIZER_ACTIVE then return end
     if getgenv then getgenv().OPTIMIZER_ACTIVE = true end
 
+    -- ⚡ ULTRA AGGRESSIVE RENDERING SETTINGS
     pcall(function()
+        -- Lowest possible quality
         settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
         settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level01
         
+        -- Minimum texture quality
         pcall(function() 
             settings().Rendering.TextureQuality = Enum.TextureQuality.Level01 
         end)
         
+        -- Disable expensive effects
         pcall(function() settings().Rendering.EmissiveStrength = 0 end)
         
+        -- 🌟 LIGHTING OPTIMIZATIONS (MASSIVE FPS BOOST)
         local Lighting = game:GetService("Lighting")
+        
+        -- Disable shadows completely
         Lighting.GlobalShadows = false
-        Lighting.Brightness = 3.5
+        
+        -- Bright lighting (no need for dynamic lights)
+        Lighting.Brightness = 4
+        Lighting.EnvironmentBrightness = 1
+        
+        -- Remove fog
         Lighting.FogEnd = 999999
+        
+        -- Flat ambient light (cheapest)
         Lighting.Ambient = Color3.fromRGB(200, 200, 200)
         Lighting.OutdoorAmbient = Color3.fromRGB(200, 200, 200)
+        
+        -- Disable expensive lighting features
         Lighting.EnvironmentDiffuseScale = 0
         Lighting.EnvironmentSpecularScale = 0
-        Lighting.ClockTime = 14
+        Lighting.ClockTime = 14  -- Brightest time of day
         
+        -- Use cheapest technology
         pcall(function()
             Lighting.Technology = Enum.Technology.Compatibility
         end)
         
+        -- No shadow softness
         pcall(function()
             Lighting.ShadowSoftness = 0
         end)
+        
+        -- Remove extra lighting effects
+        for _, effect in ipairs(Lighting:GetChildren()) do
+            if effect:IsA("PostEffect") then
+                effect:Destroy()
+            end
+        end
     end)
 
-    print("[DarkerHub] Starting optimization sweep...")
+    print("[DarkerHub] 🚀 Starting ULTRA Optimization...")
+    
+    -- Initial comprehensive sweep
     sweepWorkspace()
-    print("[DarkerHub] Optimization complete! Processed " .. optimizationCount .. " objects")
+    
+    print("[DarkerHub] ✅ Optimization complete! Processed " .. optimizationCount .. " objects")
 
+    -- Real-time listener for new objects
     if optimizerConn then optimizerConn:Disconnect() end
     optimizerConn = workspace.DescendantAdded:Connect(function(obj)
         if not scriptActive or not Features.Optimizer then return end
         stripObject(obj)
     end)
 
+    -- Safety sweep every 10 seconds
     if optimizerSlowSweep then 
         pcall(function() task.cancel(optimizerSlowSweep) end) 
     end
     optimizerSlowSweep = task.spawn(function()
         while scriptActive and Features.Optimizer do
-            task.wait(8)
+            task.wait(10)
             if not scriptActive or not Features.Optimizer then break end
             sweepWorkspace()
         end
     end)
     
-    print("[DarkerHub] ✅ Optimizer ENABLED!")
+    print("[DarkerHub] ✅ ULTRA Optimizer ENABLED - Gray Mode Active!")
 end
 
 local function disableOptimizer()
@@ -1052,12 +1114,9 @@ local function updateEnemyTimers()
 end
 TrackHB(updateEnemyTimers)
 
--- ╔═══════════════════════════════════════════════════════════════╗
--- ║  🔒 UNIFIED BEHIND LOCK — Follows from BACK at SPEED 57      ║
--- ║  ✓ Works IDENTICAL on PC & Mobile                            ║
--- ║  ✓ Follows BEHIND target (not front)                         ║
--- ║  ✓ Speed set to 57                                           ║
--- ╚═══════════════════════════════════════════════════════════════╝
+-- ╔═════════════════════════════════════════════════════════════╗
+-- ║  🔒 BEHIND LOCK — Follows from BACK at SPEED 57             ║
+-- ╚═════════════════════════════════════════════════════════════╝
 local Cebo = { Circle = nil, Align = nil, Attach = nil }
 local frontLockTarget = nil
 local frontLockOriginalSpeed = 16
@@ -1121,19 +1180,16 @@ local function stopFrontLock()
     if Cebo.Attach then Cebo.Attach:Destroy(); Cebo.Attach = nil end
 end
 
--- ✅ UNIFIED BEHIND LOCK LOGIC (Same for PC & Mobile)
 TrackRS(function()
     if not scriptActive or not Features.FrontLock then return end
     local char = Player.Character; if not char then return end
     local hum = char:FindFirstChildOfClass("Humanoid"); local root = char:FindFirstChild("HumanoidRootPart")
     if not hum or not root then return end
     
-    -- Set walkspeed to 57 (unified for both platforms)
     if hum.WalkSpeed ~= FrontLockConfig.SPEED then 
         hum.WalkSpeed = FrontLockConfig.SPEED 
     end
     
-    -- Find nearest target
     if not frontLockTarget or not frontLockTarget.Character or not frontLockTarget.Character:FindFirstChild("HumanoidRootPart") then
         frontLockTarget = findNearestPlayerForFrontLock()
         frontLockEquippedBat = false
@@ -1146,56 +1202,44 @@ TrackRS(function()
             local myPos = root.Position
             local targetCFrame = targetRoot.CFrame
             
-            -- ✅ Get where target is LOOKING (LookVector)
             local lookVector = targetCFrame.LookVector
-            
-            -- ✅ Calculate position BEHIND the target (subtract LookVector)
             local spotBehind = targetPos - (lookVector * FrontLockConfig.BEHIND_DISTANCE)
             
-            -- Direction from us to the spot behind target
             local directionVector = spotBehind - myPos
             local distance = directionVector.Magnitude
             
-            -- Height difference handling
             local heightDiff = targetPos.Y - myPos.Y
             local horizontalDir = Vector3.new(directionVector.X, 0, directionVector.Z).Unit
             if horizontalDir.Magnitude == 0 then horizontalDir = Vector3.new(1,0,0) end
             
-            -- Vertical velocity for height correction
             local verticalVel = 0
             if math.abs(heightDiff) > 2 then 
                 verticalVel = (heightDiff > 0 and FrontLockConfig.SPEED * 0.8) or (-FrontLockConfig.SPEED * 0.8) 
             end
             
-            -- Move towards the BEHIND position at speed 57
             if distance > FrontLockConfig.STOP_DISTANCE then
-                -- Smooth velocity interpolation
                 local targetVelocity = Vector3.new(
                     horizontalDir.X * FrontLockConfig.SPEED, 
                     verticalVel, 
                     horizontalDir.Z * FrontLockConfig.SPEED
                 )
                 
-                -- Lerp for smooth movement
                 frontLockSmoothVelocity = frontLockSmoothVelocity:Lerp(targetVelocity, 0.15)
                 
                 root.Velocity = frontLockSmoothVelocity
                 hum:MoveTo(spotBehind)
             else
-                -- Close enough, stop moving
                 root.Velocity = Vector3.new(0, verticalVel * 0.3, 0)
                 hum:MoveTo(myPos)
                 frontLockSmoothVelocity = Vector3.new(0, 0, 0)
             end
             
-            -- Face the target
             char.Humanoid.AutoRotate = false
             if Cebo.Align then
                 Cebo.Align.Enabled = true
                 Cebo.Align.CFrame = CFrame.lookAt(myPos, Vector3.new(targetPos.X, myPos.Y, targetPos.Z))
             end
             
-            -- Auto-equip bat when locked
             if not frontLockEquippedBat then
                 local backpack = Player:FindFirstChildOfClass("Backpack")
                 local bat = char:FindFirstChild("Bat") or char:FindFirstChild("Medusa") or (backpack and (backpack:FindFirstChild("Bat") or backpack:FindFirstChild("Medusa")))
@@ -1397,7 +1441,7 @@ do
 end
 
 do
-    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "No Texture + FPS", "Optimizer", false, nil, false)
+    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "⚡ NoTex + Gray Mode", "Optimizer", false, nil, false)
     btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.Optimizer = on; if on then enableOptimizer() else disableOptimizer() end; SaveConfig() end)
     if Features.Optimizer then setVisual(true); enableOptimizer() end
 end
@@ -1510,7 +1554,7 @@ header.InputBegan:Connect(function(input)
 end)
 
 -- ╔════════════════════════════════════════════════════════════════════╗
--- ║  📱 MOBILE 3x2 GRID (with keybind support)                      ║
+-- ║  📱 MOBILE 3x2 GRID                                              ║
 -- ╚════════════════════════════════════════════════════════════════════╝
 if isMobile then
     local CELL_W = 62; local CELL_H = 44; local GAP = 5; local PAD = 8
