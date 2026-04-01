@@ -1,6 +1,6 @@
 -- Darker Hub | INFINITY JUMP (HOLD JUMP TO FLY)
--- Toggle ON = Hold Jump to Fly | Toggle OFF = Normal
--- Works on PC and Mobile!
+-- PC: Hold Space | Mobile: Tap jump to fly up, land to stop
+-- NO Infinity Jump keybind - only LEFT RIGHT DROP LOCK
 
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
@@ -14,12 +14,10 @@ local Lighting = game:GetService("Lighting")
 local Player = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
 
--- Keybinds
 local Keybinds = {
 ToggleMenu = Enum.KeyCode.RightShift,
 SpeedBoost = Enum.KeyCode.Q,
 AntiRagdoll = Enum.KeyCode.R,
-InfinityJump = Enum.KeyCode.F,
 Helicopter = Enum.KeyCode.G,
 AutoRightSteal = Enum.KeyCode.V,
 AutoLeftSteal = Enum.KeyCode.C,
@@ -27,7 +25,6 @@ DropShot = Enum.KeyCode.X,
 FrontLock = Enum.KeyCode.F,
 }
 
--- Mobile detection
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 local guiScale = isMobile and 0.9 or 1.0
 
@@ -78,10 +75,6 @@ local stealPath2 = {
 {pos = Vector3.new(-475, -6, 22)},
 }
 
--- MOBILE JUMP TRACKING
-local mobileJumpHeld = false
-local mobileFlyButton = nil
-
 -- Speed Display
 local speedLabelBillboard = nil
 local speedTextLabel = nil
@@ -92,14 +85,12 @@ local char = Player.Character
 if not char then return end
 local hrp = char:FindFirstChild("HumanoidRootPart")
 if not hrp then return end
-
 speedLabelBillboard = Instance.new("BillboardGui")
 speedLabelBillboard.Name = "SpeedDisplay"
 speedLabelBillboard.Adornee = hrp
 speedLabelBillboard.Size = UDim2.new(0, 100, 0, 40)
 speedLabelBillboard.StudsOffset = Vector3.new(0, 3.5, 0)
 speedLabelBillboard.AlwaysOnTop = true
-
 speedTextLabel = Instance.new("TextLabel", speedLabelBillboard)
 speedTextLabel.Size = UDim2.new(1, 0, 1, 0)
 speedTextLabel.BackgroundTransparency = 1
@@ -109,23 +100,15 @@ speedTextLabel.TextSize = 14
 speedTextLabel.TextColor3 = COLOR_GLOW
 speedTextLabel.TextStrokeTransparency = 0
 speedTextLabel.TextStrokeColor3 = Color3.new(0,0,0)
-
 speedLabelBillboard.Parent = hrp
 end
 
 local function destroySpeedDisplay()
-if speedLabelBillboard then
-speedLabelBillboard:Destroy()
-speedLabelBillboard = nil
-speedTextLabel = nil
-end
+if speedLabelBillboard then speedLabelBillboard:Destroy(); speedLabelBillboard = nil; speedTextLabel = nil end
 end
 
 local function updateSpeedDisplay()
-if not (Features.SpeedBoost or Features.ThiefSpeed or Features.GalaxyMode) then
-destroySpeedDisplay()
-return
-end
+if not (Features.SpeedBoost or Features.ThiefSpeed or Features.GalaxyMode) then destroySpeedDisplay(); return end
 if not speedLabelBillboard then createSpeedDisplay() end
 local char = Player.Character
 if char and char:FindFirstChild("HumanoidRootPart") then
@@ -139,12 +122,8 @@ RunService.Heartbeat:Connect(updateSpeedDisplay)
 Player.CharacterAdded:Connect(function()
 destroySpeedDisplay()
 task.wait(0.5)
-if (Features.SpeedBoost or Features.ThiefSpeed or Features.GalaxyMode) then
-createSpeedDisplay()
-end
+if (Features.SpeedBoost or Features.ThiefSpeed or Features.GalaxyMode) then createSpeedDisplay() end
 end)
-
--- Feature Logic
 
 -- 1. Speed Boost
 local Connections = {}
@@ -211,13 +190,8 @@ if descendant:IsA("BallSocketConstraint") or (descendant:IsA("Attachment") and d
 descendant:Destroy()
 end
 end
-if not isBoosting then
-isBoosting = true
-cachedCharData.humanoid.WalkSpeed = BOOST_SPEED
-end
-if cachedCharData.humanoid.Health > 0 then
-cachedCharData.humanoid:ChangeState(Enum.HumanoidStateType.Running)
-end
+if not isBoosting then isBoosting = true; cachedCharData.humanoid.WalkSpeed = BOOST_SPEED end
+if cachedCharData.humanoid.Health > 0 then cachedCharData.humanoid:ChangeState(Enum.HumanoidStateType.Running) end
 cachedCharData.root.Anchored = false
 end
 
@@ -231,18 +205,13 @@ local cam = workspace.CurrentCamera
 if cam and cachedCharData.humanoid then cam.CameraSubject = cachedCharData.humanoid end
 end)
 table.insert(ragdollConnections, camConn)
-local respawnConn = Player.CharacterAdded:Connect(function()
-isBoosting = false; task.wait(0.5); arCacheCharacterData()
-end)
+local respawnConn = Player.CharacterAdded:Connect(function() isBoosting = false; task.wait(0.5); arCacheCharacterData() end)
 table.insert(ragdollConnections, respawnConn)
 task.spawn(function()
 while antiRagdollMode == "v1" do
 task.wait()
 if arIsRagdolled() then arForceExitRagdoll()
-elseif isBoosting and not arIsRagdolled() then
-isBoosting = false
-if cachedCharData.humanoid then cachedCharData.humanoid.WalkSpeed = AR_DEFAULT_SPEED end
-end
+elseif isBoosting and not arIsRagdolled() then isBoosting = false; if cachedCharData.humanoid then cachedCharData.humanoid.WalkSpeed = AR_DEFAULT_SPEED end end
 end
 end)
 end
@@ -255,37 +224,34 @@ arDisconnectAll()
 cachedCharData = {}
 end
 
--- 3. INFINITY JUMP (HOLD JUMP TO FLY) - PC + MOBILE
+-- 3. INFINITY JUMP - PC: Hold Space | Mobile: In air = fly up
 local infinityJumpEnabled = false
 local jumpLoopConnection = nil
 
 local function startInfinityJump()
 infinityJumpEnabled = true
 if jumpLoopConnection then jumpLoopConnection:Disconnect() end
-
 jumpLoopConnection = RunService.Heartbeat:Connect(function()
 if not infinityJumpEnabled then return end
-
 local char = Player.Character
 if not char then return end
-
 local hrp = char:FindFirstChild("HumanoidRootPart")
 local hum = char:FindFirstChildOfClass("Humanoid")
-
 if not hrp or not hum then return end
 
--- Check if jump is held (PC: Space, Mobile: Custom button)
-local isJumpHeld = UserInputService:IsKeyDown(Enum.KeyCode.Space) or mobileJumpHeld
-
 if hum.FloorMaterial == Enum.Material.Air then
--- HOLD JUMP to fly up
-if isJumpHeld then
+if isMobile then
+-- Mobile: just being in air = fly up
+local currentVel = hrp.AssemblyLinearVelocity
+hrp.AssemblyLinearVelocity = Vector3.new(currentVel.X, Values.UP_SPEED, currentVel.Z)
+else
+-- PC: hold space to fly
+if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
 local currentVel = hrp.AssemblyLinearVelocity
 hrp.AssemblyLinearVelocity = Vector3.new(currentVel.X, Values.UP_SPEED, currentVel.Z)
 end
--- Release = normal gravity (drop)
+end
 else
--- On ground: zero Y velocity
 local currentVel = hrp.AssemblyLinearVelocity
 if math.abs(currentVel.Y) < 1 then
 hrp.AssemblyLinearVelocity = Vector3.new(currentVel.X, 0, currentVel.Z)
@@ -296,29 +262,20 @@ end
 
 local function stopInfinityJump()
 infinityJumpEnabled = false
-if jumpLoopConnection then
-jumpLoopConnection:Disconnect()
-jumpLoopConnection = nil
-end
+if jumpLoopConnection then jumpLoopConnection:Disconnect(); jumpLoopConnection = nil end
 end
 
 Player.CharacterAdded:Connect(function(char)
-if Features.InfinityJump and infinityJumpEnabled then
-task.wait(0.5)
-startInfinityJump()
-end
+if Features.InfinityJump and infinityJumpEnabled then task.wait(0.5); startInfinityJump() end
 end)
 
 -- 4. Helicopter
 local helicopterSpinBAV = nil
 local function startHelicopter()
-local c = Player.Character
-if not c then return end
-local hrp = c:FindFirstChild("HumanoidRootPart")
-if not hrp then return end
+local c = Player.Character; if not c then return end
+local hrp = c:FindFirstChild("HumanoidRootPart"); if not hrp then return end
 if helicopterSpinBAV then helicopterSpinBAV:Destroy() end
 for _, v in pairs(hrp:GetChildren()) do if v.Name == "HelicopterBAV" then v:Destroy() end end
-
 helicopterSpinBAV = Instance.new("BodyAngularVelocity")
 helicopterSpinBAV.Name = "HelicopterBAV"
 helicopterSpinBAV.MaxTorque = Vector3.new(0, math.huge, 0)
@@ -328,46 +285,34 @@ end
 local function stopHelicopter()
 if helicopterSpinBAV then helicopterSpinBAV:Destroy(); helicopterSpinBAV = nil end
 local c = Player.Character
-if c then
-local hrp = c:FindFirstChild("HumanoidRootPart")
-if hrp then for _, v in pairs(hrp:GetChildren()) do if v.Name == "HelicopterBAV" then v:Destroy() end end end
-end
+if c then local hrp = c:FindFirstChild("HumanoidRootPart"); if hrp then for _, v in pairs(hrp:GetChildren()) do if v.Name == "HelicopterBAV" then v:Destroy() end end end end
 end
 
 -- 5. Float
 local floatConn = nil
 local FLOAT_TARGET_HEIGHT = 10
 local function startFloat()
-local c = Player.Character
-if not c then return end
-local hrp = c:FindFirstChild("HumanoidRootPart")
-if not hrp then return end
+local c = Player.Character; if not c then return end
+local hrp = c:FindFirstChild("HumanoidRootPart"); if not hrp then return end
 for _, v in pairs(hrp:GetChildren()) do if v.Name == "FloatBV" or v.Name == "FloatBP" then v:Destroy() end end
 local floatOriginY = hrp.Position.Y + FLOAT_TARGET_HEIGHT
 local floatStartTime, floatDescending = tick(), false
-
 floatConn = RunService.Heartbeat:Connect(function()
 if not Features.Float then return end
-local c2 = Player.Character
-if not c2 then return end
-local h = c2:FindFirstChild("HumanoidRootPart")
-if not h then return end
+local c2 = Player.Character; if not c2 then return end
+local h = c2:FindFirstChild("HumanoidRootPart"); if not h then return end
 local hum2 = c2:FindFirstChildOfClass("Humanoid")
 local isStealing = Player:GetAttribute("Stealing")
 local moveSpeed = isStealing and Values.StealingSpeedValue or Values.BoostSpeed
 local moveDir = hum2 and hum2.MoveDirection or Vector3.zero
-
 if tick() - floatStartTime >= 4 then floatDescending = true end
 local currentY = h.Position.Y
 local vertVel
-
 if floatDescending then
 vertVel = -20
 if currentY <= floatOriginY - FLOAT_TARGET_HEIGHT + 0.5 then
-h.AssemblyLinearVelocity = Vector3.zero
-Features.Float = false
-if floatConn then floatConn:Disconnect(); floatConn = nil end
-return
+h.AssemblyLinearVelocity = Vector3.zero; Features.Float = false
+if floatConn then floatConn:Disconnect(); floatConn = nil end; return
 end
 else
 local diff = floatOriginY - currentY
@@ -375,7 +320,6 @@ if diff > 0.3 then vertVel = math.clamp(diff * 8, 5, 50)
 elseif diff < -0.3 then vertVel = math.clamp(diff * 8, -50, -5)
 else vertVel = 0 end
 end
-
 local horizX = moveDir.Magnitude > 0.1 and moveDir.X * moveSpeed or 0
 local horizZ = moveDir.Magnitude > 0.1 and moveDir.Z * moveSpeed or 0
 h.AssemblyLinearVelocity = Vector3.new(horizX, vertVel, horizZ)
@@ -384,13 +328,7 @@ end
 local function stopFloat()
 if floatConn then floatConn:Disconnect(); floatConn = nil end
 local c = Player.Character
-if c then
-local hrp = c:FindFirstChild("HumanoidRootPart")
-if hrp then
-for _, v in pairs(hrp:GetChildren()) do if v.Name == "FloatBV" or v.Name == "FloatBP" then v:Destroy() end end
-hrp.AssemblyLinearVelocity = Vector3.zero
-end
-end
+if c then local hrp = c:FindFirstChild("HumanoidRootPart"); if hrp then for _, v in pairs(hrp:GetChildren()) do if v.Name == "FloatBV" or v.Name == "FloatBP" then v:Destroy() end end; hrp.AssemblyLinearVelocity = Vector3.zero end end
 end
 
 -- 6. Thief Speed
@@ -399,15 +337,11 @@ local function startSpeedWhileStealing()
 if speedWhileStealingConn then return end
 speedWhileStealingConn = RunService.Heartbeat:Connect(function()
 if not Features.ThiefSpeed or not Player:GetAttribute("Stealing") then return end
-local c = Player.Character
-if not c then return end
-local h = c:FindFirstChild("HumanoidRootPart")
-if not h then return end
+local c = Player.Character; if not c then return end
+local h = c:FindFirstChild("HumanoidRootPart"); if not h then return end
 local hum = c:FindFirstChildOfClass("Humanoid")
 local md = hum and hum.MoveDirection or Vector3.zero
-if md.Magnitude > 0.1 then
-h.AssemblyLinearVelocity = Vector3.new(md.X * Values.StealingSpeedValue, h.AssemblyLinearVelocity.Y, md.Z * Values.StealingSpeedValue)
-end
+if md.Magnitude > 0.1 then h.AssemblyLinearVelocity = Vector3.new(md.X * Values.StealingSpeedValue, h.AssemblyLinearVelocity.Y, md.Z * Values.StealingSpeedValue) end
 end)
 end
 local function stopSpeedWhileStealing()
@@ -427,45 +361,29 @@ if ProgressBarFill then ProgressBarFill.Size = UDim2.new(0, 0, 1, 0) end
 end
 
 local function isMyPlotByName(plotName)
-local plots = workspace:FindFirstChild("Plots")
-if not plots then return false end
-local plot = plots:FindFirstChild(plotName)
-if not plot then return false end
+local plots = workspace:FindFirstChild("Plots"); if not plots then return false end
+local plot = plots:FindFirstChild(plotName); if not plot then return false end
 local sign = plot:FindFirstChild("PlotSign")
-if sign then
-local yb = sign:FindFirstChild("YourBase")
-if yb and yb:IsA("BillboardGui") then return yb.Enabled == true end
-end
+if sign then local yb = sign:FindFirstChild("YourBase"); if yb and yb:IsA("BillboardGui") then return yb.Enabled == true end end
 return false
 end
 
 local function findNearestPrompt()
-local h = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-if not h then return nil, nil, nil end
-local plots = workspace:FindFirstChild("Plots")
-if not plots then return nil, nil, nil end
+local h = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart"); if not h then return nil, nil, nil end
+local plots = workspace:FindFirstChild("Plots"); if not plots then return nil, nil, nil end
 local np, nd, nn = nil, math.huge, nil
 for _, plot in ipairs(plots:GetChildren()) do
 if isMyPlotByName(plot.Name) then continue end
-local podiums = plot:FindFirstChild("AnimalPodiums")
-if not podiums then continue end
+local podiums = plot:FindFirstChild("AnimalPodiums"); if not podiums then continue end
 for _, pod in ipairs(podiums:GetChildren()) do
 pcall(function()
-local base = pod:FindFirstChild("Base")
-local spawn = base and base:FindFirstChild("Spawn")
+local base = pod:FindFirstChild("Base"); local spawn = base and base:FindFirstChild("Spawn")
 if spawn then
 local dist = (spawn.Position - h.Position).Magnitude
 if dist < nd and dist <= AutoStealValues.STEAL_RADIUS then
-local att = spawn:FindFirstChild("PromptAttachment")
-if att then
-for _, ch in ipairs(att:GetChildren()) do
-if ch:IsA("ProximityPrompt") then
-np, nd, nn = ch, dist, pod.Name
-break
-end
-end
-end
-end
+local att = spawn:FindFirstChild("PromptAttachment"); if att then
+for _, ch in ipairs(att:GetChildren()) do if ch:IsA("ProximityPrompt") then np, nd, nn = ch, dist, pod.Name; break end end
+end end
 end
 end)
 end
@@ -479,54 +397,30 @@ if not StealData[prompt] then
 StealData[prompt] = {hold = {}, trigger = {}, ready = true}
 pcall(function()
 if getconnections then
-for _, c in ipairs(getconnections(prompt.PromptButtonHoldBegan)) do
-if c.Function then table.insert(StealData[prompt].hold, c.Function) end
-end
-for _, c in ipairs(getconnections(prompt.Triggered)) do
-if c.Function then table.insert(StealData[prompt].trigger, c.Function) end
-end
+for _, c in ipairs(getconnections(prompt.PromptButtonHoldBegan)) do if c.Function then table.insert(StealData[prompt].hold, c.Function) end end
+for _, c in ipairs(getconnections(prompt.Triggered)) do if c.Function then table.insert(StealData[prompt].trigger, c.Function) end end
 end
 end)
 end
-local data = StealData[prompt]
-if not data.ready then return end
-data.ready = false
-isStealing = true
-stealStartTime = tick()
+local data = StealData[prompt]; if not data.ready then return end
+data.ready = false; isStealing = true; stealStartTime = tick()
 if ProgressLabel then ProgressLabel.Text = name or "STEALING..." end
 if progressConn then progressConn:Disconnect() end
 progressConn = RunService.Heartbeat:Connect(function()
 if not isStealing then if progressConn then progressConn:Disconnect() end return end
-local elapsed = tick() - stealStartTime
-local duration = AutoStealValues.STEAL_DURATION
+local elapsed = tick() - stealStartTime; local duration = AutoStealValues.STEAL_DURATION
 local prog = math.clamp(elapsed / duration, 0, 1)
 if ProgressBarFill then ProgressBarFill.Size = UDim2.new(prog, 0, 1, 0) end
 if ProgressPercentLabel then ProgressPercentLabel.Text = math.floor(prog * 100) .. "%" end
 if prog >= 1 then
 if prompt.Parent and prompt:IsA("ProximityPrompt") then
-prompt.HoldDuration = 0.01
-pcall(function() prompt:InputHoldBegin() end)
-for _, f in ipairs(data.trigger) do pcall(f) end
-pcall(function() prompt:InputHoldEnd() end)
+prompt.HoldDuration = 0.01; pcall(function() prompt:InputHoldBegin() end)
+for _, f in ipairs(data.trigger) do pcall(f) end; pcall(function() prompt:InputHoldEnd() end)
 end
-if progressConn then progressConn:Disconnect() end
-resetProgressBar()
-data.ready = true
-isStealing = false
-task.wait(0.01)
-if Features.AutoSteal then
-local p, _, n = findNearestPrompt()
-if p then executeSteal(p, n) end
+if progressConn then progressConn:Disconnect() end; resetProgressBar(); data.ready = true; isStealing = false
+task.wait(0.01); if Features.AutoSteal then local p, _, n = findNearestPrompt(); if p then executeSteal(p, n) end end; return
 end
-return
-end
-if not prompt.Parent or not prompt:IsA("ProximityPrompt") then
-if progressConn then progressConn:Disconnect() end
-resetProgressBar()
-data.ready = true
-isStealing = false
-return
-end
+if not prompt.Parent or not prompt:IsA("ProximityPrompt") then if progressConn then progressConn:Disconnect() end; resetProgressBar(); data.ready = true; isStealing = false; return end
 pcall(function() prompt:InputHoldBegin() end)
 end)
 end
@@ -536,49 +430,37 @@ local function startAutoSteal()
 if autoStealConn then return end
 autoStealConn = RunService.Heartbeat:Connect(function()
 if not Features.AutoSteal or isStealing then return end
-local p, _, n = findNearestPrompt()
-if p then executeSteal(p, n) end
+local p, _, n = findNearestPrompt(); if p then executeSteal(p, n) end
 end)
 end
 local function stopAutoSteal()
 if autoStealConn then autoStealConn:Disconnect(); autoStealConn = nil end
 if progressConn then progressConn:Disconnect(); progressConn = nil end
-isStealing = false
-resetProgressBar()
+isStealing = false; resetProgressBar()
 end
 
 -- 8. Front Lock + Bat
 local SlapList = { "Bat", "Slap", "Iron Slap", "Gold Slap", "Diamond Slap", "Emerald Slap", "Ruby Slap", "Dark Matter Slap", "Flame Slap", "Nuclear Slap", "Galaxy Slap", "Glitched Slap" }
-local frontLockTarget = nil
-local frontLockOriginalSpeed = 16
-local batActivatedInLock = false
+local frontLockTarget = nil; local frontLockOriginalSpeed = 16; local batActivatedInLock = false
 
 local function findBat()
-local c = Player.Character
-if not c then return nil end
-local bp = Player:FindFirstChildOfClass("Backpack")
+local c = Player.Character; if not c then return nil end; local bp = Player:FindFirstChildOfClass("Backpack")
 for _, ch in ipairs(c:GetChildren()) do if ch:IsA("Tool") and (ch.Name:lower():find("bat") or table.find(SlapList, ch.Name)) then return ch end end
 if bp then for _, ch in ipairs(bp:GetChildren()) do if ch:IsA("Tool") and (ch.Name:lower():find("bat") or table.find(SlapList, ch.Name)) then return ch end end end
 return nil
 end
 
 local function findNearestPlayerForFrontLock()
-local nearestDist = math.huge
-local nearestPlayer = nil
-local char = Player.Character
-if not char then return nil end
-local root = char:FindFirstChild("HumanoidRootPart")
-if not root then return nil end
+local nearestDist = math.huge; local nearestPlayer = nil
+local char = Player.Character; if not char then return nil end
+local root = char:FindFirstChild("HumanoidRootPart"); if not root then return nil end
 local myPos = root.Position
 for _, otherPlayer in ipairs(Players:GetPlayers()) do
 if otherPlayer ~= Player and otherPlayer.Character then
 local targetRoot = otherPlayer.Character:FindFirstChild("HumanoidRootPart")
 if targetRoot then
 local distance = (myPos - targetRoot.Position).Magnitude
-if distance < nearestDist and distance <= FrontLockConfig.DETECTION_RADIUS then
-nearestDist = distance
-nearestPlayer = otherPlayer
-end
+if distance < nearestDist and distance <= FrontLockConfig.DETECTION_RADIUS then nearestDist = distance; nearestPlayer = otherPlayer end
 end
 end
 end
@@ -588,98 +470,61 @@ end
 local function activateBatOnce()
 if batActivatedInLock then return end
 local bat = findBat()
-if bat then
-if bat.Parent ~= Player.Character then bat.Parent = Player.Character end
-bat:Activate()
-batActivatedInLock = true
-end
+if bat then if bat.Parent ~= Player.Character then bat.Parent = Player.Character end; bat:Activate(); batActivatedInLock = true end
 end
 
 local function startFrontLock()
 local char = Player.Character
-if char then
-local hum = char:FindFirstChildOfClass("Humanoid")
-if hum then frontLockOriginalSpeed = hum.WalkSpeed end
-end
+if char then local hum = char:FindFirstChildOfClass("Humanoid"); if hum then frontLockOriginalSpeed = hum.WalkSpeed end end
 batActivatedInLock = false
 end
 
 local function stopFrontLock()
 local char = Player.Character
 if char then
-local hum = char:FindFirstChildOfClass("Humanoid")
-local root = char:FindFirstChild("HumanoidRootPart")
+local hum = char:FindFirstChildOfClass("Humanoid"); local root = char:FindFirstChild("HumanoidRootPart")
 if hum then hum.WalkSpeed = frontLockOriginalSpeed end
-if root then
-root.Velocity = Vector3.new(0, 0, 0)
-if hum then hum:MoveTo(root.Position) end
+if root then root.Velocity = Vector3.new(0, 0, 0); if hum then hum:MoveTo(root.Position) end end
 end
-end
-frontLockTarget = nil
-batActivatedInLock = false
+frontLockTarget = nil; batActivatedInLock = false
 end
 
 RunService.RenderStepped:Connect(function()
 if not Features.FrontLock then batActivatedInLock = false return end
-local char = Player.Character
-if not char then return end
-local hum = char:FindFirstChildOfClass("Humanoid")
-local root = char:FindFirstChild("HumanoidRootPart")
+local char = Player.Character; if not char then return end
+local hum = char:FindFirstChildOfClass("Humanoid"); local root = char:FindFirstChild("HumanoidRootPart")
 if not hum or not root then return end
 if hum.WalkSpeed ~= FrontLockConfig.SPEED then hum.WalkSpeed = FrontLockConfig.SPEED end
 if not frontLockTarget or not frontLockTarget.Character or not frontLockTarget.Character:FindFirstChild("HumanoidRootPart") then
-frontLockTarget = findNearestPlayerForFrontLock()
-batActivatedInLock = false
+frontLockTarget = findNearestPlayerForFrontLock(); batActivatedInLock = false
 end
 if frontLockTarget and frontLockTarget.Character then
 local targetRoot = frontLockTarget.Character:FindFirstChild("HumanoidRootPart")
 if targetRoot then
 activateBatOnce()
-local targetPos = targetRoot.Position
-local myPos = root.Position
-local targetCFrame = targetRoot.CFrame
-local lookVector = targetCFrame.LookVector
+local targetPos = targetRoot.Position; local myPos = root.Position
+local lookVector = targetRoot.CFrame.LookVector
 local spotInFront = targetPos + (lookVector * FrontLockConfig.FRONT_DISTANCE)
-local directionVector = spotInFront - myPos
-local distance = directionVector.Magnitude
+local directionVector = spotInFront - myPos; local distance = directionVector.Magnitude
 local heightDiff = targetPos.Y - myPos.Y
 local horizontalDir = Vector3.new(directionVector.X, 0, directionVector.Z).Unit
 if horizontalDir.Magnitude == 0 then horizontalDir = Vector3.new(1,0,0) end
 local verticalVel = 0
-if math.abs(heightDiff) > 2 then
-verticalVel = (heightDiff > 0 and FrontLockConfig.SPEED * 0.8) or (-FrontLockConfig.SPEED * 0.8)
-end
+if math.abs(heightDiff) > 2 then verticalVel = (heightDiff > 0 and FrontLockConfig.SPEED * 0.8) or (-FrontLockConfig.SPEED * 0.8) end
 if distance > FrontLockConfig.STOP_DISTANCE then
 root.Velocity = Vector3.new(horizontalDir.X * FrontLockConfig.SPEED, verticalVel, horizontalDir.Z * FrontLockConfig.SPEED)
 hum:MoveTo(spotInFront)
-else
-root.Velocity = Vector3.new(0, 0, 0)
-hum:MoveTo(myPos)
-end
-else
-frontLockTarget = nil
-batActivatedInLock = false
-end
-else
-frontLockTarget = nil
-batActivatedInLock = false
-end
+else root.Velocity = Vector3.new(0, 0, 0); hum:MoveTo(myPos) end
+else frontLockTarget = nil; batActivatedInLock = false end
+else frontLockTarget = nil; batActivatedInLock = false end
 end)
 
 Player.CharacterAdded:Connect(function(newChar)
-if Features.FrontLock then
-task.wait(0.05)
-local hum = newChar:FindFirstChildOfClass("Humanoid")
-if hum then hum.WalkSpeed = FrontLockConfig.SPEED end
-frontLockTarget = nil
-batActivatedInLock = false
-end
+if Features.FrontLock then task.wait(0.05); local hum = newChar:FindFirstChildOfClass("Humanoid"); if hum then hum.WalkSpeed = FrontLockConfig.SPEED end; frontLockTarget = nil; batActivatedInLock = false end
 end)
 
 -- 9. Path Steal Logic
-local pathActive = false
-local pathPaused = false
-local currentPathIndex = 1
+local pathActive = false; local pathPaused = false; local currentPathIndex = 1
 local lastFlatVel = Vector3.zero
 local PATH_VELOCITY_SPEED, PATH_SECOND_SPEED = 57, 29
 local PATH_BASE_STOP, PATH_MIN_STOP = 1.35, 0.65
@@ -687,10 +532,8 @@ local PATH_NEXT_POINT_BIAS, PATH_SMOOTH_FACTOR = 0.45, 0.12
 local currentPathType = nil
 
 local function isPlayerRagdolled()
-local char = Player.Character
-if not char then return true end
-local hum = char:FindFirstChildOfClass("Humanoid")
-if not hum then return true end
+local char = Player.Character; if not char then return true end
+local hum = char:FindFirstChildOfClass("Humanoid"); if not hum then return true end
 local state = hum:GetState()
 local ragdollStates = {[Enum.HumanoidStateType.Physics] = true, [Enum.HumanoidStateType.Ragdoll] = true, [Enum.HumanoidStateType.FallingDown] = true}
 if ragdollStates[state] then return true end
@@ -700,53 +543,36 @@ return false
 end
 
 local function pathMoveToPoint(hrp, current, nextPoint, speed)
-local conn
-local reached = false
+local conn; local reached = false
 conn = RunService.Heartbeat:Connect(function()
 if not pathActive then if conn then conn:Disconnect() end hrp.AssemblyLinearVelocity = Vector3.zero reached = true return end
-if isPlayerRagdolled() then pathPaused = true hrp.AssemblyLinearVelocity = Vector3.zero return
-else if pathPaused then pathPaused = false end end
+if isPlayerRagdolled() then pathPaused = true hrp.AssemblyLinearVelocity = Vector3.zero return else if pathPaused then pathPaused = false end end
 if pathPaused then return end
-local pos = hrp.Position
-local target = Vector3.new(current.X, pos.Y, current.Z)
-local dir = target - pos
-local dist = dir.Magnitude
+local pos = hrp.Position; local target = Vector3.new(current.X, pos.Y, current.Z)
+local dir = target - pos; local dist = dir.Magnitude
 local stopDist = math.clamp(PATH_BASE_STOP - dist * 0.04, PATH_MIN_STOP, PATH_BASE_STOP)
 if dist <= stopDist then if conn then conn:Disconnect() end hrp.AssemblyLinearVelocity = Vector3.zero reached = true return end
 local moveDir = dir.Unit
-if nextPoint then
-local nextDir = (Vector3.new(nextPoint.X, pos.Y, nextPoint.Z) - pos).Unit
-moveDir = (moveDir + nextDir * PATH_NEXT_POINT_BIAS).Unit
-end
-if lastFlatVel.Magnitude > 0.1 then
-moveDir = (moveDir * (1 - PATH_SMOOTH_FACTOR) + lastFlatVel.Unit * PATH_SMOOTH_FACTOR).Unit
-end
+if nextPoint then local nextDir = (Vector3.new(nextPoint.X, pos.Y, nextPoint.Z) - pos).Unit; moveDir = (moveDir + nextDir * PATH_NEXT_POINT_BIAS).Unit end
+if lastFlatVel.Magnitude > 0.1 then moveDir = (moveDir * (1 - PATH_SMOOTH_FACTOR) + lastFlatVel.Unit * PATH_SMOOTH_FACTOR).Unit end
 local vel = Vector3.new(moveDir.X * speed, hrp.AssemblyLinearVelocity.Y, moveDir.Z * speed)
-hrp.AssemblyLinearVelocity = vel
-lastFlatVel = Vector3.new(vel.X, 0, vel.Z)
+hrp.AssemblyLinearVelocity = vel; lastFlatVel = Vector3.new(vel.X, 0, vel.Z)
 end)
 while pathActive and not reached and (Vector3.new(hrp.Position.X, 0, hrp.Position.Z) - Vector3.new(current.X, 0, current.Z)).Magnitude > PATH_BASE_STOP do
 if isPlayerRagdolled() then pathPaused = true end
 while pathActive and pathPaused do RunService.Heartbeat:Wait() end
-if not pathActive then break end
-RunService.Heartbeat:Wait()
+if not pathActive then break end; RunService.Heartbeat:Wait()
 end
-if conn then conn:Disconnect() end
-hrp.AssemblyLinearVelocity = Vector3.zero
-return true
+if conn then conn:Disconnect() end; hrp.AssemblyLinearVelocity = Vector3.zero; return true
 end
 
 local function runStealPath(path)
-local char = Player.Character or Player.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
-local startIndex = currentPathIndex
-if startIndex > #path then startIndex = 1 end
+local char = Player.Character or Player.CharacterAdded:Wait(); local hrp = char:WaitForChild("HumanoidRootPart")
+local startIndex = currentPathIndex; if startIndex > #path then startIndex = 1 end
 for i = startIndex, #path do
 if not pathActive then return false end
 while isPlayerRagdolled() and pathActive do pathPaused = true RunService.Heartbeat:Wait() end
-if not pathActive then return false end
-pathPaused = false
-currentPathIndex = i
+if not pathActive then return false end; pathPaused = false; currentPathIndex = i
 local speed = i > 2 and PATH_SECOND_SPEED or PATH_VELOCITY_SPEED
 local nextP = path[i + 1] and path[i + 1].pos
 local success = pathMoveToPoint(hrp, path[i].pos, nextP, speed)
@@ -758,41 +584,26 @@ return true
 end
 
 local function startStealPath(path, pathType)
-if pathActive then return end
-pathActive = true
-currentPathIndex = 1
-currentPathType = pathType
+if pathActive then return end; pathActive = true; currentPathIndex = 1; currentPathType = pathType
 task.spawn(function()
 while pathActive do
 local completed = runStealPath(path)
 if completed then
-pathActive = false
-currentPathIndex = 1
-if currentPathType == "Right" then
-Features.AutoRight = false
-if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end
-elseif currentPathType == "Left" then
-Features.AutoLeft = false
-if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
-end
-local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-if hrp then hrp.AssemblyLinearVelocity = Vector3.zero end
-break
+pathActive = false; currentPathIndex = 1
+if currentPathType == "Right" then Features.AutoRight = false; if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end
+elseif currentPathType == "Left" then Features.AutoLeft = false; if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end end
+local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart"); if hrp then hrp.AssemblyLinearVelocity = Vector3.zero end; break
 else
 while pathActive and isPlayerRagdolled() do pathPaused = true RunService.Heartbeat:Wait() end
-if not pathActive then break end
-pathPaused = false
+if not pathActive then break end; pathPaused = false
 end
 end
 end)
 end
 
 local function stopStealPath()
-pathActive = false
-pathPaused = false
-currentPathIndex = 1
-local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-if hrp then hrp.AssemblyLinearVelocity = Vector3.zero end
+pathActive = false; pathPaused = false; currentPathIndex = 1
+local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart"); if hrp then hrp.AssemblyLinearVelocity = Vector3.zero end
 end
 
 -- 10. Galaxy Mode
@@ -801,141 +612,74 @@ local galaxyVectorForce, galaxyAttachment = nil, nil
 
 local function captureJumpPower()
 local c = Player.Character
-if c then
-local hum = c:FindFirstChildOfClass("Humanoid")
-if hum and hum.JumpPower > 0 then originalJumpPower = hum.JumpPower end
-end
+if c then local hum = c:FindFirstChildOfClass("Humanoid"); if hum and hum.JumpPower > 0 then originalJumpPower = hum.JumpPower end end
 end
 task.spawn(function() task.wait(1) captureJumpPower() end)
 Player.CharacterAdded:Connect(function() task.wait(1) captureJumpPower() end)
 
 local function setupGalaxyForce()
 pcall(function()
-local c = Player.Character
-if not c then return end
-local h = c:FindFirstChild("HumanoidRootPart")
-if not h then return end
-if galaxyVectorForce then galaxyVectorForce:Destroy() end
-if galaxyAttachment then galaxyAttachment:Destroy() end
+local c = Player.Character; if not c then return end; local h = c:FindFirstChild("HumanoidRootPart"); if not h then return end
+if galaxyVectorForce then galaxyVectorForce:Destroy() end; if galaxyAttachment then galaxyAttachment:Destroy() end
 galaxyAttachment = Instance.new("Attachment"); galaxyAttachment.Parent = h
-galaxyVectorForce = Instance.new("VectorForce")
-galaxyVectorForce.Attachment0 = galaxyAttachment
-galaxyVectorForce.ApplyAtCenterOfMass = true
-galaxyVectorForce.RelativeTo = Enum.ActuatorRelativeTo.World
-galaxyVectorForce.Force = Vector3.new(0, 0, 0)
-galaxyVectorForce.Parent = h
+galaxyVectorForce = Instance.new("VectorForce"); galaxyVectorForce.Attachment0 = galaxyAttachment
+galaxyVectorForce.ApplyAtCenterOfMass = true; galaxyVectorForce.RelativeTo = Enum.ActuatorRelativeTo.World
+galaxyVectorForce.Force = Vector3.new(0, 0, 0); galaxyVectorForce.Parent = h
 end)
 end
 
 local function updateGalaxyForce()
 if not galaxyEnabled or not galaxyVectorForce then return end
-local c = Player.Character
-if not c then return end
-local mass = 0
-for _, p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then mass = mass + p:GetMass() end end
+local c = Player.Character; if not c then return end
+local mass = 0; for _, p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then mass = mass + p:GetMass() end end
 local tg = Values.DEFAULT_GRAVITY * (Values.GalaxyGravityPercent / 100)
 galaxyVectorForce.Force = Vector3.new(0, mass * (Values.DEFAULT_GRAVITY - tg) * 0.95, 0)
 end
 
 local function adjustGalaxyJump()
 pcall(function()
-local c = Player.Character
-if not c then return end
-local hum = c:FindFirstChildOfClass("Humanoid")
-if not hum then return end
+local c = Player.Character; if not c then return end; local hum = c:FindFirstChildOfClass("Humanoid"); if not hum then return end
 if not galaxyEnabled then hum.JumpPower = originalJumpPower; return end
 local ratio = math.sqrt((Values.DEFAULT_GRAVITY * (Values.GalaxyGravityPercent / 100)) / Values.DEFAULT_GRAVITY)
 hum.JumpPower = originalJumpPower * ratio
 end)
 end
 
-local function doMiniHop()
-if not hopsEnabled then return end
-pcall(function()
-local c = Player.Character
-if not c then return end
-local h = c:FindFirstChild("HumanoidRootPart")
-local hum = c:FindFirstChildOfClass("Humanoid")
-if not h or not hum then return end
-if tick() - lastHopTime < Values.HOP_COOLDOWN then return end
-lastHopTime = tick()
-if hum.FloorMaterial == Enum.Material.Air then
-h.AssemblyLinearVelocity = Vector3.new(h.AssemblyLinearVelocity.X, Values.HOP_POWER, h.AssemblyLinearVelocity.Z)
-end
-end)
-end
-
-local function startGalaxy()
-galaxyEnabled = true; hopsEnabled = true
-setupGalaxyForce(); adjustGalaxyJump()
-end
+local function startGalaxy() galaxyEnabled = true; hopsEnabled = true; setupGalaxyForce(); adjustGalaxyJump() end
 local function stopGalaxy()
 galaxyEnabled = false; hopsEnabled = false
 if galaxyVectorForce then galaxyVectorForce:Destroy(); galaxyVectorForce = nil end
-if galaxyAttachment then galaxyAttachment:Destroy(); galaxyAttachment = nil end
-adjustGalaxyJump()
+if galaxyAttachment then galaxyAttachment:Destroy(); galaxyAttachment = nil end; adjustGalaxyJump()
 end
-
-RunService.Heartbeat:Connect(function()
-if galaxyEnabled then updateGalaxyForce() end
-end)
+RunService.Heartbeat:Connect(function() if galaxyEnabled then updateGalaxyForce() end end)
 
 -- 11. Unwalk & OPTIMIZER
 local savedAnimations = {}
 local function startUnwalk()
-local c = Player.Character
-if not c then return end
-local hum = c:FindFirstChildOfClass("Humanoid")
-if hum then for _, t in ipairs(hum:GetPlayingAnimationTracks()) do t:Stop() end end
-local anim = c:FindFirstChild("Animate")
-if anim then savedAnimations.Animate = anim:Clone(); anim:Destroy() end
+local c = Player.Character; if not c then return end
+local hum = c:FindFirstChildOfClass("Humanoid"); if hum then for _, t in ipairs(hum:GetPlayingAnimationTracks()) do t:Stop() end end
+local anim = c:FindFirstChild("Animate"); if anim then savedAnimations.Animate = anim:Clone(); anim:Destroy() end
 end
 local function stopUnwalk()
-local c = Player.Character
-if c and savedAnimations.Animate then savedAnimations.Animate:Clone().Parent = c; savedAnimations.Animate = nil end
+local c = Player.Character; if c and savedAnimations.Animate then savedAnimations.Animate:Clone().Parent = c; savedAnimations.Animate = nil end
 end
 
 local optimizerConnections = {}
 local function enableOptimizer()
-if getgenv and getgenv().OPTIMIZER_ACTIVE then return end
-if getgenv then getgenv().OPTIMIZER_ACTIVE = true end
-pcall(function()
-settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-Lighting.GlobalShadows = false
-Lighting.Brightness = 3
-Lighting.FogEnd = 9e9
-Lighting.FogStart = 0
-end)
-local function cleanVisuals(obj)
-if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Fire") or obj:IsA("Smoke") then
-obj:Destroy()
-end
-end
+if getgenv and getgenv().OPTIMIZER_ACTIVE then return end; if getgenv then getgenv().OPTIMIZER_ACTIVE = true end
+pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01; Lighting.GlobalShadows = false; Lighting.Brightness = 3; Lighting.FogEnd = 9e9; Lighting.FogStart = 0 end)
+local function cleanVisuals(obj) if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Fire") or obj:IsA("Smoke") then obj:Destroy() end end
 local function optimizeParts()
-for _, obj in ipairs(workspace:GetDescendants()) do
-pcall(function()
-if obj:IsA("BasePart") then
-obj.Material = Enum.Material.Plastic
-obj.Color = Color3.fromRGB(100, 100, 100)
-for _, child in ipairs(obj:GetChildren()) do
-if child:IsA("Decal") or child:IsA("Texture") then child:Destroy() end
-end
-end
+for _, obj in ipairs(workspace:GetDescendants()) do pcall(function()
+if obj:IsA("BasePart") then obj.Material = Enum.Material.Plastic; obj.Color = Color3.fromRGB(100, 100, 100); for _, child in ipairs(obj:GetChildren()) do if child:IsA("Decal") or child:IsA("Texture") then child:Destroy() end end end
 cleanVisuals(obj)
-end)
-end
+end) end
 end
 optimizeParts()
 local streamConn = Workspace.DescendantAdded:Connect(function(obj)
 if not Features.Optimizer then return end
 pcall(function()
-if obj:IsA("BasePart") then
-obj.Material = Enum.Material.Plastic
-obj.Color = Color3.fromRGB(90, 90, 90)
-for _, child in ipairs(obj:GetChildren()) do
-if child:IsA("Decal") or child:IsA("Texture") then child:Destroy() end
-end
-end
+if obj:IsA("BasePart") then obj.Material = Enum.Material.Plastic; obj.Color = Color3.fromRGB(90, 90, 90); for _, child in ipairs(obj:GetChildren()) do if child:IsA("Decal") or child:IsA("Texture") then child:Destroy() end end end
 cleanVisuals(obj)
 end)
 end)
@@ -944,59 +688,28 @@ end
 
 local function disableOptimizer()
 if getgenv then getgenv().OPTIMIZER_ACTIVE = false end
-for _, conn in ipairs(optimizerConnections) do
-if conn.Connected then conn:Disconnect() end
-end
+for _, conn in ipairs(optimizerConnections) do if conn.Connected then conn:Disconnect() end end
 optimizerConnections = {}
-pcall(function()
-settings().Rendering.QualityLevel = Enum.QualityLevel.Level05
-Lighting.GlobalShadows = true
-end)
+pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level05; Lighting.GlobalShadows = true end)
 end
 
 -- 12. Enemy Timer
 local enemyTimers = {}
 local function createEnemyTimerGui(player)
-local char = player.Character
-if not char then return nil end
-local hrp = char:FindFirstChild("HumanoidRootPart")
-if not hrp then return nil end
-local bg = Instance.new("BillboardGui")
-bg.Name = "RagdollTimerBG"
-bg.Adornee = hrp
-bg.Size = UDim2.new(0, 100, 0, 40)
-bg.StudsOffset = Vector3.new(0, 3, 0)
-bg.AlwaysOnTop = true
-local frame = Instance.new("Frame", bg)
-frame.Size = UDim2.new(1, 0, 1, 0)
-frame.BackgroundColor3 = COLOR_BG_ROW
-frame.BackgroundTransparency = 0.3
-frame.BorderSizePixel = 0
+local char = player.Character; if not char then return nil end
+local hrp = char:FindFirstChild("HumanoidRootPart"); if not hrp then return nil end
+local bg = Instance.new("BillboardGui"); bg.Name = "RagdollTimerBG"; bg.Adornee = hrp
+bg.Size = UDim2.new(0, 100, 0, 40); bg.StudsOffset = Vector3.new(0, 3, 0); bg.AlwaysOnTop = true
+local frame = Instance.new("Frame", bg); frame.Size = UDim2.new(1, 0, 1, 0); frame.BackgroundColor3 = COLOR_BG_ROW; frame.BackgroundTransparency = 0.3; frame.BorderSizePixel = 0
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
-local stroke = Instance.new("UIStroke", frame)
-stroke.Color = COLOR_ACCENT
-stroke.Thickness = 2
-local label = Instance.new("TextLabel", frame)
-label.Size = UDim2.new(1, 0, 1, 0)
-label.BackgroundTransparency = 1
-label.Text = "0.0s"
-label.Font = Enum.Font.GothamBlack
-label.TextSize = 14
-label.TextColor3 = COLOR_GLOW
-label.TextStrokeTransparency = 0
-bg.Parent = hrp
-return { Gui = bg, Label = label }
+local stroke = Instance.new("UIStroke", frame); stroke.Color = COLOR_ACCENT; stroke.Thickness = 2
+local label = Instance.new("TextLabel", frame); label.Size = UDim2.new(1, 0, 1, 0); label.BackgroundTransparency = 1; label.Text = "0.0s"
+label.Font = Enum.Font.GothamBlack; label.TextSize = 14; label.TextColor3 = COLOR_GLOW; label.TextStrokeTransparency = 0
+bg.Parent = hrp; return { Gui = bg, Label = label }
 end
 
 local function updateEnemyTimers()
-if not Features.EnemyTimer then
-for p, data in pairs(enemyTimers) do
-if data.Connection then data.Connection:Disconnect() end
-if data.Gui then data.Gui:Destroy() end
-end
-enemyTimers = {}
-return
-end
+if not Features.EnemyTimer then for p, data in pairs(enemyTimers) do if data.Connection then data.Connection:Disconnect() end; if data.Gui then data.Gui:Destroy() end end; enemyTimers = {}; return end
 for _, p in ipairs(Players:GetPlayers()) do
 if p ~= Player then
 local char = p.Character
@@ -1005,54 +718,24 @@ local hum = char:FindFirstChildOfClass("Humanoid")
 if hum then
 local state = hum:GetState()
 local isRagdolledState = (state == Enum.HumanoidStateType.Ragdoll or state == Enum.HumanoidStateType.Physics or state == Enum.HumanoidStateType.FallingDown)
-local endTimeAttr = p:GetAttribute("RagdollEndTime")
-local isRagdolledAttr = endTimeAttr and (endTimeAttr - workspace:GetServerTimeNow()) > 0
+local endTimeAttr = p:GetAttribute("RagdollEndTime"); local isRagdolledAttr = endTimeAttr and (endTimeAttr - workspace:GetServerTimeNow()) > 0
 if isRagdolledState or isRagdolledAttr then
 if not enemyTimers[p] then
 local timerData = createEnemyTimerGui(p)
 if timerData then
-local conn
-conn = RunService.Heartbeat:Connect(function()
-if not Features.EnemyTimer or not p.Character then
-conn:Disconnect()
-if enemyTimers[p] then
-if enemyTimers[p].Gui then enemyTimers[p].Gui:Destroy() end
-enemyTimers[p] = nil
-end
-return
-end
+local conn; conn = RunService.Heartbeat:Connect(function()
+if not Features.EnemyTimer or not p.Character then conn:Disconnect(); if enemyTimers[p] then if enemyTimers[p].Gui then enemyTimers[p].Gui:Destroy() end; enemyTimers[p] = nil end; return end
 local currentEnd = p:GetAttribute("RagdollEndTime")
 if currentEnd then
 local timeLeft = currentEnd - workspace:GetServerTimeNow()
-if timeLeft > 0 then
-timerData.Label.Text = string.format("%.1f", timeLeft) .. "s"
-timerData.Label.TextColor3 = timeLeft < 1.0 and COLOR_TEXT or COLOR_GLOW
-else
-conn:Disconnect()
-if enemyTimers[p] then
-if enemyTimers[p].Gui then enemyTimers[p].Gui:Destroy() end
-enemyTimers[p] = nil
-end
-end
-else
-conn:Disconnect()
-if enemyTimers[p] then
-if enemyTimers[p].Gui then enemyTimers[p].Gui:Destroy() end
-enemyTimers[p] = nil
-end
-end
+if timeLeft > 0 then timerData.Label.Text = string.format("%.1f", timeLeft) .. "s"; timerData.Label.TextColor3 = timeLeft < 1.0 and COLOR_TEXT or COLOR_GLOW
+else conn:Disconnect(); if enemyTimers[p] then if enemyTimers[p].Gui then enemyTimers[p].Gui:Destroy() end; enemyTimers[p] = nil end end
+else conn:Disconnect(); if enemyTimers[p] then if enemyTimers[p].Gui then enemyTimers[p].Gui:Destroy() end; enemyTimers[p] = nil end end
 end)
-timerData.Connection = conn
-enemyTimers[p] = timerData
+timerData.Connection = conn; enemyTimers[p] = timerData
 end
 end
-else
-if enemyTimers[p] then
-if enemyTimers[p].Connection then enemyTimers[p].Connection:Disconnect() end
-if enemyTimers[p].Gui then enemyTimers[p].Gui:Destroy() end
-enemyTimers[p] = nil
-end
-end
+else if enemyTimers[p] then if enemyTimers[p].Connection then enemyTimers[p].Connection:Disconnect() end; if enemyTimers[p].Gui then enemyTimers[p].Gui:Destroy() end; enemyTimers[p] = nil end end
 end
 end
 end
@@ -1061,125 +744,48 @@ end
 RunService.Heartbeat:Connect(updateEnemyTimers)
 
 -- UI BUILDERS
-local toggleSliderOrder = 0
-local scriptActive = true
-local SliderReferences = {}
-local ConfigFileName = "DarkerHub_Config.json"
-local rainbowElements = {}
+local toggleSliderOrder = 0; local scriptActive = true; local SliderReferences = {}
+local ConfigFileName = "DarkerHub_Config.json"; local rainbowElements = {}
 
 local PB_W, PB_H = 340 * guiScale, 35 * guiScale
 local progressBar = Instance.new("Frame", sg)
-progressBar.Size = UDim2.new(0, PB_W, 0, PB_H)
-progressBar.Position = UDim2.new(0.5, -PB_W / 2, 0, 20 * guiScale)
-progressBar.BackgroundColor3 = COLOR_BG_MAIN
-progressBar.BackgroundTransparency = 0.1
-progressBar.BorderSizePixel = 0
-progressBar.ClipsDescendants = false
-progressBar.ZIndex = 10
+progressBar.Size = UDim2.new(0, PB_W, 0, PB_H); progressBar.Position = UDim2.new(0.5, -PB_W / 2, 0, 20 * guiScale)
+progressBar.BackgroundColor3 = COLOR_BG_MAIN; progressBar.BackgroundTransparency = 0.1; progressBar.BorderSizePixel = 0
+progressBar.ClipsDescendants = false; progressBar.ZIndex = 10
 Instance.new("UICorner", progressBar).CornerRadius = UDim.new(1, 0)
-local pStroke = Instance.new("UIStroke", progressBar)
-pStroke.Thickness = 2.5 * guiScale
-pStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-pStroke.Color = COLOR_GLOW
-pStroke.Transparency = 0.2
-local pTrack = Instance.new("Frame", progressBar)
-pTrack.Size = UDim2.new(1, -6 * guiScale, 0, 6 * guiScale)
-pTrack.Position = UDim2.new(0, 3 * guiScale, 1, -9 * guiScale)
-pTrack.BackgroundColor3 = Color3.fromRGB(10, 10, 30)
-pTrack.BorderSizePixel = 0
-pTrack.ZIndex = 11
+local pStroke = Instance.new("UIStroke", progressBar); pStroke.Thickness = 2.5 * guiScale; pStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; pStroke.Color = COLOR_GLOW; pStroke.Transparency = 0.2
+local pTrack = Instance.new("Frame", progressBar); pTrack.Size = UDim2.new(1, -6 * guiScale, 0, 6 * guiScale); pTrack.Position = UDim2.new(0, 3 * guiScale, 1, -9 * guiScale)
+pTrack.BackgroundColor3 = Color3.fromRGB(10, 10, 30); pTrack.BorderSizePixel = 0; pTrack.ZIndex = 11
 Instance.new("UICorner", pTrack).CornerRadius = UDim.new(1, 0)
-ProgressBarFill = Instance.new("Frame", pTrack)
-ProgressBarFill.Size = UDim2.new(0, 0, 1, 0)
-ProgressBarFill.BackgroundColor3 = COLOR_ACCENT
-ProgressBarFill.BorderSizePixel = 0
-ProgressBarFill.ZIndex = 12
+ProgressBarFill = Instance.new("Frame", pTrack); ProgressBarFill.Size = UDim2.new(0, 0, 1, 0); ProgressBarFill.BackgroundColor3 = COLOR_ACCENT; ProgressBarFill.BorderSizePixel = 0; ProgressBarFill.ZIndex = 12
 Instance.new("UICorner", ProgressBarFill).CornerRadius = UDim.new(1, 0)
-ProgressPercentLabel = Instance.new("TextLabel", progressBar)
-ProgressPercentLabel.Size = UDim2.new(1, 0, 1, 0)
-ProgressPercentLabel.BackgroundTransparency = 1
-ProgressPercentLabel.Text = "0%"
-ProgressPercentLabel.Font = Enum.Font.GothamBlack
-ProgressPercentLabel.TextSize = 12 * guiScale
-ProgressPercentLabel.TextXAlignment = Enum.TextXAlignment.Center
-ProgressPercentLabel.TextYAlignment = Enum.TextYAlignment.Center
-ProgressPercentLabel.ZIndex = 13
-ProgressPercentLabel.TextColor3 = COLOR_GLOW
-ProgressPercentLabel.TextStrokeTransparency = 0.4
-ProgressLabel = Instance.new("TextLabel", progressBar)
-ProgressLabel.Size = UDim2.new(1, -50 * guiScale, 1, 0)
-ProgressLabel.BackgroundTransparency = 1
-ProgressLabel.Text = "READY"
-ProgressLabel.Font = Enum.Font.GothamBold
-ProgressLabel.TextSize = 11 * guiScale
-ProgressLabel.TextXAlignment = Enum.TextXAlignment.Left
-ProgressLabel.TextYAlignment = Enum.TextYAlignment.Center
-ProgressLabel.ZIndex = 13
-ProgressLabel.TextColor3 = COLOR_TEXT
-ProgressLabel.TextStrokeTransparency = 0.5
+ProgressPercentLabel = Instance.new("TextLabel", progressBar); ProgressPercentLabel.Size = UDim2.new(1, 0, 1, 0); ProgressPercentLabel.BackgroundTransparency = 1; ProgressPercentLabel.Text = "0%"
+ProgressPercentLabel.Font = Enum.Font.GothamBlack; ProgressPercentLabel.TextSize = 12 * guiScale; ProgressPercentLabel.TextXAlignment = Enum.TextXAlignment.Center
+ProgressPercentLabel.TextYAlignment = Enum.TextYAlignment.Center; ProgressPercentLabel.ZIndex = 13; ProgressPercentLabel.TextColor3 = COLOR_GLOW; ProgressPercentLabel.TextStrokeTransparency = 0.4
+ProgressLabel = Instance.new("TextLabel", progressBar); ProgressLabel.Size = UDim2.new(1, -50 * guiScale, 1, 0); ProgressLabel.BackgroundTransparency = 1; ProgressLabel.Text = "READY"
+ProgressLabel.Font = Enum.Font.GothamBold; ProgressLabel.TextSize = 11 * guiScale; ProgressLabel.TextXAlignment = Enum.TextXAlignment.Left
+ProgressLabel.TextYAlignment = Enum.TextYAlignment.Center; ProgressLabel.ZIndex = 13; ProgressLabel.TextColor3 = COLOR_TEXT; ProgressLabel.TextStrokeTransparency = 0.5
 
 -- Main Window
-local main = Instance.new("Frame", sg)
-main.Name = "Main"
-main.Size = UDim2.new(0, W, 0, H)
+local main = Instance.new("Frame", sg); main.Name = "Main"; main.Size = UDim2.new(0, W, 0, H)
 main.Position = isMobile and UDim2.new(0.5, -W/2, 0.5, -H/2) or UDim2.new(1, -W - 10, 0, 10)
-main.BackgroundColor3 = COLOR_BG_MAIN
-main.BackgroundTransparency = 0.1
-main.BorderSizePixel = 0
-main.Active = true
-main.Draggable = false
-main.ClipsDescendants = true
+main.BackgroundColor3 = COLOR_BG_MAIN; main.BackgroundTransparency = 0.1; main.BorderSizePixel = 0; main.Active = true; main.Draggable = false; main.ClipsDescendants = true
 Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10 * guiScale)
-local mainStroke = Instance.new("UIStroke", main)
-mainStroke.Color = COLOR_ACCENT
-mainStroke.Thickness = 2 * guiScale
-mainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+local mainStroke = Instance.new("UIStroke", main); mainStroke.Color = COLOR_ACCENT; mainStroke.Thickness = 2 * guiScale; mainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
 -- Header
-local header = Instance.new("Frame", main)
-header.Size = UDim2.new(1, 0, 0, HeaderH)
-header.BackgroundColor3 = COLOR_BG_ROW
-header.BackgroundTransparency = 0.3
-header.BorderSizePixel = 0
-header.ZIndex = 4
-header.Active = true
+local header = Instance.new("Frame", main); header.Size = UDim2.new(1, 0, 0, HeaderH); header.BackgroundColor3 = COLOR_BG_ROW; header.BackgroundTransparency = 0.3; header.BorderSizePixel = 0; header.ZIndex = 4; header.Active = true
 Instance.new("UICorner", header).CornerRadius = UDim.new(0, 10 * guiScale)
-local title = Instance.new("TextLabel", header)
-title.Size = UDim2.new(1, 0, 1, 0)
-title.BackgroundTransparency = 1
-title.Text = "Darker Hub"
-title.Font = Enum.Font.GothamBlack
-title.TextSize = 16 * guiScale
-title.ZIndex = 6
-title.TextColor3 = COLOR_GLOW
+local title = Instance.new("TextLabel", header); title.Size = UDim2.new(1, 0, 1, 0); title.BackgroundTransparency = 1; title.Text = "Darker Hub"; title.Font = Enum.Font.GothamBlack; title.TextSize = 16 * guiScale; title.ZIndex = 6; title.TextColor3 = COLOR_GLOW
 
--- CLOSE BUTTON
-local closeBtn = Instance.new("TextButton", header)
-closeBtn.Size = UDim2.new(0, 28 * guiScale, 0, 28 * guiScale)
-closeBtn.Position = UDim2.new(1, -32 * guiScale, 0.5, -14 * guiScale)
-closeBtn.BackgroundColor3 = Color3.fromRGB(80, 20, 20)
-closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
-closeBtn.Font = Enum.Font.GothamBlack
-closeBtn.TextSize = 14 * guiScale
-closeBtn.BorderSizePixel = 0
-closeBtn.ZIndex = 7
+local closeBtn = Instance.new("TextButton", header); closeBtn.Size = UDim2.new(0, 28 * guiScale, 0, 28 * guiScale); closeBtn.Position = UDim2.new(1, -32 * guiScale, 0.5, -14 * guiScale)
+closeBtn.BackgroundColor3 = Color3.fromRGB(80, 20, 20); closeBtn.Text = "X"; closeBtn.TextColor3 = Color3.fromRGB(255, 80, 80); closeBtn.Font = Enum.Font.GothamBlack; closeBtn.TextSize = 14 * guiScale; closeBtn.BorderSizePixel = 0; closeBtn.ZIndex = 7
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6 * guiScale)
 
--- HIDE BUTTON
-local hideBtn = Instance.new("TextButton", header)
-hideBtn.Size = UDim2.new(0, 28 * guiScale, 0, 28 * guiScale)
-hideBtn.Position = UDim2.new(1, -64 * guiScale, 0.5, -14 * guiScale)
-hideBtn.BackgroundColor3 = COLOR_BG_ROW
-hideBtn.Text = "_"
-hideBtn.TextColor3 = COLOR_GLOW
-hideBtn.Font = Enum.Font.GothamBlack
-hideBtn.TextSize = 16 * guiScale
-hideBtn.BorderSizePixel = 0
-hideBtn.ZIndex = 7
+local hideBtn = Instance.new("TextButton", header); hideBtn.Size = UDim2.new(0, 28 * guiScale, 0, 28 * guiScale); hideBtn.Position = UDim2.new(1, -64 * guiScale, 0.5, -14 * guiScale)
+hideBtn.BackgroundColor3 = COLOR_BG_ROW; hideBtn.Text = "_"; hideBtn.TextColor3 = COLOR_GLOW; hideBtn.Font = Enum.Font.GothamBlack; hideBtn.TextSize = 16 * guiScale; hideBtn.BorderSizePixel = 0; hideBtn.ZIndex = 7
 Instance.new("UICorner", hideBtn).CornerRadius = UDim.new(0, 6 * guiScale)
 
--- Drag Logic
 do
 local dragging, dragStart, startPos
 local function onInputBegan(input)
@@ -1190,85 +796,30 @@ end
 end
 local function onInputChanged(input)
 if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-local delta = input.Position - dragStart
-main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+local delta = input.Position - dragStart; main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 end
 end
-header.InputBegan:Connect(onInputBegan)
-UserInputService.InputChanged:Connect(onInputChanged)
+header.InputBegan:Connect(onInputBegan); UserInputService.InputChanged:Connect(onInputChanged)
 end
 
--- Content Area
-local contentArea = Instance.new("Frame", main)
-contentArea.Size = UDim2.new(1, 0, 1, -HeaderH)
-contentArea.Position = UDim2.new(0, 0, 0, HeaderH)
-contentArea.BackgroundTransparency = 1
-contentArea.BorderSizePixel = 0
-contentArea.ClipsDescendants = true
-contentArea.ZIndex = 3
-local scrollFrame = Instance.new("ScrollingFrame", contentArea)
-scrollFrame.Size = UDim2.new(1, -10 * guiScale, 1, -10 * guiScale)
-scrollFrame.Position = UDim2.new(0, 5 * guiScale, 0, 5 * guiScale)
-scrollFrame.BackgroundTransparency = 1
-scrollFrame.BorderSizePixel = 0
-scrollFrame.ScrollBarThickness = 4 * guiScale
-scrollFrame.ScrollBarImageColor3 = COLOR_ACCENT
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-scrollFrame.ZIndex = 3
-local listLayout = Instance.new("UIListLayout", scrollFrame)
-listLayout.Padding = UDim.new(0, 6 * guiScale)
-listLayout.FillDirection = Enum.FillDirection.Vertical
-listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+local contentArea = Instance.new("Frame", main); contentArea.Size = UDim2.new(1, 0, 1, -HeaderH); contentArea.Position = UDim2.new(0, 0, 0, HeaderH); contentArea.BackgroundTransparency = 1; contentArea.BorderSizePixel = 0; contentArea.ClipsDescendants = true; contentArea.ZIndex = 3
+local scrollFrame = Instance.new("ScrollingFrame", contentArea); scrollFrame.Size = UDim2.new(1, -10 * guiScale, 1, -10 * guiScale); scrollFrame.Position = UDim2.new(0, 5 * guiScale, 0, 5 * guiScale)
+scrollFrame.BackgroundTransparency = 1; scrollFrame.BorderSizePixel = 0; scrollFrame.ScrollBarThickness = 4 * guiScale; scrollFrame.ScrollBarImageColor3 = COLOR_ACCENT; scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0); scrollFrame.ZIndex = 3
+local listLayout = Instance.new("UIListLayout", scrollFrame); listLayout.Padding = UDim.new(0, 6 * guiScale); listLayout.FillDirection = Enum.FillDirection.Vertical; listLayout.SortOrder = Enum.SortOrder.LayoutOrder; listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- Helpers
-local VisualSetters = {}
-local SliderSetters = {}
-local waitingForKeybind = nil
-local KeyBindBtns = {}
+local VisualSetters = {}; local SliderSetters = {}; local waitingForKeybind = nil; local KeyBindBtns = {}
 
 local function makeToggleHeader(parent, labelText, featureName, hasKeybind, defaultKeycode, noSave)
-local frame = Instance.new("Frame", parent)
-frame.Size = UDim2.new(1, -8 * guiScale, 0, 36 * guiScale)
-frame.BackgroundColor3 = COLOR_BG_ROW
-frame.BackgroundTransparency = 0.4
-frame.BorderSizePixel = 0
-frame.LayoutOrder = toggleSliderOrder
-toggleSliderOrder = toggleSliderOrder + 1
+local frame = Instance.new("Frame", parent); frame.Size = UDim2.new(1, -8 * guiScale, 0, 36 * guiScale); frame.BackgroundColor3 = COLOR_BG_ROW; frame.BackgroundTransparency = 0.4; frame.BorderSizePixel = 0; frame.LayoutOrder = toggleSliderOrder; toggleSliderOrder = toggleSliderOrder + 1
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6 * guiScale)
-local fStroke = Instance.new("UIStroke", frame)
-fStroke.Thickness = 1.5 * guiScale
-fStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-fStroke.Color = COLOR_ACCENT
-table.insert(rainbowElements, fStroke)
-local lbl = Instance.new("TextLabel", frame)
-lbl.Size = UDim2.new(0.65, 0, 1, 0)
-lbl.BackgroundTransparency = 1
-lbl.Text = labelText
-lbl.TextColor3 = COLOR_DIM
-lbl.Font = Enum.Font.GothamBold
-lbl.TextSize = 11 * guiScale
-lbl.TextXAlignment = Enum.TextXAlignment.Left
-local bg = Instance.new("Frame", frame)
-bg.Size = UDim2.new(0, 38 * guiScale, 0, 18 * guiScale)
-bg.Position = UDim2.new(1, -44 * guiScale, 0.5, -9 * guiScale)
-bg.BackgroundColor3 = COLOR_OFF
-bg.ZIndex = 4
+local fStroke = Instance.new("UIStroke", frame); fStroke.Thickness = 1.5 * guiScale; fStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; fStroke.Color = COLOR_ACCENT; table.insert(rainbowElements, fStroke)
+local lbl = Instance.new("TextLabel", frame); lbl.Size = UDim2.new(0.65, 0, 1, 0); lbl.BackgroundTransparency = 1; lbl.Text = labelText; lbl.TextColor3 = COLOR_DIM; lbl.Font = Enum.Font.GothamBold; lbl.TextSize = 11 * guiScale; lbl.TextXAlignment = Enum.TextXAlignment.Left
+local bg = Instance.new("Frame", frame); bg.Size = UDim2.new(0, 38 * guiScale, 0, 18 * guiScale); bg.Position = UDim2.new(1, -44 * guiScale, 0.5, -9 * guiScale); bg.BackgroundColor3 = COLOR_OFF; bg.ZIndex = 4
 Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
-local circle = Instance.new("Frame", bg)
-circle.Size = UDim2.new(0, 14 * guiScale, 0, 14 * guiScale)
-circle.Position = UDim2.new(0, 2 * guiScale, 0.5, -7 * guiScale)
-circle.BackgroundColor3 = Color3.new(0.8, 0.8, 0.9)
-circle.ZIndex = 5
+local circle = Instance.new("Frame", bg); circle.Size = UDim2.new(0, 14 * guiScale, 0, 14 * guiScale); circle.Position = UDim2.new(0, 2 * guiScale, 0.5, -7 * guiScale); circle.BackgroundColor3 = Color3.new(0.8, 0.8, 0.9); circle.ZIndex = 5
 Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
-local btn = Instance.new("TextButton", frame)
-btn.Size = UDim2.new(1, 0, 1, 0)
-btn.BackgroundTransparency = 1
-btn.Text = ""
-btn.ZIndex = 6
-local isOn = false
-local currentKeybind = defaultKeycode
-local listeningForKey = false
+local btn = Instance.new("TextButton", frame); btn.Size = UDim2.new(1, 0, 1, 0); btn.BackgroundTransparency = 1; btn.Text = ""; btn.ZIndex = 6
+local isOn = false; local currentKeybind = defaultKeycode; local listeningForKey = false
 local function updateVisual(state)
 if state ~= nil then isOn = state end
 if isOn then
@@ -1280,55 +831,26 @@ TweenService:Create(bg, TweenInfo.new(0.2), {BackgroundColor3 = COLOR_OFF}):Play
 TweenService:Create(circle, TweenInfo.new(0.2), {Position = UDim2.new(0,2*guiScale,0.5,-7*guiScale)}):Play()
 lbl.TextColor3 = COLOR_DIM
 end
-if lbl and hasKeybind and currentKeybind then
-lbl.Text = string.gsub(labelText, "%[.*%]", "[" .. currentKeybind.Name .. "]")
-elseif lbl then
-lbl.Text = labelText
-end
+if lbl and hasKeybind and currentKeybind then lbl.Text = string.gsub(labelText, "%[.*%]", "[" .. currentKeybind.Name .. "]")
+elseif lbl then lbl.Text = labelText end
 end
 if featureName then
 _G["UpdateVisual_"..featureName] = updateVisual
 if hasKeybind then
 _G["GetKeybind_"..featureName] = function() return currentKeybind end
-_G["SetKeybind_"..featureName] = function(k)
-currentKeybind = k
-updateVisual()
-if not noSave then SaveConfig() end
-end
+_G["SetKeybind_"..featureName] = function(k) currentKeybind = k; updateVisual(); if not noSave then SaveConfig() end end
 end
 end
 if hasKeybind then
-local kbBtn = Instance.new("TextButton", frame)
-kbBtn.Size = UDim2.new(0, 32 * guiScale, 0, 16 * guiScale)
-kbBtn.Position = UDim2.new(1, -82 * guiScale, 0.5, -8 * guiScale)
-kbBtn.BackgroundColor3 = COLOR_BG_MAIN
-kbBtn.TextColor3 = COLOR_GLOW
-kbBtn.Font = Enum.Font.GothamBold
-kbBtn.TextSize = 8 * guiScale
-kbBtn.Text = "BIND"
-kbBtn.BorderSizePixel = 0
-kbBtn.ZIndex = 8
+local kbBtn = Instance.new("TextButton", frame); kbBtn.Size = UDim2.new(0, 32 * guiScale, 0, 16 * guiScale); kbBtn.Position = UDim2.new(1, -82 * guiScale, 0.5, -8 * guiScale)
+kbBtn.BackgroundColor3 = COLOR_BG_MAIN; kbBtn.TextColor3 = COLOR_GLOW; kbBtn.Font = Enum.Font.GothamBold; kbBtn.TextSize = 8 * guiScale; kbBtn.Text = "BIND"; kbBtn.BorderSizePixel = 0; kbBtn.ZIndex = 8
 Instance.new("UICorner", kbBtn).CornerRadius = UDim.new(0, 4 * guiScale)
-local kbStroke = Instance.new("UIStroke", kbBtn)
-kbStroke.Thickness = 1 * guiScale
-kbStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-kbStroke.Color = COLOR_ACCENT
-table.insert(rainbowElements, kbStroke)
+local kbStroke = Instance.new("UIStroke", kbBtn); kbStroke.Thickness = 1 * guiScale; kbStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; kbStroke.Color = COLOR_ACCENT; table.insert(rainbowElements, kbStroke)
 kbBtn.MouseButton1Click:Connect(function()
-if listeningForKey then return end
-listeningForKey = true
-kbBtn.Text = "..."
-kbBtn.TextColor3 = COLOR_TEXT
-local conn
-conn = UserInputService.InputBegan:Connect(function(input)
+if listeningForKey then return end; listeningForKey = true; kbBtn.Text = "..."; kbBtn.TextColor3 = COLOR_TEXT
+local conn; conn = UserInputService.InputBegan:Connect(function(input)
 if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
-conn:Disconnect()
-currentKeybind = input.KeyCode
-listeningForKey = false
-kbBtn.Text = "BIND"
-kbBtn.TextColor3 = COLOR_GLOW
-updateVisual()
-if not noSave then SaveConfig() end
+conn:Disconnect(); currentKeybind = input.KeyCode; listeningForKey = false; kbBtn.Text = "BIND"; kbBtn.TextColor3 = COLOR_GLOW; updateVisual(); if not noSave then SaveConfig() end
 end)
 end)
 end
@@ -1336,91 +858,36 @@ return btn, updateVisual, function() return isOn end, function() return currentK
 end
 
 local function createSlider(parent, labelText, minVal, maxVal, valueKey, onChange)
-local container = Instance.new("Frame", parent)
-container.Size = UDim2.new(1, -8 * guiScale, 0, 40 * guiScale)
-container.BackgroundColor3 = COLOR_BG_ROW
-container.BackgroundTransparency = 0.4
-container.BorderSizePixel = 0
-container.LayoutOrder = toggleSliderOrder
-toggleSliderOrder = toggleSliderOrder + 1
+local container = Instance.new("Frame", parent); container.Size = UDim2.new(1, -8 * guiScale, 0, 40 * guiScale); container.BackgroundColor3 = COLOR_BG_ROW; container.BackgroundTransparency = 0.4; container.BorderSizePixel = 0; container.LayoutOrder = toggleSliderOrder; toggleSliderOrder = toggleSliderOrder + 1
 Instance.new("UICorner", container).CornerRadius = UDim.new(0, 6 * guiScale)
-local cStroke = Instance.new("UIStroke", container)
-cStroke.Thickness = 1.5 * guiScale
-cStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-cStroke.Color = COLOR_ACCENT
-table.insert(rainbowElements, cStroke)
-local label = Instance.new("TextLabel", container)
-label.Size = UDim2.new(1, 0, 0, 14 * guiScale)
-label.BackgroundTransparency = 1
-label.Text = labelText
-label.TextColor3 = COLOR_DIM
-label.Font = Enum.Font.GothamBold
-label.TextSize = 10 * guiScale
-label.TextXAlignment = Enum.TextXAlignment.Left
-local sliderBg = Instance.new("Frame", container)
-sliderBg.Size = UDim2.new(1, 0, 0, 5 * guiScale)
-sliderBg.Position = UDim2.new(0, 0, 0, 20 * guiScale)
-sliderBg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+local cStroke = Instance.new("UIStroke", container); cStroke.Thickness = 1.5 * guiScale; cStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; cStroke.Color = COLOR_ACCENT; table.insert(rainbowElements, cStroke)
+local label = Instance.new("TextLabel", container); label.Size = UDim2.new(1, 0, 0, 14 * guiScale); label.BackgroundTransparency = 1; label.Text = labelText; label.TextColor3 = COLOR_DIM; label.Font = Enum.Font.GothamBold; label.TextSize = 10 * guiScale; label.TextXAlignment = Enum.TextXAlignment.Left
+local sliderBg = Instance.new("Frame", container); sliderBg.Size = UDim2.new(1, 0, 0, 5 * guiScale); sliderBg.Position = UDim2.new(0, 0, 0, 20 * guiScale); sliderBg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 Instance.new("UICorner", sliderBg).CornerRadius = UDim.new(1, 0)
-local sliderFill = Instance.new("Frame", sliderBg)
-sliderFill.Size = UDim2.new(0.5, 0, 1, 0)
-sliderFill.BackgroundColor3 = COLOR_ACCENT
-Instance.new("UICorner", sliderFill).CornerRadius = UDim.new(1, 0)
-local thumb = Instance.new("Frame", sliderBg)
-thumb.Size = UDim2.new(0, 10 * guiScale, 0, 10 * guiScale)
-thumb.Position = UDim2.new(0.5, -5 * guiScale, 0.5, -5 * guiScale)
-thumb.BackgroundColor3 = COLOR_GLOW
-Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
-local valueLabel = Instance.new("TextLabel", container)
-valueLabel.Size = UDim2.new(0, 35 * guiScale, 0, 14 * guiScale)
-valueLabel.Position = UDim2.new(1, -38 * guiScale, 0, 0)
-valueLabel.BackgroundTransparency = 1
-valueLabel.Text = tostring(Values[valueKey] or AutoStealValues[valueKey])
-valueLabel.TextColor3 = COLOR_GLOW
-valueLabel.Font = Enum.Font.GothamBold
-valueLabel.TextSize = 10 * guiScale
+local sliderFill = Instance.new("Frame", sliderBg); sliderFill.Size = UDim2.new(0.5, 0, 1, 0); sliderFill.BackgroundColor3 = COLOR_ACCENT; Instance.new("UICorner", sliderFill).CornerRadius = UDim.new(1, 0)
+local thumb = Instance.new("Frame", sliderBg); thumb.Size = UDim2.new(0, 10 * guiScale, 0, 10 * guiScale); thumb.Position = UDim2.new(0.5, -5 * guiScale, 0.5, -5 * guiScale); thumb.BackgroundColor3 = COLOR_GLOW; Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
+local valueLabel = Instance.new("TextLabel", container); valueLabel.Size = UDim2.new(0, 35 * guiScale, 0, 14 * guiScale); valueLabel.Position = UDim2.new(1, -38 * guiScale, 0, 0); valueLabel.BackgroundTransparency = 1; valueLabel.Text = tostring(Values[valueKey] or AutoStealValues[valueKey]); valueLabel.TextColor3 = COLOR_GLOW; valueLabel.Font = Enum.Font.GothamBold; valueLabel.TextSize = 10 * guiScale
 local dragging = false
 local function updateSliderVisual(value)
-local relative = (value - minVal) / (maxVal - minVal)
-relative = math.clamp(relative, 0, 1)
-if valueKey == "STEAL_DURATION" or valueKey == "PATH_TURN_WAIT" then
-valueLabel.Text = string.format("%.2f", value) .. "s"
-else
-valueLabel.Text = tostring(value)
-end
-sliderFill.Size = UDim2.new(relative, 0, 1, 0)
-thumb.Position = UDim2.new(relative, -5 * guiScale, 0.5, -5 * guiScale)
+local relative = math.clamp((value - minVal) / (maxVal - minVal), 0, 1)
+if valueKey == "STEAL_DURATION" or valueKey == "PATH_TURN_WAIT" then valueLabel.Text = string.format("%.2f", value) .. "s" else valueLabel.Text = tostring(value) end
+sliderFill.Size = UDim2.new(relative, 0, 1, 0); thumb.Position = UDim2.new(relative, -5 * guiScale, 0.5, -5 * guiScale)
 if onChange then onChange(value) end
 end
 SliderReferences[valueKey] = { func = updateSliderVisual }
 local function updateSlider(inputRelative)
 inputRelative = math.clamp(inputRelative, 0, 1)
 if valueKey == "STEAL_DURATION" or valueKey == "PATH_TURN_WAIT" then
-local decimalVal = minVal + (maxVal - minVal) * inputRelative
-decimalVal = tonumber(string.format("%.2f", decimalVal))
-if AutoStealValues[valueKey] then AutoStealValues[valueKey] = decimalVal end
-updateSliderVisual(decimalVal)
-return
+local decimalVal = tonumber(string.format("%.2f", minVal + (maxVal - minVal) * inputRelative))
+if AutoStealValues[valueKey] then AutoStealValues[valueKey] = decimalVal end; updateSliderVisual(decimalVal); return
 end
 local value = math.floor(minVal + (maxVal - minVal) * inputRelative)
-if Values[valueKey] then Values[valueKey] = value
-elseif AutoStealValues[valueKey] then AutoStealValues[valueKey] = value end
-updateSliderVisual(value)
+if Values[valueKey] then Values[valueKey] = value elseif AutoStealValues[valueKey] then AutoStealValues[valueKey] = value end; updateSliderVisual(value)
 end
-sliderBg.InputBegan:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = true end
-end)
-UserInputService.InputEnded:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
-end)
-UserInputService.InputChanged:Connect(function(input)
-if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-local relative = (input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X
-updateSlider(relative)
-end
-end)
-local currentVal = Values[valueKey] or AutoStealValues[valueKey]
-if currentVal then updateSliderVisual(currentVal) end
+sliderBg.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = true end end)
+UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end end)
+UserInputService.InputChanged:Connect(function(input) if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then updateSlider((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X) end end)
+local currentVal = Values[valueKey] or AutoStealValues[valueKey]; if currentVal then updateSliderVisual(currentVal) end
 return container
 end
 
@@ -1434,16 +901,11 @@ GalaxyMode = Features.GalaxyMode, Unwalk = Features.Unwalk,
 EnemyTimer = Features.EnemyTimer, FrontLock = Features.FrontLock,
 BoostSpeed = Values.BoostSpeed, SpinSpeed = Values.SpinSpeed, GalaxyGravityPercent = Values.GalaxyGravityPercent,
 StealingSpeedValue = Values.StealingSpeedValue, HOP_POWER = Values.HOP_POWER, HOP_COOLDOWN = Values.HOP_COOLDOWN,
-UP_SPEED = Values.UP_SPEED,
-DEFAULT_GRAVITY = Values.DEFAULT_GRAVITY,
-STEAL_RADIUS = AutoStealValues.STEAL_RADIUS,
-STEAL_DURATION = AutoStealValues.STEAL_DURATION,
-PATH_TURN_WAIT = AutoStealValues.PATH_TURN_WAIT,
+UP_SPEED = Values.UP_SPEED, DEFAULT_GRAVITY = Values.DEFAULT_GRAVITY,
+STEAL_RADIUS = AutoStealValues.STEAL_RADIUS, STEAL_DURATION = AutoStealValues.STEAL_DURATION, PATH_TURN_WAIT = AutoStealValues.PATH_TURN_WAIT,
 KEY_SPEED = Keybinds.SpeedBoost.Name, KEY_ANTIRAG = Keybinds.AntiRagdoll.Name,
-KEY_INFJUMP = Keybinds.InfinityJump.Name, KEY_HELI = Keybinds.Helicopter.Name,
-KEY_MENU = Keybinds.ToggleMenu.Name, KEY_FRONTLOCK = Keybinds.FrontLock.Name,
-KEY_AUTORIGHT = Keybinds.AutoRightSteal.Name, KEY_AUTOLEFT = Keybinds.AutoLeftSteal.Name,
-KEY_DROP = Keybinds.DropShot.Name,
+KEY_HELI = Keybinds.Helicopter.Name, KEY_MENU = Keybinds.ToggleMenu.Name, KEY_FRONTLOCK = Keybinds.FrontLock.Name,
+KEY_AUTORIGHT = Keybinds.AutoRightSteal.Name, KEY_AUTOLEFT = Keybinds.AutoLeftSteal.Name, KEY_DROP = Keybinds.DropShot.Name,
 }
 pcall(function() writefile(ConfigFileName, HttpService:JSONEncode(fullConfig)) end)
 end
@@ -1453,11 +915,7 @@ if not readfile then return end
 pcall(function()
 if isfile(ConfigFileName) then
 local data = HttpService:JSONDecode(readfile(ConfigFileName))
-for k, v in pairs(Features) do
-if k ~= "AutoRight" and k ~= "AutoLeft" then
-if data[k] ~= nil then Features[k] = data[k] end
-end
-end
+for k, v in pairs(Features) do if k ~= "AutoRight" and k ~= "AutoLeft" and data[k] ~= nil then Features[k] = data[k] end end
 if data.BoostSpeed then Values.BoostSpeed = data.BoostSpeed end
 if data.SpinSpeed then Values.SpinSpeed = data.SpinSpeed end
 if data.GalaxyGravityPercent then Values.GalaxyGravityPercent = data.GalaxyGravityPercent end
@@ -1470,7 +928,6 @@ if data.STEAL_DURATION then AutoStealValues.STEAL_DURATION = data.STEAL_DURATION
 if data.PATH_TURN_WAIT then AutoStealValues.PATH_TURN_WAIT = data.PATH_TURN_WAIT end
 if data.KEY_SPEED then Keybinds.SpeedBoost = Enum.KeyCode[data.KEY_SPEED] or Keybinds.SpeedBoost end
 if data.KEY_ANTIRAG then Keybinds.AntiRagdoll = Enum.KeyCode[data.KEY_ANTIRAG] or Keybinds.AntiRagdoll end
-if data.KEY_INFJUMP then Keybinds.InfinityJump = Enum.KeyCode[data.KEY_INFJUMP] or Keybinds.InfinityJump end
 if data.KEY_HELI then Keybinds.Helicopter = Enum.KeyCode[data.KEY_HELI] or Keybinds.Helicopter end
 if data.KEY_MENU then Keybinds.ToggleMenu = Enum.KeyCode[data.KEY_MENU] or Keybinds.ToggleMenu end
 if data.KEY_FRONTLOCK then Keybinds.FrontLock = Enum.KeyCode[data.KEY_FRONTLOCK] or Keybinds.FrontLock end
@@ -1478,56 +935,32 @@ if data.KEY_DROP then Keybinds.DropShot = Enum.KeyCode[data.KEY_DROP] or Keybind
 if data.KEY_AUTORIGHT then Keybinds.AutoRightSteal = Enum.KeyCode[data.KEY_AUTORIGHT] or Keybinds.AutoRightSteal end
 if data.KEY_AUTOLEFT then Keybinds.AutoLeftSteal = Enum.KeyCode[data.KEY_AUTOLEFT] or Keybinds.AutoLeftSteal end
 for key, ref in pairs(SliderReferences) do
-local savedVal = nil
-if Values[key] then savedVal = Values[key] elseif AutoStealValues[key] then savedVal = AutoStealValues[key] end
-if savedVal and ref.func then ref.func(savedVal) end
+local savedVal = Values[key] or AutoStealValues[key]; if savedVal and ref.func then ref.func(savedVal) end
 end
 end
 end)
 end
 LoadConfig()
 
--- Feature Implementation Blocks
+-- Build Toggles
 do
 local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Speed Boost", "SpeedBoost", true, Keybinds.SpeedBoost, false)
-local function toggleSpeedBoost()
-local on = not getState()
-setVisual(on)
-Features.SpeedBoost = on
-if on then startSpeedBoost() else stopSpeedBoost() end
-SaveConfig()
-end
-btn.MouseButton1Click:Connect(toggleSpeedBoost)
+btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.SpeedBoost = on; if on then startSpeedBoost() else stopSpeedBoost() end; SaveConfig() end)
 if Features.SpeedBoost then setVisual(true) startSpeedBoost() end
 end
 createSlider(scrollFrame, "Speed Value", 1, 70, "BoostSpeed")
 
 do
 local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Anti Ragdoll", "AntiRagdoll", true, Keybinds.AntiRagdoll, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.AntiRagdoll = on
-if on then startAntiRagdoll() else stopAntiRagdoll() end
-SaveConfig()
-end)
+btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.AntiRagdoll = on; if on then startAntiRagdoll() else stopAntiRagdoll() end; SaveConfig() end)
 if Features.AntiRagdoll then setVisual(true) startAntiRagdoll() end
 end
 
 do
-local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Inf Jump (Hold Jump)", "InfinityJump", false, nil, false)
+local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Inf Jump (Hold Jump)", "InfinityJump", false, nil, false)
 btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.InfinityJump = on
-if on then
-startInfinityJump()
-print("[InfJump] ENABLED! Hold JUMP to fly, release to drop.")
-else
-stopInfinityJump()
-print("[InfJump] DISABLED.")
-end
-SaveConfig()
+local on = not getState(); setVisual(on); Features.InfinityJump = on
+if on then startInfinityJump(); print("[InfJump] ON - PC: Hold Space | Mobile: Tap jump") else stopInfinityJump(); print("[InfJump] OFF") end; SaveConfig()
 end)
 if Features.InfinityJump then setVisual(true) startInfinityJump() end
 end
@@ -1535,554 +968,254 @@ createSlider(scrollFrame, "Fly Speed", 20, 100, "UP_SPEED")
 
 do
 local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Float", "Float", false, nil, false)
-local function toggleFloat()
-local on = not getState()
-setVisual(on)
-Features.Float = on
-if on then startFloat() else stopFloat() end
-SaveConfig()
-end
-btn.MouseButton1Click:Connect(toggleFloat)
+btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.Float = on; if on then startFloat() else stopFloat() end; SaveConfig() end)
 if Features.Float then setVisual(true) startFloat() end
 end
 
 do
 local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Helicopter", "Helicopter", true, Keybinds.Helicopter, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.Helicopter = on
-if on then startHelicopter() else stopHelicopter() end
-SaveConfig()
-end)
+btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.Helicopter = on; if on then startHelicopter() else stopHelicopter() end; SaveConfig() end)
 if Features.Helicopter then setVisual(true) startHelicopter() end
 end
-createSlider(scrollFrame, "Heli Speed", 5, 50, "SpinSpeed", function(v)
-Values.SpinSpeed = v
-if helicopterSpinBAV then helicopterSpinBAV.AngularVelocity = Vector3.new(0, v, 0) end
-end)
+createSlider(scrollFrame, "Heli Speed", 5, 50, "SpinSpeed", function(v) Values.SpinSpeed = v; if helicopterSpinBAV then helicopterSpinBAV.AngularVelocity = Vector3.new(0, v, 0) end end)
 
 do
 local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Thief Speed", "ThiefSpeed", false, nil, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.ThiefSpeed = on
-if on then startSpeedWhileStealing() else stopSpeedWhileStealing() end
-SaveConfig()
-end)
+btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.ThiefSpeed = on; if on then startSpeedWhileStealing() else stopSpeedWhileStealing() end; SaveConfig() end)
 if Features.ThiefSpeed then setVisual(true) startSpeedWhileStealing() end
 end
-createSlider(scrollFrame, "Steal Speed", 10, 50, "StealingSpeedValue", function(v)
-Values.StealingSpeedValue = v
-end)
+createSlider(scrollFrame, "Steal Speed", 10, 50, "StealingSpeedValue", function(v) Values.StealingSpeedValue = v end)
 
 do
 local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Auto Steal (Perfect)", "AutoSteal", false, nil, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.AutoSteal = on
-if on then startAutoSteal() else stopAutoSteal() end
-SaveConfig()
-end)
+btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.AutoSteal = on; if on then startAutoSteal() else stopAutoSteal() end; SaveConfig() end)
 if Features.AutoSteal then setVisual(true) startAutoSteal() end
 end
 
 do
 local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Galaxy Mode", "GalaxyMode", false, nil, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-if on then startGalaxy() else stopGalaxy() end
-SaveConfig()
-end)
+btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); if on then startGalaxy() else stopGalaxy() end; SaveConfig() end)
 if Features.GalaxyMode then setVisual(true) startGalaxy() end
 end
-createSlider(scrollFrame, "Gravity %", 25, 130, "GalaxyGravityPercent", function(v)
-Values.GalaxyGravityPercent = v
-if galaxyEnabled then adjustGalaxyJump() end
-end)
+createSlider(scrollFrame, "Gravity %", 25, 130, "GalaxyGravityPercent", function(v) Values.GalaxyGravityPercent = v; if galaxyEnabled then adjustGalaxyJump() end end)
 
 do
 local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Unwalk", "Unwalk", false, nil, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.Unwalk = on
-if on then startUnwalk() else stopUnwalk() end
-SaveConfig()
-end)
+btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.Unwalk = on; if on then startUnwalk() else stopUnwalk() end; SaveConfig() end)
 if Features.Unwalk then setVisual(true) startUnwalk() end
 end
 
 do
-local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Optimizer (No Texture Only)", "Optimizer", false, nil, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.Optimizer = on
-if on then enableOptimizer() else disableOptimizer() end
-SaveConfig()
-end)
+local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Optimizer", "Optimizer", false, nil, false)
+btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.Optimizer = on; if on then enableOptimizer() else disableOptimizer() end; SaveConfig() end)
 if Features.Optimizer then setVisual(true) enableOptimizer() end
 end
 
 do
 local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Enemy Ragdoll Timer", "EnemyTimer", false, nil, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.EnemyTimer = on
-if on then updateEnemyTimers() end
-SaveConfig()
-end)
+btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.EnemyTimer = on; if on then updateEnemyTimers() end; SaveConfig() end)
 if Features.EnemyTimer then setVisual(true) end
 end
 
--- Auto Right Steal
 do
 local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Auto Right Steal", "AutoRight", true, Keybinds.AutoRightSteal, true)
 btn.MouseButton1Click:Connect(function()
 local on = not getState()
-if on then
-if Features.AutoLeft then
-Features.AutoLeft = false
-if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
-end
-end
-setVisual(on)
-Features.AutoRight = on
-if on then
-stopStealPath()
-startStealPath(stealPath1, "Right")
-else
-stopStealPath()
-end
+if on then if Features.AutoLeft then Features.AutoLeft = false; if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end end end
+setVisual(on); Features.AutoRight = on; if on then stopStealPath(); startStealPath(stealPath1, "Right") else stopStealPath() end
 end)
 if Features.AutoRight then setVisual(true) startStealPath(stealPath1, "Right") end
 end
 
--- Auto Left Steal
 do
 local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Auto Left Steal", "AutoLeft", true, Keybinds.AutoLeftSteal, true)
 btn.MouseButton1Click:Connect(function()
 local on = not getState()
-if on then
-if Features.AutoRight then
-Features.AutoRight = false
-if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end
-end
-end
-setVisual(on)
-Features.AutoLeft = on
-if on then
-stopStealPath()
-startStealPath(stealPath2, "Left")
-else
-stopStealPath()
-end
+if on then if Features.AutoRight then Features.AutoRight = false; if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end end end
+setVisual(on); Features.AutoLeft = on; if on then stopStealPath(); startStealPath(stealPath2, "Left") else stopStealPath() end
 end)
 if Features.AutoLeft then setVisual(true) startStealPath(stealPath2, "Left") end
 end
 
-createSlider(scrollFrame, "Path Turn Speed (Wait)", 0.0, 1.0, "PATH_TURN_WAIT", function(v)
-AutoStealValues.PATH_TURN_WAIT = v
-end)
+createSlider(scrollFrame, "Path Turn Wait", 0.0, 1.0, "PATH_TURN_WAIT", function(v) AutoStealValues.PATH_TURN_WAIT = v end)
 
--- FRONT LOCK TOGGLE
 do
 local btn, setVisual, getState, getKey = makeToggleHeader(scrollFrame, "Front Lock + Bat", "FrontLock", true, Keybinds.FrontLock, false)
-btn.MouseButton1Click:Connect(function()
-local on = not getState()
-setVisual(on)
-Features.FrontLock = on
-if on then startFrontLock() else stopFrontLock() end
-SaveConfig()
-end)
+btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.FrontLock = on; if on then startFrontLock() else stopFrontLock() end; SaveConfig() end)
 if Features.FrontLock then setVisual(true) startFrontLock() end
 end
 
-listLayout.Changed:Connect(function()
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 10 * guiScale)
-end)
+listLayout.Changed:Connect(function() scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 10 * guiScale) end)
 
--- Rainbow Effect
 task.spawn(function()
 local hue = 260
 while scriptActive and main.Parent do
-hue = (hue + 0.8) % 360
-local col = Color3.fromHSV(hue / 360, 0.8, 1)
-for _, elem in ipairs(rainbowElements) do
-elem.Color = col
-end
-task.wait(0.04)
+hue = (hue + 0.8) % 360; local col = Color3.fromHSV(hue / 360, 0.8, 1)
+for _, elem in ipairs(rainbowElements) do elem.Color = col end; task.wait(0.04)
 end
 end)
 
--- Input Handler
+-- Input Handler (NO InfinityJump keybind)
 UserInputService.InputBegan:Connect(function(input, gpe)
 if gpe then return end
 if input.KeyCode == Keybinds.ToggleMenu then
 if main.Parent then
-if main.Size.Y.Offset <= HeaderH + 5 then
-main.Size = UDim2.new(0, W, 0, H)
-else
-main.Size = UDim2.new(0, W, 0, HeaderH)
-end
-end
-return
+if main.Size.Y.Offset <= HeaderH + 5 then main.Size = UDim2.new(0, W, 0, H) else main.Size = UDim2.new(0, W, 0, HeaderH) end
+end; return
 end
 if input.KeyCode == Keybinds.DropShot then
-local char = Player.Character or Player.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
-local startCF = hrp.CFrame
-hrp.AssemblyLinearVelocity = Vector3.new(0, 120, 0)
-task.wait(0.35)
-hrp.AssemblyLinearVelocity = Vector3.zero
-hrp.CFrame = startCF
-return
+local char = Player.Character or Player.CharacterAdded:Wait(); local hrp = char:WaitForChild("HumanoidRootPart"); local startCF = hrp.CFrame
+hrp.AssemblyLinearVelocity = Vector3.new(0, 120, 0); task.wait(0.35); hrp.AssemblyLinearVelocity = Vector3.zero; hrp.CFrame = startCF; return
 end
-local function syncToggle(featureName, newState, noSave)
-Features[featureName] = newState
-if featureName == "InfinityJump" then
-if newState then startInfinityJump() else stopInfinityJump() end
+local function syncToggle(fn, ns, ns2)
+Features[fn] = ns; if _G["UpdateVisual_"..fn] then _G["UpdateVisual_"..fn](ns) end; if ns2 then ns2() end; SaveConfig()
 end
-if _G["UpdateVisual_"..featureName] then
-_G["UpdateVisual_"..featureName](newState)
-end
-if not noSave then SaveConfig() end
-end
-if _G["GetKeybind_SpeedBoost"] and input.KeyCode == _G["GetKeybind_SpeedBoost"]() then
-local newState = not Features.SpeedBoost
-syncToggle("SpeedBoost", newState, false)
-if newState then startSpeedBoost() else stopSpeedBoost() end
-return
-end
-if _G["GetKeybind_AntiRagdoll"] and input.KeyCode == _G["GetKeybind_AntiRagdoll"]() then
-local newState = not Features.AntiRagdoll
-syncToggle("AntiRagdoll", newState, false)
-if newState then startAntiRagdoll() else stopAntiRagdoll() end
-return
-end
-if _G["GetKeybind_InfinityJump"] and input.KeyCode == _G["GetKeybind_InfinityJump"]() then
-local newState = not Features.InfinityJump
-syncToggle("InfinityJump", newState, false)
-return
-end
-if _G["GetKeybind_Helicopter"] and input.KeyCode == _G["GetKeybind_Helicopter"]() then
-local newState = not Features.Helicopter
-syncToggle("Helicopter", newState, false)
-if newState then startHelicopter() else stopHelicopter() end
-return
-end
+if _G["GetKeybind_SpeedBoost"] and input.KeyCode == _G["GetKeybind_SpeedBoost"]() then syncToggle("SpeedBoost", not Features.SpeedBoost, Features.SpeedBoost and stopSpeedBoost or startSpeedBoost); return end
+if _G["GetKeybind_AntiRagdoll"] and input.KeyCode == _G["GetKeybind_AntiRagdoll"]() then syncToggle("AntiRagdoll", not Features.AntiRagdoll, Features.AntiRagdoll and stopAntiRagdoll or startAntiRagdoll); return end
+if _G["GetKeybind_Helicopter"] and input.KeyCode == _G["GetKeybind_Helicopter"]() then syncToggle("Helicopter", not Features.Helicopter, Features.Helicopter and stopHelicopter or startHelicopter); return end
 if _G["GetKeybind_AutoRight"] and input.KeyCode == _G["GetKeybind_AutoRight"]() then
-local newState = not Features.AutoRight
-if newState then
-if Features.AutoLeft then
-Features.AutoLeft = false
-if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
-end
-end
-Features.AutoRight = newState
-if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](newState) end
-if newState then stopStealPath(); startStealPath(stealPath1, "Right") else stopStealPath() end
-return
+local ns = not Features.AutoRight
+if ns then if Features.AutoLeft then Features.AutoLeft = false; if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end end end
+Features.AutoRight = ns; if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](ns) end; if ns then stopStealPath(); startStealPath(stealPath1, "Right") else stopStealPath() end; return
 end
 if _G["GetKeybind_AutoLeft"] and input.KeyCode == _G["GetKeybind_AutoLeft"]() then
-local newState = not Features.AutoLeft
-if newState then
-if Features.AutoRight then
-Features.AutoRight = false
-if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end
+local ns = not Features.AutoLeft
+if ns then if Features.AutoRight then Features.AutoRight = false; if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end end end
+Features.AutoLeft = ns; if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](ns) end; if ns then stopStealPath(); startStealPath(stealPath2, "Left") else stopStealPath() end; return
 end
-end
-Features.AutoLeft = newState
-if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](newState) end
-if newState then stopStealPath(); startStealPath(stealPath2, "Left") else stopStealPath() end
-return
-end
-if _G["GetKeybind_FrontLock"] and input.KeyCode == _G["GetKeybind_FrontLock"]() then
-local newState = not Features.FrontLock
-syncToggle("FrontLock", newState, false)
-if newState then startFrontLock() else stopFrontLock() end
-return
+if _G["GetKeybind_FrontLock"] and input.KeyCode == _G["GetKeybind_FrontLock"]() then syncToggle("FrontLock", not Features.FrontLock, Features.FrontLock and stopFrontLock or startFrontLock); return
 end
 end)
 
--- CLOSE BUTTON LOGIC
 closeBtn.MouseButton1Click:Connect(function()
-scriptActive = false
-stopSpeedBoost()
-stopAntiRagdoll()
-stopInfinityJump()
-stopFloat()
-stopHelicopter()
-stopSpeedWhileStealing()
-stopAutoSteal()
-stopGalaxy()
-stopUnwalk()
-disableOptimizer()
-stopStealPath()
-stopFrontLock()
-for p, data in pairs(enemyTimers) do
-if data.Connection then data.Connection:Disconnect() end
-if data.Gui then data.Gui:Destroy() end
-end
-enemyTimers = {}
-destroySpeedDisplay()
-sg:Destroy()
-print("GUI Closed Completely. All features stopped.")
+scriptActive = false; stopSpeedBoost(); stopAntiRagdoll(); stopInfinityJump(); stopFloat(); stopHelicopter(); stopSpeedWhileStealing(); stopAutoSteal(); stopGalaxy(); stopUnwalk(); disableOptimizer(); stopStealPath(); stopFrontLock()
+for p, data in pairs(enemyTimers) do if data.Connection then data.Connection:Disconnect() end; if data.Gui then data.Gui:Destroy() end end; enemyTimers = {}
+destroySpeedDisplay(); sg:Destroy()
 end)
 
--- Hide/Show Logic
-hideBtn.MouseButton1Click:Connect(function()
-TweenService:Create(main, TweenInfo.new(0.2), {Size = UDim2.new(0, W, 0, HeaderH)}):Play()
-end)
+hideBtn.MouseButton1Click:Connect(function() TweenService:Create(main, TweenInfo.new(0.2), {Size = UDim2.new(0, W, 0, HeaderH)}):Play() end)
 header.InputBegan:Connect(function(input)
 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-if main.Size.Y.Offset <= HeaderH + 5 then
-TweenService:Create(main, TweenInfo.new(0.2), {Size = UDim2.new(0, W, 0, H)}):Play()
-end
+if main.Size.Y.Offset <= HeaderH + 5 then TweenService:Create(main, TweenInfo.new(0.2), {Size = UDim2.new(0, W, 0, H)}):Play() end
 end
 end)
 
--- MOBILE BUTTONS - 2 UP 2 DOWN IN MIDDLE (NO EMOJIS)
+-- MOBILE: 4 small galaxy boxes RIGHT SIDE MIDDLE - LEFT RIGHT DROP LOCK
 if isMobile then
-local btnSize = 70
-local btnGap = 15
-local gridWidth = btnSize * 2 + btnGap
-local gridHeight = btnSize * 2 + btnGap
-local startX = 0.5 - gridWidth / 2
-local startY = 0.5 - gridHeight / 2
+local bSize = 52
+local bGap = 6
+local gridW = bSize * 2 + bGap
+local gridH = bSize * 2 + bGap
+local startX = 1 - gridW - 12
+local startY = 0.5 - gridH / 2
 
-local function createMobileButton(name, pos, color, callback)
-local btn = Instance.new("Frame", sg)
-btn.Name = "MobBtn_" .. name
-btn.Size = UDim2.new(0, btnSize, 0, btnSize)
-btn.Position = pos
-btn.BackgroundColor3 = color
-btn.BackgroundTransparency = 0.25
-btn.BorderSizePixel = 0
-btn.ZIndex = 100
-Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
+-- Galaxy gradient colors
+local cRight = Color3.fromRGB(60, 20, 130)
+local cDrop = Color3.fromRGB(130, 20, 60)
+local cLeft = Color3.fromRGB(20, 60, 130)
+local cLock = Color3.fromRGB(80, 10, 120)
 
-local stroke = Instance.new("UIStroke", btn)
-stroke.Color = COLOR_GLOW
-stroke.Thickness = 2.5
+local function makeGalaxyBox(name, pos, baseColor, callback)
+local box = Instance.new("Frame", sg)
+box.Name = "GBox_" .. name
+box.Size = UDim2.new(0, bSize, 0, bSize)
+box.Position = pos
+box.BackgroundColor3 = baseColor
+box.BackgroundTransparency = 0.15
+box.BorderSizePixel = 0
+box.ZIndex = 100
+Instance.new("UICorner", box).CornerRadius = UDim.new(0, 8)
+
+-- Inner glow
+local inner = Instance.new("Frame", box)
+inner.Size = UDim2.new(1, -6, 1, -6)
+inner.Position = UDim2.new(0, 3, 0, 3)
+inner.BackgroundColor3 = baseColor
+inner.BackgroundTransparency = 0.5
+inner.BorderSizePixel = 0
+inner.ZIndex = 99
+Instance.new("UICorner", inner).CornerRadius = UDim.new(0, 6)
+
+local stroke = Instance.new("UIStroke", box)
+stroke.Color = Color3.fromHSV(math.random(200, 300) / 360, 0.7, 1)
+stroke.Thickness = 1.5
 stroke.Transparency = 0.3
 
-local label = Instance.new("TextLabel", btn)
-label.Size = UDim2.new(1, 0, 1, 0)
-label.BackgroundTransparency = 1
-label.Text = name
-label.TextColor3 = COLOR_TEXT
-label.Font = Enum.Font.GothamBlack
-label.TextSize = 13
-label.TextScaled = true
-label.ZIndex = 101
+local lbl = Instance.new("TextLabel", box)
+lbl.Size = UDim2.new(1, 0, 1, 0)
+lbl.BackgroundTransparency = 1
+lbl.Text = name
+lbl.TextColor3 = Color3.fromRGB(220, 200, 255)
+lbl.Font = Enum.Font.GothamBlack
+lbl.TextSize = 12
+lbl.TextScaled = true
+lbl.ZIndex = 101
 
-local clickBtn = Instance.new("TextButton", btn)
-clickBtn.Size = UDim2.new(1, 0, 1, 0)
-clickBtn.BackgroundTransparency = 1
-clickBtn.Text = ""
-clickBtn.ZIndex = 102
+local click = Instance.new("TextButton", box)
+click.Size = UDim2.new(1, 0, 1, 0)
+click.BackgroundTransparency = 1
+click.Text = ""
+click.ZIndex = 102
 
-clickBtn.MouseButton1Down:Connect(function()
-TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(0, btnSize - 5, 0, btnSize - 5), BackgroundTransparency = 0}):Play()
-end)
-
-clickBtn.MouseButton1Up:Connect(function()
-TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(0, btnSize, 0, btnSize), BackgroundTransparency = 0.25}):Play()
+click.MouseButton1Click:Connect(function()
+TweenService:Create(box, TweenInfo.new(0.08), {BackgroundTransparency = 0}):Play()
+task.delay(0.12, function() TweenService:Create(box, TweenInfo.new(0.1), {BackgroundTransparency = 0.15}):Play() end)
 callback()
 end)
 
-clickBtn.TouchTap:Connect(function()
-callback()
-end)
-
-return btn, label
+return box, lbl
 end
 
--- TOP ROW: RIGHT (left) | DROP (right)
-local rightBtn, rightLabel = createMobileButton("RIGHT", UDim2.new(startX, 0, startY, 0), Color3.fromRGB(50, 200, 50), function()
-local newState = not Features.AutoRight
-if newState then
-if Features.AutoLeft then
-Features.AutoLeft = false
-if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
-leftBtn.BackgroundColor3 = Color3.fromRGB(50, 120, 200)
-end
-end
-Features.AutoRight = newState
-if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](newState) end
-if newState then
-stopStealPath()
-startStealPath(stealPath1, "Right")
-rightBtn.BackgroundColor3 = Color3.fromRGB(80, 255, 80)
-else
-stopStealPath()
-rightBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-end
+-- 2 UP: RIGHT | DROP
+local rBox, rLbl = makeGalaxyBox("RIGHT", UDim2.new(startX, 0, startY, 0), cRight, function()
+local ns = not Features.AutoRight
+if ns then if Features.AutoLeft then Features.AutoLeft = false; if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end end end
+Features.AutoRight = ns; if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](ns) end
+if ns then stopStealPath(); startStealPath(stealPath1, "Right") else stopStealPath() end
 end)
 
-local dropBtn, dropLabel = createMobileButton("DROP", UDim2.new(startX + btnSize + btnGap, 0, startY, 0), Color3.fromRGB(220, 50, 50), function()
-local char = Player.Character or Player.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
-local startCF = hrp.CFrame
-hrp.AssemblyLinearVelocity = Vector3.new(0, 120, 0)
-task.wait(0.35)
-hrp.AssemblyLinearVelocity = Vector3.zero
-hrp.CFrame = startCF
-dropBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-task.delay(0.2, function()
-dropBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-end)
+local dBox, dLbl = makeGalaxyBox("DROP", UDim2.new(startX + bSize + bGap, 0, startY, 0), cDrop, function()
+local char = Player.Character or Player.CharacterAdded:Wait(); local hrp = char:WaitForChild("HumanoidRootPart"); local startCF = hrp.CFrame
+hrp.AssemblyLinearVelocity = Vector3.new(0, 120, 0); task.wait(0.35); hrp.AssemblyLinearVelocity = Vector3.zero; hrp.CFrame = startCF
 end)
 
--- BOTTOM ROW: LEFT (left) | LOCK (right)
-local leftBtn, leftLabel = createMobileButton("LEFT", UDim2.new(startX, 0, startY + btnSize + btnGap, 0), Color3.fromRGB(50, 120, 200), function()
-local newState = not Features.AutoLeft
-if newState then
-if Features.AutoRight then
-Features.AutoRight = false
-if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end
-rightBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+-- 2 DOWN: LEFT | LOCK
+local lBox, lLbl = makeGalaxyBox("LEFT", UDim2.new(startX, 0, startY + bSize + bGap, 0), cLeft, function()
+local ns = not Features.AutoLeft
+if ns then if Features.AutoRight then Features.AutoRight = false; if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end end end
+Features.AutoLeft = ns; if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](ns) end
+if ns then stopStealPath(); startStealPath(stealPath2, "Left") else stopStealPath() end
+end)
+
+local kBox, kLbl = makeGalaxyBox("LOCK", UDim2.new(startX + bSize + bGap, 0, startY + bSize + bGap, 0), cLock, function()
+local ns = not Features.FrontLock; Features.FrontLock = ns
+if _G["UpdateVisual_FrontLock"] then _G["UpdateVisual_FrontLock"](ns) end
+if ns then startFrontLock() else stopFrontLock() end
+end)
+
+-- Galaxy shimmer on boxes
+task.spawn(function()
+local t = 0
+while scriptActive do
+t = t + 0.02
+local shimmer = math.sin(t) * 0.1 + 0.1
+for _, bx in ipairs({rBox, dBox, lBox, kBox}) do
+if bx and bx.Parent then
+TweenService:Create(bx, TweenInfo.new(0.05), {BackgroundTransparency = shimmer}):Play()
 end
 end
-Features.AutoLeft = newState
-if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](newState) end
-if newState then
-stopStealPath()
-startStealPath(stealPath2, "Left")
-leftBtn.BackgroundColor3 = Color3.fromRGB(80, 160, 255)
-else
-stopStealPath()
-leftBtn.BackgroundColor3 = Color3.fromRGB(50, 120, 200)
+task.wait(0.05)
 end
 end)
 
-local lockBtn, lockLabel = createMobileButton("LOCK", UDim2.new(startX + btnSize + btnGap, 0, startY + btnSize + btnGap, 0), Color3.fromRGB(180, 50, 220), function()
-local newState = not Features.FrontLock
-Features.FrontLock = newState
-if _G["UpdateVisual_FrontLock"] then _G["UpdateVisual_FrontLock"](newState) end
-if newState then
-startFrontLock()
-lockBtn.BackgroundColor3 = Color3.fromRGB(220, 100, 255)
-else
-stopFrontLock()
-lockBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 220)
-end
-end)
+-- Hook visuals
+local oR = _G["UpdateVisual_AutoRight"]; _G["UpdateVisual_AutoRight"] = function(s) if oR then oR(s) end; rBox.BackgroundColor3 = s and Color3.fromRGB(90, 40, 180) or cRight end
+local oL = _G["UpdateVisual_AutoLeft"]; _G["UpdateVisual_AutoLeft"] = function(s) if oL then oL(s) end; lBox.BackgroundColor3 = s and Color3.fromRGB(40, 100, 200) or cLeft end
+local oK = _G["UpdateVisual_FrontLock"]; _G["UpdateVisual_FrontLock"] = function(s) if oK then oK(s) end; kBox.BackgroundColor3 = s and Color3.fromRGB(140, 40, 200) or cLock end
 
--- FLY BUTTON for Mobile Infinity Jump
-local flyBtnSize = 80
-local flyBtn = Instance.new("Frame", sg)
-flyBtn.Name = "FlyButton"
-flyBtn.Size = UDim2.new(0, flyBtnSize, 0, flyBtnSize)
-flyBtn.Position = UDim2.new(0, 15, 1, -flyBtnSize - 15)
-flyBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-flyBtn.BackgroundTransparency = 0.25
-flyBtn.BorderSizePixel = 0
-flyBtn.ZIndex = 100
-Instance.new("UICorner", flyBtn).CornerRadius = UDim.new(1, 0)
-
-local flyStroke = Instance.new("UIStroke", flyBtn)
-flyStroke.Color = COLOR_GLOW
-flyStroke.Thickness = 3
-flyStroke.Transparency = 0.2
-
-local flyLabel = Instance.new("TextLabel", flyBtn)
-flyLabel.Size = UDim2.new(1, 0, 1, 0)
-flyLabel.BackgroundTransparency = 1
-flyLabel.Text = "FLY"
-flyLabel.TextColor3 = COLOR_GLOW
-flyLabel.Font = Enum.Font.GothamBlack
-flyLabel.TextSize = 20
-flyLabel.ZIndex = 101
-
-local flyTouchBtn = Instance.new("TextButton", flyBtn)
-flyTouchBtn.Size = UDim2.new(1, 0, 1, 0)
-flyTouchBtn.BackgroundTransparency = 1
-flyTouchBtn.Text = ""
-flyTouchBtn.ZIndex = 102
-
--- Touch events for holding
-flyTouchBtn.MouseButton1Down:Connect(function()
-mobileJumpHeld = true
-flyBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-flyBtn.BackgroundTransparency = 0
-end)
-
-flyTouchBtn.MouseButton1Up:Connect(function()
-mobileJumpHeld = false
-flyBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-flyBtn.BackgroundTransparency = 0.25
-end)
-
--- Handle touch properly
-flyTouchBtn.TouchTap:Connect(function()
-mobileJumpHeld = true
-flyBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-flyBtn.BackgroundTransparency = 0
-task.delay(0.5, function()
-mobileJumpHeld = false
-flyBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-flyBtn.BackgroundTransparency = 0.25
-end)
-end)
-
--- Better touch handling
-UserInputService.InputBegan:Connect(function(input, gpe)
-if gpe then return end
-if input.UserInputType == Enum.UserInputType.Touch then
-local touchPos = input.Position
-local btnAbsPos = flyBtn.AbsolutePosition
-local btnAbsSize = flyBtn.AbsoluteSize
-if touchPos.X >= btnAbsPos.X and touchPos.X <= btnAbsPos.X + btnAbsSize.X and
-touchPos.Y >= btnAbsPos.Y and touchPos.Y <= btnAbsPos.Y + btnAbsSize.Y then
-mobileJumpHeld = true
-flyBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-flyBtn.BackgroundTransparency = 0
-end
-end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.Touch then
-if mobileJumpHeld then
-mobileJumpHeld = false
-flyBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-flyBtn.BackgroundTransparency = 0.25
-end
-end
-end)
-
-mobileFlyButton = flyBtn
-
--- Hook visual updates
-local origRight = _G["UpdateVisual_AutoRight"]
-_G["UpdateVisual_AutoRight"] = function(state)
-if origRight then origRight(state) end
-rightBtn.BackgroundColor3 = state and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(50, 200, 50)
+if Features.AutoRight then rBox.BackgroundColor3 = Color3.fromRGB(90, 40, 180) end
+if Features.AutoLeft then lBox.BackgroundColor3 = Color3.fromRGB(40, 100, 200) end
+if Features.FrontLock then kBox.BackgroundColor3 = Color3.fromRGB(140, 40, 200) end
 end
 
-local origLeft = _G["UpdateVisual_AutoLeft"]
-_G["UpdateVisual_AutoLeft"] = function(state)
-if origLeft then origLeft(state) end
-leftBtn.BackgroundColor3 = state and Color3.fromRGB(80, 160, 255) or Color3.fromRGB(50, 120, 200)
-end
-
-local origLock = _G["UpdateVisual_FrontLock"]
-_G["UpdateVisual_FrontLock"] = function(state)
-if origLock then origLock(state) end
-lockBtn.BackgroundColor3 = state and Color3.fromRGB(220, 100, 255) or Color3.fromRGB(180, 50, 220)
-end
-
--- Initial state
-if Features.AutoRight then rightBtn.BackgroundColor3 = Color3.fromRGB(80, 255, 80) end
-if Features.AutoLeft then leftBtn.BackgroundColor3 = Color3.fromRGB(80, 160, 255) end
-if Features.FrontLock then lockBtn.BackgroundColor3 = Color3.fromRGB(220, 100, 255) end
-end
-
-print("[Darker Hub] Loaded! PC: Hold SPACE to fly | Mobile: Hold FLY button to fly")
+print("[Darker Hub] Loaded! PC: Hold Space to fly | Mobile: Tap jump to fly")
