@@ -1512,7 +1512,7 @@ if isMobile then
         
         btn.Parent = innerPad
         return btn
-   
+    end  -- ✅ FIXED: Added missing 'end' statement here!
 
     -- 📱 CREATE THE 6 BUTTONS (RENAMED!)
     createGridButton("Auto R\n[V]", "AutoRight", "toggle", 1)
@@ -1526,7 +1526,7 @@ if isMobile then
 ╔═══════════════════════════════════════════════════════════════╗
 ║  📱 Mobile Grid Loaded!                                        ║
 ║  ✋ HOLD InfJump to FLOAT UP                                   ║
-║  🔄 Auto R/L | SpinBot | BatLock                              ║
+║  🔄 Auto L/R | SpinBot | BatLock                              ║
 ╚═══════════════════════════════════════════════════════════════╝
 ]])
 end
