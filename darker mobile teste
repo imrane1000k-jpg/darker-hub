@@ -1,4 +1,8 @@
--- Darker Hub | Ultimate Edition + ULTRA NoTex FPS Booster + Mobile Spam Jump + Behind Lock [FINAL]
+-- ╔═══════════════════════════════════════════════════════════════════════════════╗
+-- ║  Darker Hub | Ultimate Edition + Mobile Grid (Auto L/R + Hold InfJump)        ║
+-- ║  📱 Mobile: HOLD InfJump button to float up (release to fall)                  ║
+-- ╚═══════════════════════════════════════════════════════════════════════════════╝
+
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
 
@@ -10,20 +14,22 @@ local HttpService = game:GetService("HttpService")
 local Player = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
 
+-- ─── 🔑 DEFAULT KEYBIND SETTINGS ────────────────────────────────
 local Keybinds = {
-    ToggleMenu = Enum.KeyCode.RightShift,
-    SpeedBoost = Enum.KeyCode.Q,
-    AntiRagdoll = Enum.KeyCode.R,
-    InfinityJump = Enum.KeyCode.Z,
-    Helicopter = Enum.KeyCode.G,
-    AutoSteal = nil,
-    AutoRightSteal = Enum.KeyCode.V,
-    AutoLeftSteal = Enum.KeyCode.C,
-    DropShot = Enum.KeyCode.X,
-    FrontLock = Enum.KeyCode.F,
-    Float = Enum.KeyCode.T,
+    ToggleMenu      = Enum.KeyCode.RightShift,
+    SpeedBoost      = Enum.KeyCode.Q,
+    AntiRagdoll     = Enum.KeyCode.R,
+    InfinityJump    = Enum.KeyCode.Z,
+    Helicopter      = Enum.KeyCode.G,
+    AutoSteal       = nil,
+    AutoRightSteal  = Enum.KeyCode.V,
+    AutoLeftSteal   = Enum.KeyCode.C,
+    DropShot        = Enum.KeyCode.X,
+    FrontLock       = Enum.KeyCode.F,
+    Float           = Enum.KeyCode.T,
 }
 
+-- ─── 📱 MOBILE DETECTION & SCALING ──────────────────────────────
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 local guiScale = 1
 if isMobile then
@@ -32,14 +38,16 @@ if isMobile then
     guiScale = math.clamp(vp.X / 540, 0.58, 0.82)
 end
 
+-- ─── 🌌 GALAXY THEME COLORS ─────────────────────────────────────
 local COLOR_BG_MAIN = Color3.fromRGB(5, 5, 20)
-local COLOR_BG_ROW = Color3.fromRGB(15, 15, 40)
-local COLOR_ACCENT = Color3.fromRGB(148, 50, 255)
-local COLOR_GLOW = Color3.fromRGB(0, 255, 255)
-local COLOR_TEXT = Color3.fromRGB(255, 255, 255)
-local COLOR_DIM = Color3.fromRGB(180, 180, 240)
-local COLOR_OFF = Color3.fromRGB(30, 30, 50)
+local COLOR_BG_ROW  = Color3.fromRGB(15, 15, 40)
+local COLOR_ACCENT  = Color3.fromRGB(148, 50, 255)
+local COLOR_GLOW    = Color3.fromRGB(0, 255, 255)
+local COLOR_TEXT    = Color3.fromRGB(255, 255, 255)
+local COLOR_DIM     = Color3.fromRGB(180, 180, 240)
+local COLOR_OFF     = Color3.fromRGB(30, 30, 50)
 
+-- ─── 🖥️ SCREEN GUI SETUP ────────────────────────────────────────
 local sg = Instance.new("ScreenGui")
 sg.Name = "DarkerHub"
 sg.ResetOnSpawn = false
@@ -49,6 +57,7 @@ sg.Parent = Player.PlayerGui
 local W, H = 380 * guiScale, 480 * guiScale
 local HeaderH = 45 * guiScale
 
+-- ─── 🔧 CONNECTION TRACKING ─────────────────────────────────────
 local AllRunConnections = {}
 local rainbowTask = nil
 local function TrackHB(func)
@@ -62,6 +71,7 @@ local function TrackRS(func)
     return c
 end
 
+-- ─── ⚙️ FEATURE STATES ─────────────────────────────────────────
 local Features = {
     SpeedBoost = false, AntiRagdoll = false, InfinityJump = false, Float = false,
     Helicopter = false, ThiefSpeed = false, AutoSteal = false, SpamBat = false,
@@ -69,6 +79,7 @@ local Features = {
     EnemyTimer = false, AutoRight = false, AutoLeft = false, FrontLock = false
 }
 
+-- ─── 📊 VALUES & CONFIG ─────────────────────────────────────────
 local Values = {
     BoostSpeed = 30, SpinSpeed = 50, DEFAULT_GRAVITY = 196.2, GalaxyGravityPercent = 70,
     StealingSpeedValue = 29, HOP_POWER = 50, HOP_COOLDOWN = 0.08, FOV = 70, FloatHeight = 8,
@@ -83,6 +94,7 @@ local SliderReferences = {}
 local ConfigFileName = "DarkerHub_Config.json"
 local MobileGridButtons = {}
 
+-- ─── 💾 CONFIG SYSTEM ───────────────────────────────────────────
 local function SaveConfig()
     if not writefile then return end
     local fullConfig = {
@@ -140,6 +152,7 @@ local function LoadConfig()
 end
 LoadConfig()
 
+-- ─── 💫 DROP SHOT LOGIC ─────────────────────────────────────────
 local function performDrop()
     if dropRunning then return end
     dropRunning = true
@@ -153,6 +166,7 @@ local function performDrop()
     dropRunning = false
 end
 
+-- ─── 📊 SPEED COUNTER GUI ───────────────────────────────────────
 local speedCounterGui = nil
 local function createSpeedCounter(char)
     if not char then return end
@@ -191,6 +205,7 @@ end)
 Player.CharacterAdded:Connect(function(char) task.wait(1); createSpeedCounter(char) end)
 if Player.Character then createSpeedCounter(Player.Character) end
 
+-- ─── 📊 PROGRESS BAR (TOP OF SCREEN) ────────────────────────────
 local ProgressBarFill, ProgressLabel, ProgressPercentLabel, progressConn, stealStartTime
 local function resetProgressBar()
     if ProgressLabel then ProgressLabel.Text = "READY" end
@@ -251,6 +266,7 @@ ProgressLabel.ZIndex = 13
 ProgressLabel.TextColor3 = COLOR_TEXT
 ProgressLabel.TextStrokeTransparency = 0.5
 
+-- ─── 🪟 MAIN WINDOW ────────────────────────────────────────────
 local main = Instance.new("Frame", sg)
 main.Name = "Main"
 main.Size = UDim2.new(0, W, 0, H)
@@ -267,6 +283,7 @@ mainStroke.Color = COLOR_ACCENT
 mainStroke.Thickness = 2 * guiScale
 mainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
+-- Header
 local header = Instance.new("Frame", main)
 header.Size = UDim2.new(1, 0, 0, HeaderH)
 header.BackgroundColor3 = COLOR_BG_ROW
@@ -284,6 +301,7 @@ title.TextSize = 16 * guiScale
 title.ZIndex = 6
 title.TextColor3 = COLOR_GLOW
 
+-- Close Button
 local closeBtn = Instance.new("TextButton", header)
 closeBtn.Size = UDim2.new(0, 28 * guiScale, 0, 28 * guiScale)
 closeBtn.Position = UDim2.new(1, -32 * guiScale, 0.5, -14 * guiScale)
@@ -300,6 +318,7 @@ closeStroke.Color = Color3.fromRGB(255, 50, 50)
 closeStroke.Thickness = 1.5
 closeStroke.Transparency = 0.5
 
+-- Hide Button
 local hideBtn = Instance.new("TextButton", header)
 hideBtn.Size = UDim2.new(0, 28 * guiScale, 0, 28 * guiScale)
 hideBtn.Position = UDim2.new(1, -64 * guiScale, 0.5, -14 * guiScale)
@@ -312,6 +331,7 @@ hideBtn.BorderSizePixel = 0
 hideBtn.ZIndex = 7
 Instance.new("UICorner", hideBtn).CornerRadius = UDim.new(0, 6 * guiScale)
 
+-- Drag Logic
 do
     local dragging, dragStart, startPos
     header.InputBegan:Connect(function(input)
@@ -328,6 +348,7 @@ do
     end)
 end
 
+-- Content Area
 local contentArea = Instance.new("Frame", main)
 contentArea.Size = UDim2.new(1, 0, 1, -HeaderH)
 contentArea.Position = UDim2.new(0, 0, 0, HeaderH)
@@ -350,10 +371,14 @@ listLayout.FillDirection = Enum.FillDirection.Vertical
 listLayout.SortOrder = Enum.SortOrder.LayoutOrder
 listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
+-- Helpers
 local Connections = {}
 local rainbowElements = {}
 local scriptActive = true
 local spaceHeld = false
+
+-- 🆕 MOBILE INFJUMP HOLD STATE
+local mobileInfJumpHeld = false
 
 local function getMovementDirection()
     local c = Player.Character
@@ -362,6 +387,11 @@ local function getMovementDirection()
     return hum and hum.MoveDirection or Vector3.zero
 end
 
+-- ╔═══════════════════════════════════════════════════════════════╗
+-- ║  ⚡ FEATURE LOGIC                                            ║
+-- ╚═══════════════════════════════════════════════════════════════╝
+
+-- Speed Boost
 local function startSpeedBoost()
     if Connections.speed then return end
     Connections.speed = TrackHB(function()
@@ -376,6 +406,7 @@ local function startSpeedBoost()
 end
 local function stopSpeedBoost() if Connections.speed then Connections.speed:Disconnect(); Connections.speed = nil end end
 
+-- Anti Ragdoll
 local antiRagdollMode, ragdollConnections, cachedCharData, isBoosting = nil, {}, {}, false
 local BOOST_SPEED, AR_DEFAULT_SPEED = 400, 16
 local function arCacheCharacterData()
@@ -433,68 +464,60 @@ local function stopAntiRagdoll()
 end
 
 -- ╔═══════════════════════════════════════════════════════════════╗
--- ║  📱 MOBILE AUTO-SPAM INFINITY JUMP                            ║
--- ║  - MOBILE: Constant auto-spam (no hold needed)               ║
--- ║  - PC: Hold space to fly up                                  ║
+-- ║  🚀 INFINITY JUMP - HOLD TO FLOAT MODE                       ║
+-- ║  📱 MOBILE: Hold button = Float Up | Release = Fall         ║
+-- ║  💻 PC: Hold Space = Fly Up                                 ║
 -- ╚═══════════════════════════════════════════════════════════════╝
 local infinityJumpEnabled = false
-local JUMP_BOOST_FORCE = 65
-local mobileJumpSpamming = false
-local lastMobileJumpTime = 0
+local JUMP_FORCE = 65
 
+-- PC Space detection
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
         spaceHeld = true
-        -- Mobile: Start spamming when jump pressed
-        if isMobile and infinityJumpEnabled then
-            mobileJumpSpamming = true
-        end
     end
 end)
 
 UserInputService.InputEnded:Connect(function(input, gpe)
     if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
         spaceHeld = false
-        mobileJumpSpamming = false
     end
 end)
 
-UserInputService.JumpRequest:Connect(function()
-    if not scriptActive or not infinityJumpEnabled then return end
-    -- MOBILE: Auto-spam trigger
-    if isMobile then
-        mobileJumpSpamming = true
-        -- Keep spamming for a while
-        delay(0.2, function()
-            if isMobile and infinityJumpEnabled then
-                mobileJumpSpamming = true  -- Continue spamming
-            else
-                mobileJumpSpamming = false
-            end
-        end)
-    end
-end)
-
+-- Main Infinity Jump Loop - Works for BOTH PC and Mobile now!
 TrackHB(function()
     if not scriptActive or not infinityJumpEnabled then return end
-    local char = Player.Character; if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart"); if not hrp then return end
     
-    -- 📱 MOBILE: AUTO SPAM MODE (constant jumping without holding)
-    if isMobile and infinityJumpEnabled then
-        local now = tick()
-        -- Spam every 0.05 seconds (super fast)
-        if now - lastMobileJumpTime >= 0.05 then
-            lastMobileJumpTime = now
-            hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, JUMP_BOOST_FORCE, hrp.AssemblyLinearVelocity.Z)
-        end
-    -- 💻 PC: Hold space to fly
-    elseif spaceHeld then
-        hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, JUMP_BOOST_FORCE, hrp.AssemblyLinearVelocity.Z)
+    local char = Player.Character
+    if not char then return end
+    
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    
+    -- Check if we should be floating up
+    local shouldFloatUp = false
+    
+    -- 💻 PC: Float while holding space
+    if not isMobile and spaceHeld then
+        shouldFloatUp = true
+    
+    -- 📱 MOBILE: Float while holding the InfJump button (mobileInfJumpHeld)
+    elseif isMobile and mobileInfJumpHeld then
+        shouldFloatUp = true
+    end
+    
+    -- Apply upward force if conditions met
+    if shouldFloatUp then
+        hrp.AssemblyLinearVelocity = Vector3.new(
+            hrp.AssemblyLinearVelocity.X, 
+            JUMP_FORCE, 
+            hrp.AssemblyLinearVelocity.Z
+        )
     end
 end)
 
+-- Helicopter
 local helicopterSpinBAV = nil
 local function applyHelicopterSpeed() if helicopterSpinBAV then helicopterSpinBAV.AngularVelocity = Vector3.new(0, Values.SpinSpeed, 0) end end
 local function startHelicopter()
@@ -514,6 +537,7 @@ local function stopHelicopter()
     if c then local hrp = c:FindFirstChild("HumanoidRootPart"); if hrp then for _, v in pairs(hrp:GetChildren()) do if v.Name == "HelicopterBAV" then v:Destroy() end end end end
 end
 
+-- Float
 local floatConn, FLOAT_TARGET_HEIGHT, floatOriginY = nil, 10, nil
 local function startFloat()
     local c = Player.Character; if not c then return end
@@ -540,9 +564,10 @@ end
 local function stopFloat()
     if floatConn then floatConn:Disconnect(); floatConn = nil end
     local c = Player.Character
-    if c then local hrp = c:FindFirstChild("HumanoidRootPart"); if hrp then for _, v in pairs(hrp:GetChildren()) do if v.Name == "FloatBV" or v.Name == "FloatBP" then v:Destroy() end end; hrp.AssemblyLinearVelocity = Vector3.zero end end
+    if c then local hrp = c:FindFirstChild("HumanoidRootPart"); if hrp then for _, v in ipairs(hrp:GetChildren()) do if v.Name == "FloatBV" or v.Name == "FloatBP" then v:Destroy() end end; hrp.AssemblyLinearVelocity = Vector3.zero end end
 end
 
+-- Thief Speed
 local speedWhileStealingConn = nil
 local function startSpeedWhileStealing()
     if speedWhileStealingConn then return end
@@ -556,6 +581,7 @@ local function startSpeedWhileStealing()
 end
 local function stopSpeedWhileStealing() if speedWhileStealingConn then speedWhileStealingConn:Disconnect(); speedWhileStealingConn = nil end end
 
+-- Auto Steal Logic
 local isStealing = false
 local StealData = {}
 local pathActive = false
@@ -647,6 +673,7 @@ local function stopAutoSteal()
     isStealing = false; resetProgressBar()
 end
 
+-- Spam Bat
 local lastBatSwing = 0
 local SlapList = { "Bat", "Slap", "Iron Slap", "Gold Slap", "Diamond Slap", "Emerald Slap", "Ruby Slap", "Dark Matter Slap", "Flame Slap", "Nuclear Slap", "Galaxy Slap", "Glitched Slap" }
 local function findBat()
@@ -672,6 +699,7 @@ local function startSpamBat()
 end
 local function stopSpamBat() if spamBatConn then spamBatConn:Disconnect(); spamBatConn = nil end end
 
+-- Auto Hitbox
 local function applyAutoHitbox()
     if not scriptActive then return end
     pcall(function()
@@ -696,6 +724,7 @@ local function applyAutoHitbox()
 end
 TrackHB(applyAutoHitbox)
 
+-- Galaxy Mode
 local galaxyEnabled, hopsEnabled, lastHopTime, originalJumpPower = false, false, 0, 50
 local galaxyVectorForce, galaxyAttachment = nil, nil
 local function captureJumpPower()
@@ -755,6 +784,7 @@ end
 TrackHB(function() if hopsEnabled and spaceHeld then doMiniHop() end; if galaxyEnabled then updateGalaxyForce() end end)
 Player.CharacterAdded:Connect(function() task.wait(1); if galaxyEnabled then setupGalaxyForce(); adjustGalaxyJump() end end)
 
+-- Unwalk
 local savedAnimations = {}
 local function startUnwalk()
     local c = Player.Character; if not c then return end
@@ -766,19 +796,12 @@ end
 local function stopUnwalk() local c = Player.Character; if c and savedAnimations.Animate then savedAnimations.Animate:Clone().Parent = c; savedAnimations.Animate = nil end end
 
 -- ╔═══════════════════════════════════════════════════════════════╗
--- ║  🚀 ULTRA OPTIMIZER - GRAY MODE + NO VFX + MAX FPS          ║
--- ║  ✅ All parts → Gray Plastic                                 ║
--- ║  ✅ All textures removed                                     ║
--- ║  ✅ All VFX destroyed (particles, trails, beams, etc)         ║
--- ║  ✅ Shadows off                                              ║
--- ║  ✅ Maximum performance                                      ║
+-- ║  🚀 ULTRA OPTIMIZER                                          ║
 -- ╚═══════════════════════════════════════════════════════════════╝
 local optimizerConn = nil
 local optimizerSlowSweep = nil
 local optimizedCache = setmetatable({}, {__mode = "kv"})
 local optimizationCount = 0
-
--- Gray color for all parts
 local GRAY_COLOR = Color3.fromRGB(128, 128, 128)
 local GRAY_MATERIAL = Enum.Material.SmoothPlastic
 
@@ -786,91 +809,21 @@ local function stripObject(obj)
     if optimizedCache[obj] then return end
     optimizedCache[obj] = true
     optimizationCount = optimizationCount + 1
-    
     pcall(function()
-        -- 🔥 DESTROY ALL VFX EFFECTS (Biggest FPS killers)
-        if obj:IsA("ParticleEmitter") or 
-           obj:IsA("Trail") or 
-           obj:IsA("Beam") or 
-           obj:IsA("Fire") or 
-           obj:IsA("Smoke") or 
-           obj:IsA("Sparkles") or
-           obj:IsA("PointLight") or
-           obj:IsA("SpotLight") or
-           obj:IsA("SurfaceLight") then
-            obj:Destroy()
-            return
+        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or
+           obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") or
+           obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
+            obj:Destroy(); return
         end
-        
-        -- 🎨 Destroy all textures and decals
-        if obj:IsA("Decal") or obj:IsA("Texture") then
-            obj:Destroy()
-            return
-        end
-        
-        -- 🧱 Handle BaseParts (Make them GRAY)
+        if obj:IsA("Decal") or obj:IsA("Texture") then obj:Destroy(); return end
         if obj:IsA("BasePart") then
-            -- Disable shadows (HUGE FPS boost)
-            obj.CastShadow = false
-            obj.ReceiveShadow = false
-            
-            -- Force GRAY material (cheapest to render)
-            obj.Material = GRAY_MATERIAL
-            
-            -- Make it GRAY color
-            obj.Color = GRAY_COLOR
-            
-            -- MeshPart specific: Remove texture ID
-            if obj:IsA("MeshPart") then
-                obj.TextureID = ""  -- Remove texture
-            end
-            
-            -- Clear any child decals/textures on this part
-            for _, child in ipairs(obj:GetChildren()) do
-                if child:IsA("Decal") or child:IsA("Texture") then
-                    optimizedCache[child] = true
-                    child:Destroy()
-                end
-            end
-            
-            -- Remove SurfaceGuis (except important ones)
-            for _, child in ipairs(obj:GetChildren()) do
-                if child:IsA("SurfaceGui") and not obj:IsDescendantOf(Player.Character) then
-                    local n = child.Name:lower()
-                    if not (n:find("yourbase") or n:find("plot") or n:find("name") or n:find("owner")) then
-                        optimizedCache[child] = true
-                        child:Destroy()
-                    end
-                end
-            end
+            obj.CastShadow = false; obj.ReceiveShadow = false
+            obj.Material = GRAY_MATERIAL; obj.Color = GRAY_COLOR
+            if obj:IsA("MeshPart") then obj.TextureID = "" end
         end
-        
-        -- 🗑️ Clean up BillboardGuis (remove visual clutter)
-        if obj:IsA("BillboardGui") and not obj:IsDescendantOf(Player.Character) then
-            local n = obj.Name:lower()
-            -- Keep essential UI
-            if n:find("timer") or n:find("speed") or n:find("ragdoll") then 
-                return 
-            end
-            if n:find("yourbase") or n:find("plot") or n:find("name") or n:find("owner") then 
-                return 
-            end
-            obj:Destroy()
-        end
-        
-        -- 🔇 Mute sounds (optional FPS boost)
-        if obj:IsA("Sound") and not obj:IsDescendantOf(Player.Character) then
-            obj.Volume = 0
-        end
-        
-        -- Remove post-processing effects
-        if obj:IsA("BloomEffect") or 
-           obj:IsA("BlurEffect") or 
-           obj:IsA("ColorCorrectionEffect") or
-           obj:IsA("SunRaysEffect") or
-           obj:IsA("DepthOfFieldEffect") then
-            obj:Destroy()
-        end
+        if obj:IsA("Sound") and not obj:IsDescendantOf(Player.Character) then obj.Volume = 0 end
+        if obj:IsA("BloomEffect") or obj:IsA("BlurEffect") or obj:IsA("ColorCorrectionEffect") or
+           obj:IsA("SunRaysEffect") or obj:IsA("DepthOfFieldEffect") then obj:Destroy() end
     end)
 end
 
@@ -879,11 +832,7 @@ local function sweepWorkspace()
         local descendants = workspace:GetDescendants()
         for i = 1, #descendants do
             stripObject(descendants[i])
-            
-            -- Yield every 1000 objects to prevent timeout
-            if i % 1000 == 0 then
-                task.wait()
-            end
+            if i % 1000 == 0 then task.wait() end
         end
     end)
 end
@@ -891,79 +840,28 @@ end
 local function enableOptimizer()
     if getgenv and getgenv().OPTIMIZER_ACTIVE then return end
     if getgenv then getgenv().OPTIMIZER_ACTIVE = true end
-
-    -- ⚡ ULTRA AGGRESSIVE RENDERING SETTINGS
     pcall(function()
-        -- Lowest possible quality
         settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
         settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level01
-        
-        -- Minimum texture quality
-        pcall(function() 
-            settings().Rendering.TextureQuality = Enum.TextureQuality.Level01 
-        end)
-        
-        -- Disable expensive effects
-        pcall(function() settings().Rendering.EmissiveStrength = 0 end)
-        
-        -- 🌟 LIGHTING OPTIMIZATIONS (MASSIVE FPS BOOST)
         local Lighting = game:GetService("Lighting")
-        
-        -- Disable shadows completely
-        Lighting.GlobalShadows = false
-        
-        -- Bright lighting (no need for dynamic lights)
-        Lighting.Brightness = 4
-        Lighting.EnvironmentBrightness = 1
-        
-        -- Remove fog
-        Lighting.FogEnd = 999999
-        
-        -- Flat ambient light (cheapest)
+        Lighting.GlobalShadows = false; Lighting.Brightness = 4
+        Lighting.EnvironmentBrightness = 1; Lighting.FogEnd = 999999
         Lighting.Ambient = Color3.fromRGB(200, 200, 200)
         Lighting.OutdoorAmbient = Color3.fromRGB(200, 200, 200)
-        
-        -- Disable expensive lighting features
-        Lighting.EnvironmentDiffuseScale = 0
-        Lighting.EnvironmentSpecularScale = 0
-        Lighting.ClockTime = 14  -- Brightest time of day
-        
-        -- Use cheapest technology
-        pcall(function()
-            Lighting.Technology = Enum.Technology.Compatibility
-        end)
-        
-        -- No shadow softness
-        pcall(function()
-            Lighting.ShadowSoftness = 0
-        end)
-        
-        -- Remove extra lighting effects
-        for _, effect in ipairs(Lighting:GetChildren()) do
-            if effect:IsA("PostEffect") then
-                effect:Destroy()
-            end
-        end
+        Lighting.EnvironmentDiffuseScale = 0; Lighting.EnvironmentSpecularScale = 0
+        Lighting.ClockTime = 14
+        pcall(function() Lighting.Technology = Enum.Technology.Compatibility end)
+        for _, effect in ipairs(Lighting:GetChildren()) do if effect:IsA("PostEffect") then effect:Destroy() end end
     end)
-
     print("[DarkerHub] 🚀 Starting ULTRA Optimization...")
-    
-    -- Initial comprehensive sweep
     sweepWorkspace()
-    
     print("[DarkerHub] ✅ Optimization complete! Processed " .. optimizationCount .. " objects")
-
-    -- Real-time listener for new objects
     if optimizerConn then optimizerConn:Disconnect() end
     optimizerConn = workspace.DescendantAdded:Connect(function(obj)
         if not scriptActive or not Features.Optimizer then return end
         stripObject(obj)
     end)
-
-    -- Safety sweep every 10 seconds
-    if optimizerSlowSweep then 
-        pcall(function() task.cancel(optimizerSlowSweep) end) 
-    end
+    if optimizerSlowSweep then pcall(function() task.cancel(optimizerSlowSweep) end) end
     optimizerSlowSweep = task.spawn(function()
         while scriptActive and Features.Optimizer do
             task.wait(10)
@@ -971,23 +869,17 @@ local function enableOptimizer()
             sweepWorkspace()
         end
     end)
-    
     print("[DarkerHub] ✅ ULTRA Optimizer ENABLED - Gray Mode Active!")
 end
 
 local function disableOptimizer()
     if getgenv then getgenv().OPTIMIZER_ACTIVE = false end
-    if optimizerConn then 
-        optimizerConn:Disconnect() 
-        optimizerConn = nil 
-    end
-    if optimizerSlowSweep then 
-        pcall(function() task.cancel(optimizerSlowSweep) end)
-        optimizerSlowSweep = nil 
-    end
+    if optimizerConn then optimizerConn:Disconnect(); optimizerConn = nil end
+    if optimizerSlowSweep then pcall(function() task.cancel(optimizerSlowSweep) end); optimizerSlowSweep = nil end
     print("[DarkerHub] ❌ Optimizer DISABLED")
 end
 
+-- Path Steal Logic
 local stealPath1 = {
     {pos = Vector3.new(-476, -6, 27)}, {pos = Vector3.new(-483, -4, 27)},
     {pos = Vector3.new(-476, -6, 27)}, {pos = Vector3.new(-475, -6, 101)},
@@ -1064,6 +956,7 @@ local function stopStealPath()
     if hrp then hrp.AssemblyLinearVelocity = Vector3.zero end
 end
 
+-- Enemy Timer
 local enemyTimers = {}
 local function createEnemyTimerGui(player)
     local char = player.Character; if not char then return nil end
@@ -1114,9 +1007,9 @@ local function updateEnemyTimers()
 end
 TrackHB(updateEnemyTimers)
 
--- ╔═════════════════════════════════════════════════════════════╗
--- ║  🔒 BEHIND LOCK — Follows from BACK at SPEED 57             ║
--- ╚═════════════════════════════════════════════════════════════╝
+-- ╔═══════════════════════════════════════════════════════════════╗
+-- ║  🔒 FRONT LOCK                                               ║
+-- ╚═══════════════════════════════════════════════════════════════╝
 local Cebo = { Circle = nil, Align = nil, Attach = nil }
 local frontLockTarget = nil
 local frontLockOriginalSpeed = 16
@@ -1134,8 +1027,7 @@ local function findNearestPlayerForFrontLock()
             if targetRoot then
                 local distance = (myPos - targetRoot.Position).Magnitude
                 if distance < nearestDist and distance <= FrontLockConfig.DETECTION_RADIUS then 
-                    nearestDist = distance; 
-                    nearestPlayer = otherPlayer 
+                    nearestDist = distance; nearestPlayer = otherPlayer 
                 end
             end
         end
@@ -1186,9 +1078,7 @@ TrackRS(function()
     local hum = char:FindFirstChildOfClass("Humanoid"); local root = char:FindFirstChild("HumanoidRootPart")
     if not hum or not root then return end
     
-    if hum.WalkSpeed ~= FrontLockConfig.SPEED then 
-        hum.WalkSpeed = FrontLockConfig.SPEED 
-    end
+    if hum.WalkSpeed ~= FrontLockConfig.SPEED then hum.WalkSpeed = FrontLockConfig.SPEED end
     
     if not frontLockTarget or not frontLockTarget.Character or not frontLockTarget.Character:FindFirstChild("HumanoidRootPart") then
         frontLockTarget = findNearestPlayerForFrontLock()
@@ -1198,62 +1088,35 @@ TrackRS(function()
     if frontLockTarget and frontLockTarget.Character then
         local targetRoot = frontLockTarget.Character:FindFirstChild("HumanoidRootPart")
         if targetRoot then
-            local targetPos = targetRoot.Position
-            local myPos = root.Position
-            local targetCFrame = targetRoot.CFrame
-            
-            local lookVector = targetCFrame.LookVector
+            local targetPos = targetRoot.Position; local myPos = root.Position
+            local targetCFrame = targetRoot.CFrame; local lookVector = targetCFrame.LookVector
             local spotBehind = targetPos - (lookVector * FrontLockConfig.BEHIND_DISTANCE)
-            
-            local directionVector = spotBehind - myPos
-            local distance = directionVector.Magnitude
-            
+            local directionVector = spotBehind - myPos; local distance = directionVector.Magnitude
             local heightDiff = targetPos.Y - myPos.Y
             local horizontalDir = Vector3.new(directionVector.X, 0, directionVector.Z).Unit
             if horizontalDir.Magnitude == 0 then horizontalDir = Vector3.new(1,0,0) end
-            
             local verticalVel = 0
-            if math.abs(heightDiff) > 2 then 
-                verticalVel = (heightDiff > 0 and FrontLockConfig.SPEED * 0.8) or (-FrontLockConfig.SPEED * 0.8) 
-            end
+            if math.abs(heightDiff) > 2 then verticalVel = (heightDiff > 0 and FrontLockConfig.SPEED * 0.8) or (-FrontLockConfig.SPEED * 0.8) end
             
             if distance > FrontLockConfig.STOP_DISTANCE then
-                local targetVelocity = Vector3.new(
-                    horizontalDir.X * FrontLockConfig.SPEED, 
-                    verticalVel, 
-                    horizontalDir.Z * FrontLockConfig.SPEED
-                )
-                
+                local targetVelocity = Vector3.new(horizontalDir.X * FrontLockConfig.SPEED, verticalVel, horizontalDir.Z * FrontLockConfig.SPEED)
                 frontLockSmoothVelocity = frontLockSmoothVelocity:Lerp(targetVelocity, 0.15)
-                
-                root.Velocity = frontLockSmoothVelocity
-                hum:MoveTo(spotBehind)
+                root.Velocity = frontLockSmoothVelocity; hum:MoveTo(spotBehind)
             else
-                root.Velocity = Vector3.new(0, verticalVel * 0.3, 0)
-                hum:MoveTo(myPos)
-                frontLockSmoothVelocity = Vector3.new(0, 0, 0)
+                root.Velocity = Vector3.new(0, verticalVel * 0.3, 0); hum:MoveTo(myPos); frontLockSmoothVelocity = Vector3.new(0, 0, 0)
             end
             
             char.Humanoid.AutoRotate = false
-            if Cebo.Align then
-                Cebo.Align.Enabled = true
-                Cebo.Align.CFrame = CFrame.lookAt(myPos, Vector3.new(targetPos.X, myPos.Y, targetPos.Z))
-            end
+            if Cebo.Align then Cebo.Align.Enabled = true; Cebo.Align.CFrame = CFrame.lookAt(myPos, Vector3.new(targetPos.X, myPos.Y, targetPos.Z)) end
             
             if not frontLockEquippedBat then
                 local backpack = Player:FindFirstChildOfClass("Backpack")
                 local bat = char:FindFirstChild("Bat") or char:FindFirstChild("Medusa") or (backpack and (backpack:FindFirstChild("Bat") or backpack:FindFirstChild("Medusa")))
-                if bat then 
-                    if bat.Parent ~= char then bat.Parent = char end
-                    frontLockEquippedBat = true 
-                end
+                if bat then if bat.Parent ~= char then bat.Parent = char end; frontLockEquippedBat = true end
             end
-        else 
-            frontLockTarget = nil 
-        end
+        else frontLockTarget = nil end
     else
-        frontLockTarget = nil
-        frontLockEquippedBat = false
+        frontLockTarget = nil; frontLockEquippedBat = false
         if Cebo.Align then Cebo.Align.Enabled = false end
         if char:FindFirstChild("Humanoid") then char.Humanoid.AutoRotate = true end
     end
@@ -1261,7 +1124,9 @@ end)
 
 Player.CharacterAdded:Connect(function(newChar) if Features.FrontLock then task.wait(0.05); startFrontLock() end end)
 
--- ─── UI BUILDERS ─────────────────────────────────────────────
+-- ╔═══════════════════════════════════════════════════════════════╗
+-- ║  🎨 UI BUILDERS                                              ║
+-- ╚═══════════════════════════════════════════════════════════════╝
 local toggleSliderOrder = 0
 
 local function makeToggleHeader(parent, labelText, featureName, hasKeybind, defaultKeycode, noSave)
@@ -1375,7 +1240,9 @@ local function createSlider(parent, labelText, minVal, maxVal, valueKey, onChang
     return container
 end
 
--- ─── BUILD ALL TOGGLES ──────────────────────────────────────
+-- ╔═══════════════════════════════════════════════════════════════╗
+-- ║  🏗️ BUILD ALL TOGGLES & SLIDERS                             ║
+-- ╚═══════════════════════════════════════════════════════════════╝
 do
     local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Speed Boost [" .. Keybinds.SpeedBoost.Name .. "]", "SpeedBoost", true, Keybinds.SpeedBoost, false)
     btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.SpeedBoost = on; if on then startSpeedBoost() else stopSpeedBoost() end; SaveConfig() end)
@@ -1390,8 +1257,14 @@ do
 end
 
 do
-    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Infinity Jump [" .. Keybinds.InfinityJump.Name .. "]", "InfinityJump", true, Keybinds.InfinityJump, false)
-    btn.MouseButton1Click:Connect(function() local on = not getState(); setVisual(on); Features.InfinityJump = on; infinityJumpEnabled = on; SaveConfig() end)
+    local btn, setVisual, getState = makeToggleHeader(scrollFrame, "Infinity Jump [" .. Keybinds.InfinityJump.Name .. "] ✋", "InfinityJump", true, Keybinds.InfinityJump, false)
+    btn.MouseButton1Click:Connect(function() 
+        local on = not getState() 
+        setVisual(on) 
+        Features.InfinityJump = on 
+        infinityJumpEnabled = on
+        SaveConfig() 
+    end)
     if Features.InfinityJump then setVisual(true); infinityJumpEnabled = true end
 end
 
@@ -1484,6 +1357,7 @@ end
 
 listLayout.Changed:Connect(function() scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 10 * guiScale) end)
 
+-- Rainbow Effect
 rainbowTask = task.spawn(function()
     local hue = 260
     while scriptActive and main and main.Parent do
@@ -1494,6 +1368,9 @@ rainbowTask = task.spawn(function()
     end
 end)
 
+-- ╔════════════════════════════════════════════════════════════════════╗
+-- ║  ⌨️ KEYBIND INPUT HANDLER                                       ║
+-- ╚════════════════════════════════════════════════════════════════════╝
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe or not scriptActive then return end
     if input.KeyCode == Keybinds.ToggleMenu then
@@ -1525,10 +1402,10 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 end)
 
 -- ╔════════════════════════════════════════════════════════════════════╗
--- ║  ✅ CLOSE BUTTON — STOPS ABSOLUTELY EVERYTHING                    ║
+-- ║  ❌ CLOSE BUTTON — STOPS ABSOLUTELY EVERYTHING                    ║
 -- ╚════════════════════════════════════════════════════════════════════╝
 closeBtn.MouseButton1Click:Connect(function()
-    scriptActive = false; infinityJumpEnabled = false; spaceHeld = false; mobileJumpSpamming = false
+    scriptActive = false; infinityJumpEnabled = false; spaceHeld = false; mobileInfJumpHeld = false
     pcall(stopSpeedBoost); pcall(stopAntiRagdoll); pcall(stopFloat); pcall(stopHelicopter)
     pcall(stopSpeedWhileStealing); pcall(stopAutoSteal); pcall(stopSpamBat); pcall(stopGalaxy)
     pcall(stopUnwalk); pcall(disableOptimizer); pcall(stopStealPath); pcall(stopFrontLock)
@@ -1553,9 +1430,11 @@ header.InputBegan:Connect(function(input)
     end
 end)
 
--- ╔════════════════════════════════════════════════════════════════════╗
--- ║  📱 MOBILE 3x2 GRID                                              ║
--- ╚════════════════════════════════════════════════════════════════════╝
+-- ╔════════════════════════════════════════════════════════════════════════════════╗
+-- ║  📱 MOBILE 3x2 KEYBIND GRID v2                                                      ║
+-- ║  ✅ Auto Right [V] | Auto Left [C] ADDED!                                         ║
+-- ║  ✅ InfJump [Z] = HOLD TO FLOAT (Release to Fall)                                  ║
+-- ╚════════════════════════════════════════════════════════════════════════════════╝
 if isMobile then
     local CELL_W = 62; local CELL_H = 44; local GAP = 5; local PAD = 8
     local gridInnerW = (CELL_W * 3) + (GAP * 2)
@@ -1584,7 +1463,9 @@ if isMobile then
     mobileFrame.Parent = sg
     table.insert(rainbowElements, boxStroke)
 
-    local function createGridButton(text, featureKey, isToggle, order)
+    local function createGridButton(text, featureKey, buttonType, order)
+        -- buttonType: "toggle" = normal toggle, "hold" = hold-to-activate (InfJump), "instant" = click once (Drop)
+        
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, CELL_W, 0, CELL_H)
         btn.BackgroundColor3 = Color3.fromRGB(12, 12, 35)
@@ -1595,10 +1476,14 @@ if isMobile then
         local stroke = Instance.new("UIStroke", btn)
         stroke.Color = COLOR_ACCENT; stroke.Thickness = 1.5; stroke.Transparency = 0.4
         table.insert(rainbowElements, stroke)
+        
+        -- Status dot (for toggles only)
         local dot = Instance.new("Frame", btn)
         dot.Size = UDim2.new(0, 8, 0, 8); dot.Position = UDim2.new(1, -12, 0, 4)
         dot.BackgroundColor3 = Color3.fromRGB(60, 60, 60); dot.BorderSizePixel = 0; dot.ZIndex = 56
         Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+        
+        -- Visual update function
         local function updateGridVisual(state)
             if state then
                 TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(80, 30, 140)}):Play()
@@ -1610,39 +1495,141 @@ if isMobile then
                 btn.TextColor3 = COLOR_GLOW
             end
         end
-        if isToggle and featureKey then
+        
+        -- Handle different button types
+        if buttonType == "toggle" and featureKey then
+            -- Normal toggle button (AutoRight, AutoLeft, Heli, Lock)
             MobileGridButtons[featureKey] = { Button = btn, Update = updateGridVisual }
             if Features[featureKey] then task.spawn(function() updateGridVisual(true) end) end
+            
             btn.MouseButton1Click:Connect(function()
                 if not scriptActive then return end
+                
                 local newState = not Features[featureKey]
-                if featureKey == "AutoRight" and newState then Features.AutoLeft = false; stopStealPath(); if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end
-                elseif featureKey == "AutoLeft" and newState then Features.AutoRight = false; stopStealPath(); if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end end
+                
+                -- Handle mutual exclusivity for steal paths
+                if featureKey == "AutoRight" and newState then 
+                    Features.AutoLeft = false; stopStealPath() 
+                    if _G["UpdateVisual_AutoLeft"] then _G["UpdateVisual_AutoLeft"](false) end 
+                elseif featureKey == "AutoLeft" and newState then 
+                    Features.AutoRight = false; stopStealPath() 
+                    if _G["UpdateVisual_AutoRight"] then _G["UpdateVisual_AutoRight"](false) end 
+                end
+                
                 Features[featureKey] = newState
-                if featureKey == "Float" then if newState then startFloat() else stopFloat() end
-                elseif featureKey == "Helicopter" then if newState then startHelicopter() else stopHelicopter() end
-                elseif featureKey == "FrontLock" then if newState then startFrontLock() else stopFrontLock() end
-                elseif featureKey == "AutoRight" then if newState then startStealPath(stealPath1) else stopStealPath() end
-                elseif featureKey == "AutoLeft" then if newState then startStealPath(stealPath2) else stopStealPath() end end
-                if _G["UpdateVisual_"..featureKey] then _G["UpdateVisual_"..featureKey](newState) end
+                
+                -- Execute logic
+                if featureKey == "Float" then 
+                    if newState then startFloat() else stopFloat() end
+                elseif featureKey == "Helicopter" then 
+                    if newState then startHelicopter() else stopHelicopter() end
+                elseif featureKey == "FrontLock" then 
+                    if newState then startFrontLock() else stopFrontLock() end
+                elseif featureKey == "SpeedBoost" then 
+                    if newState then startSpeedBoost() else stopSpeedBoost() end
+                elseif featureKey == "AntiRagdoll" then 
+                    if newState then startAntiRagdoll() else stopAntiRagdoll() end
+                elseif featureKey == "AutoRight" then 
+                    if newState then startStealPath(stealPath1) else stopStealPath() end
+                elseif featureKey == "AutoLeft" then 
+                    if newState then startStealPath(stealPath2) else stopStealPath() end 
+                end
+                
+                if _G["UpdateVisual_"..featureKey] then 
+                    _G["UpdateVisual_"..featureKey](newState) 
+                end
+                
+                if featureKey ~= "AutoRight" and featureKey ~= "AutoLeft" then
+                    SaveConfig()
+                end
             end)
-        else
+            
+        elseif buttonType == "hold" then
+            -- 🔘 HOLD BUTTON (Infinity Jump) - Hold to float, release to fall!
+            
+            -- Make sure InfJump is enabled first
+            if not Features.InfinityJump then
+                Features.InfinityJump = true
+                infinityJumpEnabled = true
+            end
+            
+            btn.MouseButton1Down:Connect(function()
+                -- User started holding the button
+                if not scriptActive then return end
+                mobileInfJumpHeld = true
+                
+                -- Visual feedback - turn bright
+                TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(0, 180, 255)}):Play()
+                btn.TextColor3 = COLOR_TEXT
+                dot.BackgroundColor3 = COLOR_GLOW
+            end)
+            
+            btn.MouseButton1Up:Connect(function()
+                -- User released the button
+                mobileInfJumpHeld = false
+                
+                -- Visual feedback - return to normal
+                TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(12, 12, 35)}):Play()
+                btn.TextColor3 = COLOR_GLOW
+                dot.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            end)
+            
+            -- Also handle touch cancel (if finger slides off)
+            btn.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.Touch then
+                    mobileInfJumpHeld = false
+                    TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(12, 12, 35)}):Play()
+                    btn.TextColor3 = COLOR_GLOW
+                    dot.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                end
+            end)
+            
+        elseif buttonType == "instant" then
+            -- Instant action button (Drop Shot)
             btn.MouseButton1Click:Connect(function()
                 if not scriptActive then return end
                 performDrop()
+                
+                -- Flash effect
                 TweenService:Create(btn, TweenInfo.new(0.08), {BackgroundColor3 = COLOR_GLOW}):Play()
                 task.wait(0.12)
                 TweenService:Create(btn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(12, 12, 35)}):Play()
             end)
         end
+        
         btn.Parent = innerPad
         return btn
     end
 
-    createGridButton("Heli", "Helicopter", true, 1)
-    createGridButton("Float", "Float", true, 2)
-    createGridButton("Drop", nil, false, 3)
-    createGridButton("Lock", "FrontLock", true, 4)
-    createGridButton("AutoR", "AutoRight", true, 5)
-    createGridButton("AutoL", "AutoLeft", true, 6)
+    -- ══════════════════════════════════════════════════════════════
+    -- 📱 CREATE THE 6 MOBILE BUTTONS (UPDATED!)
+    -- ══════════════════════════════════════════════════════════════
+    
+    -- Row 1: Auto Right, Auto Left, InfJump (HOLD)
+    createGridButton("Auto R\n[V]", "AutoRight", "toggle", 1)
+    createGridButton("Auto L\n[C]", "AutoLeft", "toggle", 2)
+    createGridButton("InfJump\n[Z] ✋", "InfinityJump", "hold", 3)  -- ✋ = Hold to float!
+    
+    -- Row 2: Heli, Lock, Drop
+    createGridButton("Heli\n[G]", "Helicopter", "toggle", 4)
+    createGridButton("Lock\n[F]", "FrontLock", "toggle", 5)
+    createGridButton("Drop\n[X]", nil, "instant", 6)
+
+    print([[
+╔═══════════════════════════════════════════════════════════════╗
+║  📱 Mobile Grid Loaded!                                        ║
+║  ✋ HOLD InfJump to FLOAT UP                                   ║
+║  👆 RELEASE to FALL DOWN                                       ║
+║  🔄 Auto R/L for stealing                                      ║
+╚═══════════════════════════════════════════════════════════════╝
+]])
 end
+
+print([[
+╔═══════════════════════════════════════════════════════════════╗
+║  ✅ Darker Hub | Ultimate Edition Loaded Successfully!       ║
+║  📱 Mobile Grid: Auto L/R + Hold InfJump                     ║
+║  ✋ Hold [Z] on mobile to FLOAT UP                           ║
+║  👆 Release to fall down                                     ║
+╚═══════════════════════════════════════════════════════════════╝
+]])
