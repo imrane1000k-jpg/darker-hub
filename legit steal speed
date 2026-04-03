@@ -1,5 +1,5 @@
 -- 🔥 Thief Speed Hub | Modified for Speed 20
--- Features: Draggable GUI, Toggle Keybinds, Modern Galaxy Theme, Close Button
+-- Features: Draggable GUI, Toggle Keybinds, Modern Galaxy Theme, Close Button, Head Speed Counter
 task.wait(0.1)
 repeat task.wait() until game:IsLoaded()
 
@@ -21,10 +21,9 @@ local COLOR_OFF     = Color3.fromRGB(30, 30, 50)
 
 -- ─── ⚙️ CONFIGURATION ───────────────────────────────────────────────
 local guiScale = 1
-local W, H = 300 * guiScale, 150 * guiScale -- Compact size for single feature
+local W, H = 300 * guiScale, 150 * guiScale
 local HeaderH = 45 * guiScale
 
--- DEFAULT SPEED SET TO 20 AS REQUESTED
 local Values = {
     StealingSpeedValue = 20 
 }
@@ -43,16 +42,15 @@ sg.ResetOnSpawn = false
 sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 sg.Parent = Player.PlayerGui
 
--- Main Frame
 local main = Instance.new("Frame", sg)
 main.Name = "Main"
 main.Size = UDim2.new(0, W, 0, H)
-main.Position = UDim2.new(1, -W - 10, 0, 10) -- Top Right
+main.Position = UDim2.new(1, -W - 10, 0, 10)
 main.BackgroundColor3 = COLOR_BG_MAIN
 main.BackgroundTransparency = 0.1
 main.BorderSizePixel = 0
 main.Active = true
-main.Draggable = true -- Draggable for PC
+main.Draggable = true
 main.ClipsDescendants = true
 Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10 * guiScale)
 
@@ -61,7 +59,6 @@ mainStroke.Color = COLOR_ACCENT
 mainStroke.Thickness = 2 * guiScale
 mainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
--- Header
 local header = Instance.new("Frame", main)
 header.Size = UDim2.new(1, 0, 0, HeaderH)
 header.BackgroundColor3 = COLOR_BG_ROW
@@ -81,7 +78,6 @@ title.ZIndex = 6
 title.TextColor3 = COLOR_GLOW
 title.TextXAlignment = Enum.TextXAlignment.Center
 
--- CLOSE BUTTON (Fully disables interface)
 local closeBtn = Instance.new("TextButton", header)
 closeBtn.Size = UDim2.new(0, 28 * guiScale, 0, 28 * guiScale)
 closeBtn.Position = UDim2.new(1, -32 * guiScale, 0.5, -14 * guiScale)
@@ -97,7 +93,6 @@ local closeStroke = Instance.new("UIStroke", closeBtn)
 closeStroke.Color = Color3.fromRGB(255, 50, 50)
 closeStroke.Thickness = 1.5
 
--- Content Area
 local contentArea = Instance.new("Frame", main)
 contentArea.Size = UDim2.new(1, 0, 1, -HeaderH)
 contentArea.Position = UDim2.new(0, 0, 0, HeaderH)
@@ -116,7 +111,6 @@ local function startSpeedWhileStealing()
         local hum = c:FindFirstChildOfClass("Humanoid")
         local md = hum and hum.MoveDirection or Vector3.zero
         if md.Magnitude > 0.1 then
-            -- Apply the specific speed value
             h.AssemblyLinearVelocity = Vector3.new(md.X * Values.StealingSpeedValue, h.AssemblyLinearVelocity.Y, md.Z * Values.StealingSpeedValue)
         end
     end)
@@ -130,9 +124,6 @@ local function stopSpeedWhileStealing()
 end
 
 -- ─── 🎛️ UI ELEMENTS (Toggle + Slider) ─────────────────────────────
-local toggleSliderOrder = 0
-
--- Helper to create a styled Toggle
 local function makeToggle(parent, labelText, featureName)
     local frame = Instance.new("Frame", parent)
     frame.Size = UDim2.new(1, -16 * guiScale, 0, 40 * guiScale)
@@ -157,7 +148,6 @@ local function makeToggle(parent, labelText, featureName)
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Position = UDim2.new(0, 10, 0, 0)
 
-    -- Toggle Switch BG
     local bg = Instance.new("Frame", frame)
     bg.Size = UDim2.new(0, 40 * guiScale, 0, 20 * guiScale)
     bg.Position = UDim2.new(1, -50 * guiScale, 0.5, -10 * guiScale)
@@ -165,7 +155,6 @@ local function makeToggle(parent, labelText, featureName)
     bg.ZIndex = 4
     Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
 
-    -- Toggle Circle
     local circle = Instance.new("Frame", bg)
     circle.Size = UDim2.new(0, 16 * guiScale, 0, 16 * guiScale)
     circle.Position = UDim2.new(0, 2 * guiScale, 0.5, -8 * guiScale)
@@ -207,7 +196,6 @@ local function makeToggle(parent, labelText, featureName)
     return updateVisual
 end
 
--- Helper to create a styled Slider
 local function createSlider(parent, labelText, minVal, maxVal, defaultValue, onChange)
     local container = Instance.new("Frame", parent)
     container.Size = UDim2.new(1, -16 * guiScale, 0, 50 * guiScale)
@@ -233,50 +221,79 @@ local function createSlider(parent, labelText, minVal, maxVal, defaultValue, onC
     label.Position = UDim2.new(0, 10, 0, 5)
 
     local sliderBg = Instance.new("Frame", container)
-    sliderBg.Size = UDim2.new(1, -20, 0, 6 * guiScale)
-    sliderBg.Position = UDim2.new(0, 10, 0, 25)
+    sliderBg.Size = UDim2.new(1, -20, 0, 8 * guiScale)
+    sliderBg.Position = UDim2.new(0, 10, 0, 26)
     sliderBg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    sliderBg.BorderSizePixel = 0
     Instance.new("UICorner", sliderBg).CornerRadius = UDim.new(1, 0)
 
     local sliderFill = Instance.new("Frame", sliderBg)
-    sliderFill.Size = UDim2.new(0.5, 0, 1, 0)
     sliderFill.BackgroundColor3 = COLOR_ACCENT
+    sliderFill.BorderSizePixel = 0
     Instance.new("UICorner", sliderFill).CornerRadius = UDim.new(1, 0)
 
     local thumb = Instance.new("Frame", sliderBg)
-    thumb.Size = UDim2.new(0, 12 * guiScale, 0, 12 * guiScale)
-    thumb.Position = UDim2.new(0.5, -6 * guiScale, 0.5, -6 * guiScale)
+    thumb.Size = UDim2.new(0, 14 * guiScale, 0, 14 * guiScale)
     thumb.BackgroundColor3 = COLOR_GLOW
+    thumb.BorderSizePixel = 0
     Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
+    
+    local thumbGlow = Instance.new("UIStroke", thumb)
+    thumbGlow.Color = COLOR_GLOW
+    thumbGlow.Thickness = 2
 
     local currentValue = defaultValue
     local dragging = false
 
     local function updateSliderVisual(val)
-        currentValue = val
-        local relative = (val - minVal) / (maxVal - minVal)
-        relative = math.clamp(relative, 0, 1)
-        label.Text = labelText .. " [" .. math.floor(val) .. "]"
+        currentValue = math.clamp(val, minVal, maxVal)
+        local relative = (currentValue - minVal) / (maxVal - minVal)
+        label.Text = labelText .. " [" .. math.floor(currentValue) .. "]"
         sliderFill.Size = UDim2.new(relative, 0, 1, 0)
-        thumb.Position = UDim2.new(relative, -6 * guiScale, 0.5, -6 * guiScale)
-        if onChange then onChange(val) end
+        thumb.Position = UDim2.new(relative, -7 * guiScale, 0, -3 * guiScale)
+        if onChange then onChange(currentValue) end
+    end
+
+    local function getValueFromPosition(inputPos)
+        local relX = (inputPos.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X
+        relX = math.clamp(relX, 0, 1)
+        return math.floor(minVal + (maxVal - minVal) * relX + 0.5)
     end
 
     sliderBg.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then 
-            dragging = true 
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            updateSliderVisual(getValueFromPosition(input.Position))
         end
     end)
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then 
-            dragging = false 
+
+    thumb.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
         end
     end)
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local relative = (input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X
-            local val = math.floor(minVal + (maxVal - minVal) * math.clamp(relative, 0, 1))
-            updateSliderVisual(val)
+
+    sliderBg.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+
+    thumb.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+
+    local inputChangedConn
+    inputChangedConn = UserInputService.InputChanged:Connect(function(input)
+        if not dragging then return end
+        if not container.Parent then 
+            inputChangedConn:Disconnect()
+            return 
+        end
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            updateSliderVisual(getValueFromPosition(input.Position))
         end
     end)
 
@@ -284,11 +301,81 @@ local function createSlider(parent, labelText, minVal, maxVal, defaultValue, onC
     return container
 end
 
+-- ─── 🏃‍♂️ HEAD SPEED COUNTER FEATURE ───────────────────────────────
+local function createSpeedCounter()
+    local currentLabel = nil
+
+    local function attachCounter(character)
+        if not character then return nil end
+        local head = character:WaitForChild("Head", 5)
+        if not head then return nil end
+        
+        -- Remove old counter if it exists
+        if head:FindFirstChild("SpeedCounterGui") then
+            head:FindFirstChild("SpeedCounterGui"):Destroy()
+        end
+        
+        -- Create Billboard GUI
+        local bb = Instance.new("BillboardGui")
+        bb.Name = "SpeedCounterGui"
+        bb.Adornee = head
+        bb.Size = UDim2.new(4, 0, 0.5, 0)
+        bb.StudsOffset = Vector3.new(0, 3, 0) -- Floats above head
+        bb.AlwaysOnTop = true
+        bb.MaxDistance = 100 -- Disappears if too far away
+        bb.Parent = head
+        
+        -- Create Text Label
+        local lbl = Instance.new("TextLabel", bb)
+        lbl.Size = UDim2.new(1, 0, 1, 0)
+        lbl.BackgroundTransparency = 1
+        lbl.Text = "Speed: 0"
+        lbl.TextColor3 = COLOR_GLOW
+        -- Add black outline so it's readable in bright areas
+        lbl.TextStrokeColor3 = Color3.new(0, 0, 0)
+        lbl.TextStrokeTransparency = 0.3
+        lbl.Font = Enum.Font.GothamBold
+        lbl.TextScaled = true
+        
+        return lbl
+    end
+
+    -- Setup on current character
+    currentLabel = attachCounter(Player.Character)
+    
+    -- Setup on respawn
+    Player.CharacterAdded:Connect(function(char)
+        currentLabel = attachCounter(char)
+    end)
+
+    -- Smoothly update the counter text
+    RunService.RenderStepped:Connect(function()
+        if not scriptActive or not currentLabel or not currentLabel.Parent then return end
+        local char = Player.Character
+        if not char then 
+            currentLabel.Text = "Speed: 0"
+            return 
+        end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then 
+            currentLabel.Text = "Speed: 0"
+            return 
+        end
+        
+        -- Calculate exact horizontal speed
+        local vel = hrp.AssemblyLinearVelocity
+        local speed = math.floor(Vector2.new(vel.X, vel.Z).Magnitude)
+        
+        currentLabel.Text = "Speed: " .. speed
+    end)
+end
+
+createSpeedCounter()
+
 -- ─── IMPLEMENTATION ───────────────────────────────────────────────
 local setToggleVisual = makeToggle(contentArea, "Thief Speed (Toggle)", "ThiefSpeed")
 
--- Slider specifically tuned around 20 (Range 5 to 40 for precision, can go higher if needed)
-createSlider(contentArea, "Steal Speed Value", 5, 40, Values.StealingSpeedValue, function(v)
+createSlider(contentArea, "Steal Speed Value", 1, 29, Values.StealingSpeedValue, function(v)
     Values.StealingSpeedValue = v
 end)
 
@@ -296,11 +383,18 @@ end)
 closeBtn.MouseButton1Click:Connect(function()
     scriptActive = false
     stopSpeedWhileStealing()
+    
+    -- Remove speed counter from head on close
+    local char = Player.Character
+    if char and char:FindFirstChild("Head") then
+        local gui = char.Head:FindFirstChild("SpeedCounterGui")
+        if gui then gui:Destroy() end
+    end
+    
     sg:Destroy()
-    print("Interface Closed.")
 end)
 
--- Optional: Rainbow Border Effect
+-- Rainbow Border Effect
 task.spawn(function()
     local hue = 260
     while scriptActive and main.Parent do
