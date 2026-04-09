@@ -5,15 +5,14 @@ local LocalPlayer = Players.LocalPlayer
 
 -- UI
 local Gui = Instance.new("ScreenGui")
-Gui.Name = "D"
+Gui.Name = "X"
 Gui.Parent = game:GetService("CoreGui")
 Gui.ResetOnSpawn = false
 Gui.IgnoreGuiInset = true
 
 local Main = Instance.new("Frame")
-Main.Name = "Main"
 Main.Parent = Gui
-Main.BackgroundColor3 = Color3.fromRGB(20, 20, 22)
+Main.BackgroundColor3 = Color3.fromRGB(18, 18, 20)
 Main.BorderSizePixel = 0
 
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
@@ -21,81 +20,63 @@ local Stroke = Instance.new("UIStroke", Main)
 Stroke.Color = Color3.fromRGB(50, 50, 55)
 Stroke.Thickness = 1
 
--- Drag Bar
+-- Top Bar (Drag)
 local Bar = Instance.new("TextButton", Main)
-Bar.Size = UDim2.new(1, 0, 0, 25)
-Bar.BackgroundColor3 = Color3.fromRGB(30, 30, 33)
+Bar.Size = UDim2.new(1, 0, 0, 22)
+Bar.BackgroundColor3 = Color3.fromRGB(28, 28, 30)
 Bar.Font = Enum.Font.GothamBold
-Bar.Text = "SYNC"
+Bar.Text = "DESYNC"
 Bar.TextColor3 = Color3.fromRGB(255, 255, 255)
 Bar.TextSize = 11
 Bar.AutoButtonColor = false
 
 Instance.new("UICorner", Bar).CornerRadius = UDim.new(0, 10)
-local BFix = Instance.new("Frame", Bar)
-BFix.Size = UDim2.new(1, 0, 0, 10)
-BFix.Position = UDim2.new(0, 0, 1, -10)
-BFix.BackgroundColor3 = Color3.fromRGB(30, 30, 33)
-BFix.BorderSizePixel = 0
+local Fix = Instance.new("Frame", Bar)
+Fix.Size = UDim2.new(1, 0, 0, 8)
+Fix.Position = UDim2.new(0, 0, 1, -8)
+Fix.BackgroundColor3 = Color3.fromRGB(28, 28, 30)
+Fix.BorderSizePixel = 0
 
--- Buttons
-local Tog = Instance.new("TextButton", Main)
-Tog.Name = "T"
-Tog.Size = UDim2.new(1, -16, 0, 28)
-Tog.Position = UDim2.new(0, 8, 0, 31)
-Tog.BackgroundColor3 = Color3.fromRGB(35, 35, 38)
-Tog.Font = Enum.Font.GothamBold
-Tog.TextColor3 = Color3.fromRGB(255, 80, 80)
-Tog.TextSize = 13
-Tog.Text = "OFF"
-Tog.AutoButtonColor = false
+-- The Only Button (Toggle + Instant Reset)
+local Btn = Instance.new("TextButton", Main)
+Btn.Name = "Btn"
+Btn.Size = UDim2.new(1, -14, 0, 32)
+Btn.Position = UDim2.new(0, 7, 0, 27)
+Btn.BackgroundColor3 = Color3.fromRGB(35, 35, 38)
+Btn.Font = Enum.Font.GothamBold
+Btn.TextColor3 = Color3.fromRGB(255, 70, 70)
+Btn.TextSize = 13
+Btn.Text = "DISABLED"
+Btn.AutoButtonColor = false
 
-Instance.new("UICorner", Tog).CornerRadius = UDim.new(0, 6)
-local TS = Instance.new("UIStroke", Tog)
-TS.Color = Color3.fromRGB(60, 60, 65)
+Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+local BS = Instance.new("UIStroke", Btn)
+BS.Color = Color3.fromRGB(60, 60, 65)
 
-local Res = Instance.new("TextButton", Main)
-Res.Name = "R"
-Res.Size = UDim2.new(1, -16, 0, 24)
-Res.Position = UDim2.new(0, 8, 1, -32)
-Res.BackgroundColor3 = Color3.fromRGB(40, 25, 25)
-Res.Font = Enum.Font.GothamBold
-Res.TextColor3 = Color3.fromRGB(255, 110, 110)
-Res.TextSize = 11
-Res.Text = "RESET"
-Res.AutoButtonColor = false
-
-Instance.new("UICorner", Res).CornerRadius = UDim.new(0, 5)
-local RS = Instance.new("UIStroke", Res)
-RS.Color = Color3.fromRGB(90, 50, 50)
-
--- Size Logic (Small & Mobile Friendly)
-local function resize()
+-- Scale
+local function scale()
     local s = workspace.CurrentCamera.ViewportSize.X
-    local m = s < 1000 or UserInputService.TouchEnabled
-    if m then
-        Main.Size = UDim2.new(0, 160, 0, 115)
-        Main.Position = UDim2.new(0.5, -80, 0.5, -57.5)
+    if s < 1000 or UserInputService.TouchEnabled then
+        Main.Size = UDim2.new(0, 150, 0, 75)
+        Main.Position = UDim2.new(0.5, -75, 0.5, -37.5)
     else
-        Main.Size = UDim2.new(0, 140, 0, 105)
-        Main.Position = UDim2.new(0.5, -70, 0.5, -52.5)
+        Main.Size = UDim2.new(0, 130, 0, 68)
+        Main.Position = UDim2.new(0.5, -65, 0.5, -34)
     end
 end
-resize()
+scale()
 
--- Dragging
+-- Drag
 local drag, start, pos
 Bar.InputBegan:Connect(function(i)
     if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-        drag = true
-        start = i.Position
-        pos = Main.Position
+        drag = true; start = i.Position; pos = Main.Position
         i.Changed:Connect(function() if i.UserInputState == Enum.UserInputState.End then drag = false end end)
     end
 end)
 UserInputService.InputChanged:Connect(function(i)
     if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-        Main.Position = UDim2.new(pos.X.Scale, pos.X.Offset + (i.Position-start).X, pos.Y.Scale, pos.Y.Offset + (i.Position-start).Y)
+        Main.Position = UDim2.new(pos.X.Scale, pos.X.Offset+(i.Position-start).X, pos.Y.Scale, pos.Y.Offset+(i.Position-start).Y)
     end
 end)
 
@@ -104,36 +85,25 @@ local on = false
 local function upd(s)
     on = s
     if s then
-        TweenService:Create(Tog, TweenInfo.new(0.2), {BackgroundColor3=Color3.fromRGB(25,45,35), TextColor3=Color3.fromRGB(80,255,140)}):Play()
-        Tog.Text = "ON"
-        TS.Color = Color3.fromRGB(40,110,75)
+        TweenService:Create(Btn, TweenInfo.new(0.25), {BackgroundColor3=Color3.fromRGB(25,45,35), TextColor3=Color3.fromRGB(80,255,140)}):Play()
+        Btn.Text = "ENABLED"
+        BS.Color = Color3.fromRGB(40,110,75)
     else
-        TweenService:Create(Tog, TweenInfo.new(0.2), {BackgroundColor3=Color3.fromRGB(35,35,38), TextColor3=Color3.fromRGB(255,80,80)}):Play()
-        Tog.Text = "OFF"
-        TS.Color = Color3.fromRGB(60,60,65)
+        TweenService:Create(Btn, TweenInfo.new(0.25), {BackgroundColor3=Color3.fromRGB(35,35,38), TextColor3=Color3.fromRGB(255,70,70)}):Play()
+        Btn.Text = "DISABLED"
+        BS.Color = Color3.fromRGB(60,60,65)
     end
 end
 
-Tog.MouseButton1Click:Connect(function()
-    upd(not on)
-    pcall(function()
-        raknet.desync(on)
-        if on then
-            local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-            if h then h.Health = 0 end
-        end
-    end)
-end)
-
-Res.MouseButton1Click:Connect(function()
-    TweenService:Create(Res, TweenInfo.new(0.1), {BackgroundColor3=Color3.fromRGB(80,40,40)}):Play()
-    wait(0.1)
-    TweenService:Create(Res, TweenInfo.new(0.2), {BackgroundColor3=Color3.fromRGB(40,25,25)}):Play()
+Btn.MouseButton1Click:Connect(function()
+    local newState = not on
+    upd(newState)
     
     pcall(function()
-        raknet.desync(false)
-        upd(false)
-        LocalPlayer:LoadCharacter() -- Instant full reset
+        raknet.desync(newState)
+        
+        -- INSTANT RESET HAPPENS HERE AUTOMATICALLY
+        LocalPlayer:LoadCharacter() 
     end)
 end)
 
