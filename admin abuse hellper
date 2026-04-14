@@ -1,0 +1,505 @@
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+
+local LP = Players.LocalPlayer
+local Mouse = LP:GetMouse()
+
+-- // Professional Gray Theme
+local Theme = {
+    Background = Color3.fromRGB(25, 25, 28),
+    Surface = Color3.fromRGB(40, 40, 45),
+    Border = Color3.fromRGB(60, 60, 65),
+    TextMain = Color3.fromRGB(240, 240, 240),
+    TextDim = Color3.fromRGB(120, 120, 120),
+    Active = Color3.fromRGB(255, 255, 255),
+    Inactive = Color3.fromRGB(70, 70, 75)
+}
+
+-- // States
+local States = {
+    Anchor = false,
+    AutoBuy = false
+}
+local IsGuiOpen = true
+
+-- // Helper Function
+local function NewInst(class, props, parent)
+    local inst = Instance.new(class)
+    for k, v in pairs(props) do
+        inst[k] = v
+    end
+    if parent then inst.Parent = parent end
+    return inst
+end
+
+-- // UI Creation
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "imrane10k_pro"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = CoreGui
+
+-- // 1. Toggle Button (Perfect Image Scaling)
+local ToggleBtn = NewInst("ImageButton", {
+    Size = UDim2.new(0, 50, 0, 50), 
+    Position = UDim2.new(0, 25, 0.5, -25),
+    BackgroundColor3 = Theme.Surface,
+    BackgroundTransparency = 0.1,
+    BorderSizePixel = 0,
+    Active = true,
+    Draggable = true,
+    Parent = ScreenGui
+}, nil)
+
+NewInst("UICorner", {CornerRadius = UDim.new(0, 10)}, ToggleBtn)
+NewInst("UIStroke", {Color = Theme.Border, Thickness = 1, Transparency = 0.2}, ToggleBtn)
+
+-- YOUR CHARACTER IMAGE (ID: 127154764213084)
+local UserImage = NewInst("ImageLabel", {
+    Size = UDim2.new(1, -6, 1, -6), 
+    Position = UDim2.new(0, 3, 0, 3),
+    BackgroundTransparency = 1,
+    Image = "rbxassetid://127154764213084", 
+    ScaleType = Enum.ScaleType.Fit,
+    Parent = ToggleBtn
+})
+
+-- // 2. Main Interface
+local Main = NewInst("Frame", {
+    Name = "Main",
+    Size = UDim2.new(0, 180, 0, 150),
+    Position = UDim2.new(0.5, -90, 0.5, -75),
+    BackgroundColor3 = Theme.Background,
+    BackgroundTransparency = 0.05,
+    BorderSizePixel = 0,
+    Active = true,
+    Draggable = true,
+    Visible = true,
+    Parent = ScreenGui
+}, nil)
+
+NewInst("UICorner", {CornerRadius = UDim.new(0, 12)}, Main)
+NewInst("UIStroke", {Color = Theme.Border, Thickness = 1, Transparency = 0.5}, Main)
+
+-- Header
+local Header = NewInst("Frame", {
+    Size = UDim2.new(1, 0, 0, 40),
+    BackgroundColor3 = Theme.Surface,
+    BackgroundTransparency = 0.2,
+    BorderSizePixel = 0
+}, Main)
+
+NewInst("UICorner", {CornerRadius = UDim.new(0, 12)}, Header)
+NewInst("Frame", {
+    Size = UDim2.new(1, 0, 0, 12),
+    Position = UDim2.new(0, 0, 1, -12),
+    BackgroundColor3 = Theme.Surface,
+    BackgroundTransparency = 0.2,
+    BorderSizePixel = 0
+}, Header)
+
+local TitleLabel = NewInst("TextLabel", {
+    Size = UDim2.new(1, -30, 1, 0),
+    Position = UDim2.new(0, 10, 0, 0),
+    BackgroundTransparency = 1,
+    Font = Enum.Font.GothamBold,
+    Text = "imrane10k",
+    TextSize = 14,
+    TextColor3 = Theme.TextMain,
+    TextXAlignment = Enum.TextXAlignment.Left
+}, Header)
+
+local SubTitle = NewInst("TextLabel", {
+    Size = UDim2.new(1, -30, 0, 12),
+    Position = UDim2.new(0, 10, 1, -12),
+    BackgroundTransparency = 1,
+    Font = Enum.Font.Gotham,
+    Text = "admin abuse hellper",
+    TextSize = 9,
+    TextColor3 = Theme.TextDim,
+    TextXAlignment = Enum.TextXAlignment.Left
+}, Header)
+
+-- Close Button
+local CloseBtn = NewInst("TextButton", {
+    Size = UDim2.new(0, 24, 0, 24),
+    Position = UDim2.new(1, -30, 0.5, -12),
+    BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+    BackgroundTransparency = 0.2,
+    Text = "",
+    AutoButtonColor = false
+}, Header)
+
+NewInst("UICorner", {CornerRadius = UDim.new(0, 6)}, CloseBtn)
+NewInst("TextLabel", {
+    Size = UDim2.new(1, 0, 1, 0),
+    BackgroundTransparency = 1,
+    Font = Enum.Font.GothamBold,
+    Text = "×",
+    TextSize = 18,
+    TextColor3 = Theme.TextMain
+}, CloseBtn)
+
+-- Content Area
+local Content = NewInst("Frame", {
+    Size = UDim2.new(1, -16, 1, -50),
+    Position = UDim2.new(0, 8, 0, 45),
+    BackgroundTransparency = 1
+}, Main)
+
+local ListLayout = NewInst("UIListLayout", {
+    Padding = UDim.new(0, 8),
+    SortOrder = Enum.SortOrder.LayoutOrder
+}, Content)
+
+-- // Pro Toggle Component
+local function CreateProToggle(name, stateKey, order)
+    local Container = NewInst("Frame", {
+        Size = UDim2.new(1, 0, 0, 34),
+        BackgroundColor3 = Theme.Surface,
+        BackgroundTransparency = 0.6,
+        BorderSizePixel = 0,
+        LayoutOrder = order
+    }, Content)
+    
+    NewInst("UICorner", {CornerRadius = UDim.new(0, 8)}, Container)
+    
+    Container.MouseEnter:Connect(function()
+        TweenService:Create(Container, TweenInfo.new(0.2), {BackgroundTransparency = 0.4}):Play()
+    end)
+    Container.MouseLeave:Connect(function()
+        TweenService:Create(Container, TweenInfo.new(0.2), {BackgroundTransparency = 0.6}):Play()
+    end)
+
+    local Label = NewInst("TextLabel", {
+        Size = UDim2.new(1, -40, 1, 0),
+        Position = UDim2.new(0, 8, 0, 0),
+        BackgroundTransparency = 1,
+        Font = Enum.Font.GothamMedium,
+        Text = name,
+        TextSize = 12,
+        TextColor3 = Theme.TextMain,
+        TextXAlignment = Enum.TextXAlignment.Left
+    }, Container)
+
+    local SwitchBg = NewInst("TextButton", {
+        Size = UDim2.new(0, 36, 0, 20),
+        Position = UDim2.new(1, -42, 0.5, -10),
+        BackgroundColor3 = Theme.Inactive,
+        BackgroundTransparency = 0.5,
+        Text = "",
+        AutoButtonColor = false
+    }, Container)
+    
+    NewInst("UICorner", {CornerRadius = UDim.new(1, 0)}, SwitchBg)
+
+    local Knob = NewInst("Frame", {
+        Size = UDim2.new(0, 14, 0, 14),
+        Position = UDim2.new(0, 3, 0.5, -7),
+        BackgroundColor3 = Color3.fromRGB(200, 200, 200),
+        BorderSizePixel = 0
+    }, SwitchBg)
+    
+    NewInst("UICorner", {CornerRadius = UDim.new(1, 0)}, Knob)
+
+    local function UpdateVisuals()
+        local isActive = States[stateKey]
+        local bgColor = isActive and Theme.Active or Theme.Inactive
+        local knobColor = isActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 150)
+        local bgTrans = isActive and 0.1 or 0.5
+        local targetPos = isActive and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
+        
+        TweenService:Create(Knob, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Position = targetPos,
+            BackgroundColor3 = knobColor
+        }):Play()
+        
+        TweenService:Create(SwitchBg, TweenInfo.new(0.25), {
+            BackgroundColor3 = bgColor,
+            BackgroundTransparency = bgTrans
+        }):Play()
+    end
+
+    SwitchBg.MouseButton1Click:Connect(function()
+        States[stateKey] = not States[stateKey]
+        UpdateVisuals()
+    end)
+
+    return UpdateVisuals
+end
+
+-- // Initialize Toggles
+CreateProToggle("Anchor Character", "Anchor", 1)
+CreateProToggle("Auto Buy System", "AutoBuy", 2)
+
+-- // GUI Toggle Logic
+local function AnimateGui(open)
+    if open then
+        Main.Visible = true
+        Main.Size = UDim2.new(0, 0, 0, 0)
+        Main.BackgroundTransparency = 1
+        TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 180, 0, 150),
+            BackgroundTransparency = 0.05
+        }):Play()
+        ToggleBtn.BackgroundTransparency = 0.1
+    else
+        TweenService:Create(Main, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 0, 0, 0),
+            BackgroundTransparency = 1
+        }):Play()
+        task.wait(0.2)
+        Main.Visible = false
+        ToggleBtn.BackgroundTransparency = 0.5
+    end
+end
+
+CloseBtn.MouseButton1Click:Connect(function()
+    IsGuiOpen = not IsGuiOpen
+    AnimateGui(IsGuiOpen)
+end)
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    IsGuiOpen = not IsGuiOpen
+    AnimateGui(IsGuiOpen)
+end)
+
+-- // FUNCTIONALITY CORE
+
+-- 1. ANCHOR SYSTEM
+task.spawn(function()
+    while task.wait() do
+        pcall(function()
+            if LP.Character then
+                local root = LP.Character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    root.Anchored = States.Anchor
+                end
+            end
+        end)
+    end
+end)
+
+LP.CharacterAdded:Connect(function()
+    task.wait(1)
+    if States.Anchor and LP.Character then
+        local root = LP.Character:FindFirstChild("HumanoidRootPart")
+        if root then root.Anchored = true end
+    end
+end)
+
+-- ============================================
+-- 2. ADVANCED AUTO BUY SYSTEM (From UGC Cheat)
+-- ============================================
+
+-- Variables for Advanced Auto Buy
+local _Workspace = game:GetService('Workspace')
+local _RunService = game:GetService('RunService')
+local _LocalPlayer3 = LP
+local u91 = {} -- Table to track prompts
+local u92 = false -- Auto buy active state
+local u93 = nil -- RenderStepped connection
+local u94 = nil -- DescendantAdded connection
+
+-- Validate prompt structure (checks for PromptAttachment > Part > Model)
+local function u99(p95)
+    if not (p95 and p95:IsA('ProximityPrompt')) then
+        return false
+    end
+    
+    local _Parent = p95.Parent
+    
+    if not _Parent or _Parent.Name ~= 'PromptAttachment' then
+        return false
+    end
+    
+    local _Parent2 = _Parent.Parent
+    
+    if not _Parent2 or _Parent2.Name ~= 'Part' then
+        return false
+    end
+    
+    local _Parent3 = _Parent2.Parent
+    
+    return _Parent3 and _Parent3:IsA('Model') and true or false
+end
+
+-- Get prompt position
+local function u101(p100)
+    if p100 and p100.Parent then
+        if p100.Parent:IsA('Attachment') and (p100.Parent.Name == 'PromptAttachment' and (p100.Parent.Parent and p100.Parent.Parent.Name == 'Part')) then
+            return p100.Parent.Parent.Position
+        elseif p100.Parent:IsA('BasePart') then
+            return p100.Parent.Position
+        elseif p100.Parent:IsA('Model') and p100.Parent.PrimaryPart then
+            return p100.Parent.PrimaryPart.Position
+        else
+            return nil
+        end
+    else
+        return nil
+    end
+end
+
+-- Check if prompt is visible on screen
+local function u105(p102)
+    local v103 = u101(p102)
+    
+    if not v103 then
+        return false
+    end
+    
+    local _, v104 = workspace.CurrentCamera:WorldToViewportPoint(v103)
+    
+    return v104
+end
+
+-- Begin holding input for all input types
+local function u111(p106)
+    local inputs = {
+        Enum.UserInputType.Keyboard,
+        Enum.UserInputType.MouseButton1,
+        Enum.UserInputType.Touch,
+    }
+    
+    for _, inputType in ipairs(inputs) do
+        pcall(function()
+            p106:InputHoldBegin(inputType)
+        end)
+    end
+end
+
+-- End holding input for all input types
+local function u117(p112)
+    local inputs = {
+        Enum.UserInputType.Keyboard,
+        Enum.UserInputType.MouseButton1,
+        Enum.UserInputType.Touch,
+    }
+    
+    for _, inputType in ipairs(inputs) do
+        pcall(function()
+            p112:InputHoldEnd(inputType)
+        end)
+    end
+end
+
+-- Register/track a valid prompt
+local function u119(p118)
+    if u99(p118) and not u91[p118] then
+        u91[p118] = true
+    end
+end
+
+local function u121(p120)
+    u119(p120)
+end
+
+-- Start Auto Buy system
+local function u133()
+    if not u92 then
+        u92 = true
+        
+        -- Scan existing prompts
+        for _, v in pairs(_Workspace:GetDescendants()) do
+            u119(v)
+        end
+        
+        -- Connect to new prompts being added
+        if u94 then
+            u94:Disconnect()
+            u94 = nil
+        end
+        
+        u94 = _Workspace.DescendantAdded:Connect(u121)
+        
+        -- Main auto buy loop
+        if u93 then
+            u93:Disconnect()
+            u93 = nil
+        end
+        
+        u93 = _RunService.RenderStepped:Connect(function()
+            local _Character = _LocalPlayer3.Character
+            
+            if _Character then
+                _Character = _Character:FindFirstChild('HumanoidRootPart')
+            end
+            
+            if _Character then
+                for prompt, _ in pairs(u91) do
+                    if prompt and (prompt.Parent and u99(prompt)) then
+                        local promptPos = u101(prompt)
+                        
+                        if promptPos then
+                            local distance = (_Character.Position - promptPos).Magnitude
+                            local isVisible = u105(prompt)
+                            
+                            if distance > 15 or not isVisible then
+                                -- Too far or not visible, release hold
+                                u117(prompt)
+                            else
+                                -- In range and visible, begin hold
+                                u111(prompt)
+                            end
+                        else
+                            -- Invalid prompt, remove from tracking
+                            u91[prompt] = nil
+                        end
+                    else
+                        -- Invalid prompt, remove from tracking
+                        u91[prompt] = nil
+                    end
+                end
+            end
+        end)
+    end
+end
+
+-- Stop Auto Buy system
+local function u138()
+    if u92 then
+        u92 = false
+        
+        -- Disconnect events
+        if u93 then
+            u93:Disconnect()
+            u93 = nil
+        end
+        
+        if u94 then
+            u94:Disconnect()
+            u94 = nil
+        end
+        
+        -- Release all held prompts
+        for prompt, _ in pairs(u91) do
+            u117(prompt)
+        end
+        
+        u91 = {}
+    end
+end
+
+-- Auto Buy Main Loop (connects to States.AutoBuy toggle)
+task.spawn(function()
+    while task.wait(0.1) do
+        pcall(function()
+            if States.AutoBuy and not u92 then
+                u133() -- Start advanced auto buy
+            elseif not States.AutoBuy and u92 then
+                u138() -- Stop advanced auto buy
+            end
+        end)
+    end
+end)
+
+-- Cleanup on character death/removal
+_LocalPlayer3.CharacterRemoving:Connect(function()
+    for prompt, _ in pairs(u91) do
+        u117(prompt)
+    end
+    u91 = {}
+end)
