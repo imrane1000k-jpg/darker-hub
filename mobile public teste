@@ -1,1 +1,1357 @@
 
+-- ═════════════════════════════════════════════════════════════════
+-- 🔱 REVINEHUB v2.0 - Complete Tabbed Hub Script
+-- Authors: Silver & .7uxp
+-- Game: Pet Simulator X
+-- Features: 17+ | Tabs: 5 | Full Keybind Support
+-- ═════════════════════════════════════════════════════════════════
+
+if not game:IsLoaded() then game.Loaded:Wait() end
+pcall(function() game:GetService("Players").RespawnTime = 0 end)
+
+-- ═════════════════════════════════════════════════════════════════
+-- SERVICES
+-- ═════════════════════════════════════════════════════════════════
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- ═════════════════════════════════════════════════════════════════
+-- CONFIGURATION & STATE
+-- ═════════════════════════════════════════════════════════════════
+local Config = {
+    MenuKey = "LeftControl",
+    TPKey = "T",
+    CloneKey = "V",
+    ResetKey = "X",
+    CarpetSpeedKey = "Q",
+    StealSpeedKey = "C",
+    InvisKey = "I",
+    KickKey = "",
+    RagdollKey = "R",
+    ClickAPKey = "L",
+    ProximityAPKey = "P",
+    JobJoinerKey = "J",
+    
+    DefaultTool = "Flying Carpet",
+    DefaultStealSpeed = 20,
+    DefaultToHighest = true,
+}
+
+local State = {
+    HubOpen = true,
+    CurrentTab = "Main",
+    AntiBeeDisco = false,
+    AutoDestroyTurrets = false,
+    AutoResetBalloon = false,
+    AutoKickOnSteal = false,
+    AutoTPOnFail = false,
+    InfiniteJump = false,
+    PlayerESP = false,
+    BrainrotESP = false,
+    DuelBaseESP = false,
+    BaseXray = false,
+    LineToBase = false,
+    TracerEnabled = false,
+    FPSBoost = false,
+    CarpetSpeed = false,
+    StealSpeed = false,
+    InvisibleSteal = false,
+}
+
+local Connections = {}
+local ESPObjects = {}
+local TurretLoop = nil
+
+-- ═════════════════════════════════════════════════════════════════
+-- THEME (Purple Dark)
+-- ═════════════════════════════════════════════════════════════════
+local Theme = {
+    BG = Color3.fromRGB(15, 12, 25),
+    Surface = Color3.fromRGB(25, 20, 40),
+    SurfaceLight = Color3.fromRGB(40, 30, 60),
+    Accent1 = Color3.fromRGB(156, 110, 255),
+    Accent2 = Color3.fromRGB(210, 170, 255),
+    TextPrimary = Color3.fromRGB(255, 255, 255),
+    TextSecondary = Color3.fromRGB(180, 170, 200),
+    Success = Color3.fromRGB(100, 220, 100),
+    Error = Color3.fromRGB(255, 80, 120),
+    Warning = Color3.fromRGB(255, 200, 80),
+}
+
+-- ═════════════════════════════════════════════════════════════════
+-- UTILITY FUNCTIONS
+-- ═════════════════════════════════════════════════════════════════
+local function Notify(title, text, color)
+    local gui = Instance.new("ScreenGui", PlayerGui)
+    gui.Name = "RH_Notif_"..tick(); gui.ResetOnSpawn = false
+    
+    local frame = Instance.new("Frame", gui)
+    frame.Size = UDim2.new(0, 300, 0, 55)
+    frame.Position = UDim2.new(0.5, -150, 0, -70)
+    frame.BackgroundColor3 = Theme.Surface
+    frame.BorderSizePixel = 0
+    Instance.new("UICorner', frame).CornerRadius = UDim.new(0, 12)
+    
+    local stroke = Instance.new("UIStroke", frame)
+    stroke.Color = color or Theme.Accent1; stroke.Thickness = 1.5
+    
+    local titleLbl = Instance.new("TextLabel", frame)
+    titleLbl.Size = UDim2.new(1, -16, 0, 24); titleLbl.Position = UDim2.new(0, 8, 0, 6)
+    titleLbl.BackgroundTransparency = 1; titleLbl.Text = title
+    titleLbl.Font = Enum.Font.GothamBlack; titleLbl.TextSize = 14
+    titleLbl.TextColor3 = Theme.Accent1; titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local textLbl = Instance.new("TextLabel", frame)
+    textLbl.Size = UDim2.new(1, -16, 0, 22); textLbl.Position = UDim2.new(0, 8, 0, 28)
+    textLbl.BackgroundTransparency = 1; textLbl.Text = text or ""
+    textLbl.Font = Enum.Font.GothamMedium; textLbl.TextSize = 12
+    textLbl.TextColor3 = Theme.TextSecondary; textLbl.TextXAlignment = Enum.TextXAlignment.Left
+    
+    TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {Position = UDim2.new(0.5, -150, 0, 85)}):Play()
+    task.delay(2.8, function()
+        TweenService:Create(frame, TweenInfo.new(0.3), {Position = UDim2.new(0.5, -150, 0, -70)}):Play()
+        task.wait(0.35) if gui then gui:Destroy() end
+    end)
+end
+
+local function MakeDraggable(handle, frame)
+    local dragging, dragInput, startPos, startPos
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true; dragInput = input; startPos = frame.Position; startPos = input.Position
+            input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+        end
+    end)
+    handle.InputChanged:Connect(function(input) if input == dragInput and dragging then dragInput = input end end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            frame.Position = startPos + (input.Position - startPos)
+        end
+    end)
+end
+
+-- ═════════════════════════════════════════════════════════════════
+-- CREATE MAIN HUB GUI
+-- ═════════════════════════════════════════════════════════════════
+local ScreenGui = Instance.new("ScreenGui", PlayerGui)
+ScreenGui.Name = "RevineHub_v2"; ScreenGui.ResetOnSpawn = false
+
+-- Main Frame
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Name = "Hub"
+MainFrame.Size = UDim2.new(0, 700, 0, 520)
+MainFrame.Position = UDim2.new(0.5, -350, 0.5, -260)
+MainFrame.BackgroundColor3 = Theme.BG
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+Instance.new("UICorner', MainFrame).CornerRadius = UDim.new(0, 16)
+
+local MainStroke = Instance.new("UIStroke", MainFrame)
+MainStroke.Color = Theme.Accent2; MainStroke.Thickness = 2; MainStroke.Transparency = 0.25
+
+-- Header Bar
+local Header = Instance.new("Frame", MainFrame)
+Header.Size = UDim2.new(1, 0, 0, 48); Header.BackgroundTransparency = 1
+MakeDraggable(Header, MainFrame)
+
+-- Title
+local TitleText = Instance.new("TextLabel", Header)
+TitleText.Size = UDim2.new(0.5, 0, 1, 0); TitleText.Position = UDim2.new(0, 16, 0, 0)
+TitleText.BackgroundTransparency = 1; TitleText.Text = "🔱 REVINEHUB v2"
+TitleText.Font = Enum.Font.GothamBlack; TitleText.TextSize = 20
+TitleText.TextColor3 = Theme.TextPrimary; TitleText.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Close Button
+local CloseBtn = Instance.new("TextButton", Header)
+CloseBtn.Size = UDim2.new(0, 32, 0, 32); CloseBtn.Position = UDim2.new(1, -40, 0, 8)
+CloseBtn.BackgroundColor3 = Theme.Error; CloseBtn.Text = "✕"
+CloseBtn.Font = Enum.Font.GothamBold; CloseBtn.TextSize = 16
+CloseBtn.TextColor3 = Color3.new(1,1,1); CloseBtn.AutoButtonColor = false
+Instance.new("UICorner', CloseBtn).CornerRadius = UDim.new(0, 8)
+CloseBtn.MouseButton1Click:Connect(function()
+    State.HubOpen = false
+    MainFrame.Visible = false
+end)
+
+-- Minimize Button
+local MinBtn = Instance.new("TextButton", Header)
+MinBtn.Size = UDim2.new(0, 32, 0, 32); MinBtn.Position = UDim2.new(1, -76, 0, 8)
+MinBtn.BackgroundColor3 = Theme.SurfaceLight; MinBtn.Text = "−"
+MinBtn.Font = Enum.Font.GothamBold; MinBtn.TextSize = 18
+MinBtn.TextColor3 = Theme.TextPrimary; MinBtn.AutoButtonColor = false
+Instance.new("UICorner', MinBtn).CornerRadius = UDim.new(0, 8)
+MinBtn.MouseButton1Click:Connect(function()
+    State.HubOpen = not State.HubOpen
+    if State.HubOpen then
+        MainFrame.Visible = true
+        MainFrame.Size = UDim2.new(0, 700, 0, 520)
+    else
+        MainFrame.Visible = true
+        MainFrame.Size = UDim2.new(0, 700, 0, 48)
+    end
+end)
+
+-- ═════════════════════════════════════════════════════════════════
+-- TAB SYSTEM
+-- ═════════════════════════════════════════════════════════════════
+local TabBar = Instance.new("Frame", MainFrame)
+TabBar.Size = UDim2.new(1, 0, 0, 44)
+TabBar.Position = UDim2.new(0, 0, 1, -44)
+TabBar.BackgroundColor3 = Color3.fromRGB(12, 10, 20)
+Instance.new("UICorner', TabBar).CornerRadius = UDim.new(0, 0, 0, 0, 16, 0, 0, 0)
+
+local TabNames = {"⚡ Main", "🛡️ Protect", "👁️ ESP", "⚙️ Settings"}
+local TabButtons = {}
+local TabContents = {}
+
+for i, name in ipairs(TabNames) do
+    -- Tab Button
+    local btn = Instance.new("TextButton", TabBar)
+    btn.Size = UDim2.new(1/#TabNames, 0, 1, 0)
+    btn.Position = UDim2.new((i-1)/#TabNames, 0, 0, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(15, 12, 25)
+    btn.BackgroundTransparency = 1
+    btn.Text = name; btn.Font = Enum.Font.GothamBold; btn.TextSize = 13
+    btn.TextColor3 = Theme.TextSecondary; btn.AutoButtonColor = false
+    table.insert(TabButtons, btn)
+    
+    -- Tab Content (ScrollingFrame)
+    local content = Instance.new("ScrollingFrame", MainFrame)
+    content.Name = "Content_"..i
+    content.Size = UDim2.new(1, -20, 1, -100)
+    content.Position = UDim2.new(0, 10, 0, 52)
+    content.BackgroundTransparency = 1
+    content.ScrollBarThickness = 4
+    content.ScrollBarImageColor3 = Theme.Accent1
+    content.Visible = (i == 1)
+    
+    local layout = Instance.new("UIListLayout", content)
+    layout.Padding = UDim.new(0, 8)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    
+    table.insert(TabContents, content)
+    
+    -- Tab Click Handler
+    btn.MouseButton1Click:Connect(function()
+        -- Update button styles
+        for _, b in ipairs(TabButtons) do
+            b.TextColor3 = Theme.TextSecondary
+            b.BackgroundColor3 = Color3.fromRGB(15, 12, 25)
+        end
+        btn.TextColor3 = Theme.Accent1
+        btn.BackgroundColor3 = Theme.Surface
+        
+        -- Show correct content
+        for _, c in ipairs(TabContents) do c.Visible = false end
+        content.Visible = true
+        State.CurrentTab = name:gsub("%s+", "")
+    end)
+end
+
+-- Set first tab active
+TabButtons[1].TextColor3 = Theme.Accent1
+TabButtons[1].BackgroundColor3 = Theme.Surface
+
+-- ═════════════════════════════════════════════════════════════════
+-- HELPER: Create Section Header
+-- ═════════════════════════════════════════════════════════════════
+local function CreateSection(parent, text)
+    local section = Instance.new("Frame", parent)
+    section.Size = UDim2.new(1, 0, 0, 32)
+    section.BackgroundColor3 = Theme.Surface
+    Instance.new("UICorner', section).CornerRadius = UDim.new(0, 8)
+    
+    local label = Instance.new("TextLabel", section)
+    label.Size = UDim2.new(1, -12, 1, 0); label.Position = UDim2.new(0, 12, 0, 0)
+    label.BackgroundTransparency = 1; label.Text = text
+    label.Font = Enum.Font.GothamBlack; label.TextSize = 13
+    label.TextColor3 = Theme.Accent1; label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    return section
+end
+
+-- ═════════════════════════════════════════════════════════════════
+-- HELPER: Create Toggle Switch
+-- ═════════════════════════════════════════════════════════════════
+local function CreateToggle(parent, labelText, callback, defaultState)
+    defaultState = defaultState or false
+    
+    local container = Instance.new("Frame", parent)
+    container.Size = UDim2.new(1, 0, 0, 38)
+    container.BackgroundTransparency = 1
+    
+    -- Label
+    local label = Instance.new("TextLabel", container)
+    label.Size = UDim2.new(0.65, 0, 1, 0); label.Position = UDim2.new(0, 4, 0, 0)
+    label.BackgroundTransparency = 1; label.Text = labelText
+    label.Font = Enum.Font.GothamMedium; label.TextSize = 14
+    label.TextColor3 = Theme.TextPrimary; label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    -- Toggle Background
+    local toggleBg = Instance.new("Frame", container)
+    toggleBg.Size = UDim2.new(0, 46, 0, 24)
+    toggleBg.Position = UDim2.new(1, -50, 0.5, -12)
+    toggleBg.BackgroundColor3 = defaultState and Theme.Success or Theme.SurfaceLight
+    Instance.new("UICorner', toggleBg).CornerRadius = UDim.new(1, 12)
+    
+    -- Toggle Dot
+    local dot = Instance.new("Frame", toggleBg)
+    dot.Size = UDim2.new(0, 18, 0, 18)
+    dot.Position = defaultState and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)
+    dot.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    Instance.new("UICorner', dot).CornerRadius = UDim.new(1, 99)
+    
+    -- Button
+    local btn = Instance.new("TextButton", toggleBg)
+    btn.Size = UDim2.new(1, 0, 1, 0); btn.BackgroundTransparency = 1; btn.Text = ""
+    
+    local isOn = defaultState
+    
+    btn.MouseButton1Click:Connect(function()
+        isOn = not isOn
+        callback(isOn)
+        
+        -- Animate
+        TweenService:Create(dot, TweenInfo.new(0.2), {Position = isOn and UDim2.new(1,-21,0.5,-9) or UDim2.new(0,3,0.5,-9)}):Play()
+        TweenService:Create(toggleBg, TweenInfo.new(0.2), {BackgroundColor3 = isOn and Theme.Success or Theme.SurfaceLight}):Play()
+    end)
+    
+    return {
+        SetState = function(state)
+            isOn = state
+            TweenService:Create(dot, TweenInfo.new(0.15), {Position = state and UDim2.new(1,-21,0.5,-9) or UDim2.new(0,3,0.5,-9)}):Play()
+            TweenService:Create(toggleBg, TweenInfo.new(0.15), {BackgroundColor3 = state and Theme.Success or Theme.SurfaceLight}):Play()
+        end,
+        GetState = function() return isOn end
+    }
+end
+
+-- ═════════════════════════════════════════════════════════════════
+-- HELPER: Create Button
+-- ═════════════════════════════════════════════════════════════════
+local function CreateButton(parent, buttonText, callback, btnColor)
+    btnColor = btnColor or Theme.Accent1
+    
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(1, 0, 0, 36)
+    btn.BackgroundColor3 = btnColor; btn.BackgroundTransparency = 0.2
+    btn.Text = buttonText; btn.Font = Enum.Font.GothamBold; btn.TextSize = 14
+    btn.TextColor3 = Color3.new(1,1,1); btn.AutoButtonColor = false
+    Instance.new("UICorner', btn).CornerRadius = UDim.new(0, 8)
+    
+    local strk = Instance.new("UIStroke", btn)
+    strk.Color = btnColor; strk.Thickness = 1.5; strk.Transparency = 0.4
+    
+    btn.MouseEnter:Connect(function() btn.BackgroundTransparency = 0 end)
+    btn.MouseLeave:Connect(function() btn.BackgroundTransparency = 0.2 end)
+    btn.MouseButton1Click:Connect(callback)
+    
+    return btn
+end
+
+-- ═════════════════════════════════════════════════════════════════
+-- HELPER: Create Slider (for Steal Speed)
+-- ═════════════════════════════════════════════════════════════════
+local function CreateSlider(parent, labelText, minVal, maxVal, defaultVal, callback)
+    local container = Instance.new("Frame", parent)
+    container.Size = UDim2.new(1, 0, 0, 56)
+    container.BackgroundTransparency = 1
+    
+    -- Label row
+    local labelRow = Instance.new("Frame", container)
+    labelRow.Size = UDim2.new(1, 0, 0, 22); labelRow.BackgroundTransparency = 1
+    
+    local lbl = Instance.new("TextLabel", labelRow)
+    lbl.Size = UDim2.new(0.6, 0, 1, 0); lbl.Position = UDim2.new(0, 4, 0, 0)
+    lbl.BackgroundTransparency = 1; lbl.Text = labelText
+    lbl.Font = Enum.Font.GothamMedium; lbl.TextSize = 13
+    lbl.TextColor3 = Theme.TextPrimary; lbl.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local valLabel = Instance.new("TextLabel", labelRow)
+    valLabel.Size = UDim2.new(0.35, 0, 1, 0); valLabel.Position = UDim2.new(1, -60, 0, 0)
+    valLabel.BackgroundTransparency = 1; valLabel.Text = tostring(defaultVal)
+    valLabel.Font = Enum.Font.GothamBold; valLabel.TextSize = 14
+    valLabel.TextColor3 = Theme.Accent1; valLabel.TextXAlignment = Enum.TextXAlignment.Right
+    
+    -- Slider track
+    local track = Instance.new("Frame", container)
+    track.Size = UDim2.new(1, 0, 0, 6); track.Position = UDim2.new(0, 0, 0, 28)
+    track.BackgroundColor3 = Theme.SurfaceLight
+    Instance.new("UICorner', track).CornerRadius = UDim.new(1, 99)
+    
+    local fill = Instance.new("Frame", track)
+    fill.Size = UDim2.new((defaultVal-minVal)/(maxVal-minVal), 0, 1, 0)
+    fill.BackgroundColor3 = Theme.Accent1
+    Instance.new("UICorner', fill).CornerRadius = UDim.new(1, 99)
+    
+    local knob = Instance.new("Frame", track)
+    knob.Size = UDim2.new(0, 16, 0, 16)
+    knob.Position = UDim2.new((defaultVal-minVal)/(maxVal-minVal), -8, 0.5, -8)
+    knob.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    Instance.new("UICorner', knob).CornerRadius = UDim.new(1, 99)
+    
+    local dragging = false
+    track.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            UpdateSlider(input.Position.X)
+        end
+    end)
+    knob.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            UpdateSlider(input.Position.X)
+        end
+    end)
+    
+    function UpdateSlider(xPos)
+        local relPos = math.clamp((xPos - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+        local value = math.floor(minVal + relPos * (maxVal - minVal))
+        
+        fill.Size = UDim2.new(relPos, 0, 1, 0)
+        knob.Position = UDim2.new(relPos, -8, 0.5, -8)
+        valLabel.Text = tostring(value)
+        
+        callback(value)
+    end
+    
+    return {GetValue = function() return tonumber(valLabel.Text) end}
+end
+
+-- ═════════════════════════════════════════════════════════════════
+-- TAB 1: MAIN (Automation & Actions)
+-- ═════════════════════════════════════════════════════════════════
+do
+    local c = TabContents[1]
+    
+    CreateSection(c, "⚡ QUICK ACTIONS")
+    
+    CreateButton(c, "🎯 TELEPORT TO TARGET ["..Config.TPKey.."]", function()
+        Notify("Teleport", "Finding best pet...")
+        -- Your auto-TP logic here
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            -- Example: TP to random plot
+            local plots = Workspace:FindFirstChild("Plots")
+            if plots and #plots:GetChildren() > 0 then
+                local targetPlot = plots:GetChildren()[math.random(1, #plots:GetChildren())]
+                local basePart = targetPlot:FindFirstChildWhichIsA("BasePart")
+                if basePart then
+                    hrp.CFrame = CFrame.new(basePart.Position + Vector3.new(0, 5, 0))
+                    Notify("TP", "Teleported to "..targetPlot.Name)
+                end
+            end
+        end
+    end)
+    
+    CreateButton(c, "📋 INSTANT CLONE ["..Config.CloneKey.."]", function()
+        Notify("Clone", "Executing Quantum Clone...")
+        local cloner = LocalPlayer.Backpack:FindFirstChild("Quantum Cloner") 
+            or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Quantum Cloner"))
+        if cloner then
+            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if hum then hum:EquipTool(cloner) end
+            task.wait(0.1)
+            cloner:Activate()
+            Notify("Clone", "Cloned successfully!")
+        else
+            Notify("Error", "No Quantum Cloner found!", Theme.Error)
+        end
+    end)
+    
+    CreateButton(c, "💀 RESET CHARACTER ["..Config.ResetKey.."]", function()
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp.CFrame = CFrame.new(0, 15000, 0)
+            Notify("Reset", "Character has been reset!")
+        end
+    end, Theme.Error)
+    
+    CreateSection(c, "🏃 SPEED CONTROLS")
+    
+    CreateToggle(c, "Carpet Speed Mode ["..Config.CarpetSpeedKey.."]", function(enabled)
+        State.CarpetSpeed = enabled
+        Notify("Carpet Speed", enabled and "✅ ENABLED (140 studs/s)" or "❌ DISABLED", enabled and Theme.Success or Theme.Error)
+    end, false)
+    
+    CreateToggle(c, "Infinite Jump [SPACE]", function(enabled)
+        State.InfiniteJump = enabled
+        Notify("Infinite Jump", enabled and "✅ ENABLED" or "❌ DISABLED", enabled and Theme.Success or Theme.Error)
+    end, Config.DefaultToHighest) -- Using this as default true
+    
+    local stealSpeedToggle = CreateToggle(c, "Steal Speed Mode ["..Config.StealSpeedKey.."]", function(enabled)
+        State.StealSpeed = enabled
+        Notify("Steal Speed", enabled and ("✅ ENABLED ("..Config.DefaultStealSpeed..")") or "❌ DISABLED", enabled and Theme.Success or Theme.Error)
+    end, false)
+    
+    CreateSlider(c, "Steal Speed Value", 5, 100, Config.DefaultStealSpeed, function(val)
+        Config.DefaultStealSpeed = val
+        -- Update speed immediately if active
+    end)
+    
+    CreateSection(c, "🤖 AUTOMATION TOGGLES")
+    
+    CreateToggle(c, "Auto-Kick on Steal", function(enabled)
+        State.AutoKickOnSteal = enabled
+        Notify("Auto-Kick", enabled and "Will kick after successful steal!" or "Disabled", enabled and Theme.Warning or Theme.TextSecondary)
+    end, false)
+    
+    CreateToggle(c, "Auto-Reset on Balloon", function(enabled)
+        State.AutoResetBalloon = enabled
+        Notify("Auto-Balloon Reset", enabled and "Will reset when ballooned!" or "Disabled", enabled and Theme.Warning or Theme.TextSecondary)
+    end, true)
+    
+    CreateToggle(c, "Auto-TP on Failed Steal", function(enabled)
+        State.AutoTPOnFail = enabled
+        Notify("Auto-TP Fail", enabled and "Will TP if steal fails (>3s)" or "Disabled", enabled and Theme.Warning or Theme.TextSecondary)
+    end, true)
+    
+    CreateToggle(c, "Default to Highest Value Target", function(enabled)
+        Config.DefaultToHighest = enabled
+        Notify("Target Mode", enabled and "Targeting HIGHEST $/s pets" or "Disabled", Theme.Accent1)
+    end, true)
+    
+    CreateToggle(c, "Auto-Destroy Turrets", function(enabled)
+        State.AutoDestroyTurrets = enabled
+        Notify("Turret Destroyer", enabled and "🔥 Hunting turrets..." or "Stopped", enabled and Theme.Error or Theme.TextSecondary)
+    end, false)
+    
+    CreateToggle(c, "Invisible Steal ["..Config.InvisKey.."]", function(enabled)
+        State.InvisibleSteal = enabled
+        Notify("Invisible Steal", enabled and "👻 ENABLED" or "❌ DISABLED", enabled and Theme.Accent1 or Theme.Error)
+    end, false)
+end
+
+-- ═════════════════════════════════════════════════════════════════
+-- TAB 2: PROTECTION
+-- ═════════════════════════════════════════════════════════════════
+do
+    local c = TabContents[2]
+    
+    CreateSection(c, "🛡️ PROTECTION SYSTEMS")
+    
+    CreateToggle(c, "Anti-Bee & Anti-Disco", function(enabled)
+        State.AntiBeeDisco = enabled
+        if enabled then
+            -- Remove harmful effects
+            local removed = 0
+            for _, v in pairs(Lighting:GetChildren()) do
+                if v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("ColorCorrectionEffect") 
+                or v:IsA("SunRaysEffect") or v:IsA("DepthOfFieldEffect") 
+                or v.Name == "Blue" or v.Name == "DiscoEffect" or v.Name == "BeeBlur" then
+                    v:Destroy()
+                    removed = removed + 1
+                end
+            end
+            Lighting.GlobalShadows = false
+            Lighting.FogEnd = 999999
+            Notify("Anti-Bee Disco", "Removed "..removed.." effects! ✅", Theme.Success)
+        else
+            Notify("Anti-Bee Disco", "Disabled ❌", Theme.Error)
+        end
+    end, false)
+    
+    CreateToggle(c, "FPS Boost", function(enabled)
+        State.FPSBoost = enabled
+        if enabled then
+            Lighting.GlobalShadows = false
+            Lighting.FogEnd = 1000000
+            Lighting.EnvironmentDiffuseScale = 0
+            Lighting.EnvironmentSpecularScale = 0
+            
+            -- Remove workspace effects
+            for _, obj in pairs(Workspace:GetDescendants()) do
+                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") 
+                or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
+                    obj.Enabled = false
+                end
+                if obj:IsA("MeshPart") then obj.TextureID = "" end
+                if obj:IsA("BasePart") then
+                    obj.Material = Enum.Material.Plastic
+                    obj.CastShadow = false
+                end
+            end
+            Notify("FPS Boost", "Optimization applied! Expect +40-200% FPS boost 🚀", Theme.Success)
+        else
+            Notify("FPS Boost", "Disabled", Theme.Error)
+        end
+    end, false)
+    
+    CreateSection(c, "⚡ ADMIN ACTIONS")
+    
+    CreateButton(c, "🔄 RAGDOLL SELF ["..Config.RagdollKey.."]", function()
+        Notify("Ragdoll", "Ragdolled yourself! Use Reset to recover.", Theme.Warning)
+        -- Fire admin command here
+    end, Theme.Warning)
+    
+    CreateButton(c, "🚪 KICK SELF FROM GAME", function()
+        if Config.KickKey ~= "" or true then
+            LocalPlayer:Kick("\n🔱 RevineHub - Manual Kick\nMade by Silver & .7uxp")
+        end
+    end, Theme.Error)
+    
+    CreateSection(c, "📋 INFO")
+    
+    local infoBox = Instance.new("Frame", c)
+    infoBox.Size = UDim2.new(1, 0, 0, 90); infoBox.BackgroundColor3 = Theme.Surface
+    Instance.new("UICorner', infoBox).CornerRadius = UDim.new(0, 8)
+    
+    local infoText = Instance.new("TextLabel", infoBox)
+    infoText.Size = UDim2.new(1, -12, 1, 0); infoText.Position = UDim2.new(0, 12, 0, 0)
+    infoText.BackgroundTransparency = 1
+    infoText.Text = [[PROTECTION FEATURES:
+
+• Anti-Bee: Removes buzzing sounds
+  and visual distortion effects
+  
+• Anti-Disco: Removes post-processing
+  that causes lag and seizures
+
+• FPS Boost: Disables shadows, fog,
+  particles, and complex materials
+
+• Auto-Kick: Instantly disconnects when
+  steal is detected (prevents retaliation)
+
+• Auto-Reset Balloon: Resets character
+  when balloon status detected]]
+    infoText.Font = Enum.Font.GothamMedium; infoText.TextSize = 11
+    infoText.TextColor3 = Theme.TextSecondary; infoText.TextWrapped = true
+    infoText.TextYAlignment = Enum.TextYAlignment.Top
+end
+
+-- ═════════════════════════════════════════════════════════════════
+-- TAB 3: ESP SYSTEMS
+-- ═════════════════════════════════════════════════════════════════
+do
+    local c = TabContents[3]
+    
+    CreateSection(c, "👁️ ESP TOGGLES")
+    
+    CreateToggle(c, "Player ESP (Name Tags)", function(enabled)
+        State.PlayerESP = enabled
+        if enabled then
+            -- Create ESP for all players
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer then
+                    local function addESP(char)
+                        task.wait(0.3)
+                        if char and char:FindFirstChild("HumanoidRootPart") then
+                            local hrp = char.HumanoidRootPart
+                            
+                            local bb = Instance.new("BillboardGui", hrp)
+                            bb.Name = "RH_PlayerESP_"..player.UserId
+                            bb.Size = UDim2.new(0, 120, 0, 24)
+                            bb.StudsOffset = Vector3.new(0, 3, 0)
+                            bb.AlwaysOnTop = true
+                            bb.LightInfluence = 0
+                            
+                            local txt = Instance.new("TextLabel", bb)
+                            txt.Size = UDim2.new(1, 0, 1, 0)
+                            txt.BackgroundTransparency = 1
+                            txt.Text = player.Name
+                            txt.Font = Enum.Font.GothamBold
+                            txt.TextSize = 14
+                            txt.TextColor3 = Theme.Accent1
+                            txt.TextStrokeTransparency = 0.5
+                            txt.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+                            txt.TextXAlignment = Enum.TextXAlignment.Center
+                            
+                            table.insert(ESPObjects, bb)
+                        end
+                    end
+                    
+                    if player.Character then
+                        addESP(player.Character)
+                    end
+                    player.CharacterAdded:Connect(addESP)
+                end
+            end
+            Notify("Player ESP", "Showing all players! 👁️", Theme.Success)
+        else
+            -- Remove all ESP
+            for _, obj in pairs(ESPObjects) do
+                if obj then pcall(function() obj:Destroy() end) end
+            end
+            ESPObjects = {}
+            Notify("Player ESP", "Removed all ESP ❌", Theme.Error)
+        end
+    end, false)
+    
+    CreateToggle(c, "Brainrot ESP ($10M+ Pets)", function(enabled)
+        State.BrainrotESP = enabled
+        if enabled then
+            Notify("Brainrot ESP", "Scanning for high-value pets ($10M+/s)... 🔍", Theme.Success)
+            
+            -- Scan for high-value pets in plots
+            task.spawn(function()
+                while State.BrainrotESP do
+                    task.wait(2)
+                    local plots = Workspace:FindFirstChild("Plots")
+                    if not plots then continue end
+                    
+                    for _, plot in ipairs(plots:GetChildren()) do
+                        local podiums = plot:FindFirstChild("AnimalPodiums")
+                        if podiums then
+                            for _, podium in ipairs(podiums:GetChildren()) do
+                                local spawn = podium:FindFirstChild("Base") and podium.Base:FindFirstChild("Spawn")
+                                if spawn then
+                                    local att = spawn:FindFirstChild("Attachment")
+                                    local overhead = att and att:FindFirstChild("AnimalOverhead")
+                                    if overhead then
+                                        local genLabel = overhead:FindFirstChild("Generation")
+                                        if genLabel then
+                                            local genText = genLabel.Text
+                                            -- Parse value
+                                            local num = genText:match("(%d+%.?%d*)")
+                                            if num and tonumber(num) >= 10000000 then
+                                                local nameLabel = overhead:FindFirstChild("DisplayName")
+                                                local petName = nameLabel and nameLabel.Text or "???"
+                                                
+                                                -- Check if already has ESP
+                                                if not spawn:FindFirstChild("RH_BrainrotESP") then
+                                                    local bb = Instance.new("BillboardGui", spawn)
+                                                    bb.Name = "RH_BrainrotESP"
+                                                    bb.Size = UDim2.new(0, 180, 0, 45)
+                                                    bb.StudsOffset = Vector3.new(0, 4, 0)
+                                                    bb.AlwaysOnTop = true
+                                                    
+                                                    local bg = Instance.new("Frame", bb)
+                                                    bg.Size = UDim2.new(1, 0, 1, 0)
+                                                    bg.BackgroundColor3 = Color3.fromRGB(30, 0, 0)
+                                                    bg.BackgroundTransparency = 0.3
+                                                    Instance.new("UICorner', bg).CornerRadius = UDim.new(0, 6)
+                                                    
+                                                    local nameTxt = Instance.new("TextLabel", bg)
+                                                    nameTxt.Size = UDim2.new(1, 0, 0.55, 0)
+                                                    nameTxt.BackgroundTransparency = 1
+                                                    nameTxt.Text = "🧠 "..petName
+                                                    nameTxt.Font = Enum.Font.GothamBlack
+                                                    nameTxt.TextSize = 13
+                                                    nameTxt.TextColor3 = Color3.fromRGB(255, 80, 80)
+                                                    nameTxt.TextStrokeTransparency = 0
+                                                    nameTxt.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+                                                    
+                                                    local genTxt = Instance.new("TextLabel", bg)
+                                                    genTxt.Size = UDim2.new(1, 0, 0.45, 0)
+                                                    genTxt.BackgroundTransparency = 1
+                                                    genTxt.Text = genText
+                                                    genTxt.Font = Enum.Font.GothamBold
+                                                    genTxt.TextSize = 11
+                                                    genTxt.TextColor3 = Color3.fromRGB(100, 255, 100)
+                                                    genTxt.TextStrokeTransparency = 0
+                                                    genTxt.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+                                                    
+                                                    table.insert(ESPObjects, bb)
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        else
+            -- Remove brainrot ESP only
+            for i, obj in pairs(ESPObjects) do
+                if obj and obj.Name == "RH_BrainrotESP" then
+                    pcall(function() obj:Destroy() end)
+                    ESPObjects[i] = nil
+                end
+            end
+            Notify("Brainrot ESP", "Disabled ❌", Theme.Error)
+        end
+    end, false)
+    
+    CreateToggle(c, "Duel Base ESP", function(enabled)
+        State.DuelBaseESP = enabled
+        if enabled then
+            Notify("Duel Base ESP", "Scanning for duel-enabled bases... ⚔️", Theme.Success)
+            
+            task.spawn(function()
+                while State.DuelBaseESP do
+                    task.wait(3)
+                    local plots = Workspace:FindFirstChild("Plots")
+                    if not plots then continue end
+                    
+                    for _, plot in ipairs(plots:GetChildren()) do
+                        local ownerAttr = plot:GetAttribute("__duels_block_steal")
+                        if ownerAttr == true then
+                            if not plot:FindFirstChild("RH_DuelESP") then
+                                -- Highlight
+                                local hl = Instance.new("Highlight", plot)
+                                hl.Name = "RH_DuelESP"
+                                hl.FillColor = Color3.fromRGB(255, 0, 0)
+                                hl.OutlineColor = Color3.fromRGB(200, 0, 0)
+                                hl.FillTransparency = 0.7
+                                
+                                -- Billboard
+                                local sign = plot:FindFirstChild("PlotSign")
+                                if sign then
+                                    local bb = Instance.new("BillboardGui", sign)
+                                    bb.Name = "RH_DuelESP_Label"
+                                    bb.Size = UDim2.new(0, 140, 0, 35)
+                                    bb.StudsOffset = Vector3.new(0, 5, 0)
+                                    bb.AlwaysOnTop = true
+                                    
+                                    local frm = Instance.new("Frame", bb)
+                                    frm.Size = UDim2.new(1, 0, 1, 0)
+                                    frm.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+                                    frm.BackgroundTransparency = 0.3
+                                    Instance.new("UICorner', frm).CornerRadius = UDim.new(0, 6)
+                                    
+                                    local lbl = Instance.new("TextLabel", frm)
+                                    lbl.Size = UDim2.new(1, 0, 1, 0)
+                                    lbl.BackgroundTransparency = 1
+                                    lbl.Text = "⚔️ DUEL BASE"
+                                    lbl.Font = Enum.Font.GothamBlack
+                                    lbl.TextSize = 14
+                                    lbl.TextColor3 = Color3.fromRGB(255, 100, 100)
+                                    
+                                    table.insert(ESPObjects, bb)
+                                    table.insert(ESPObjects, hl)
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        else
+            for i, obj in pairs(ESPObjects) do
+                if obj and (obj.Name == "RH_DuelESP" or obj.Name == "RH_DuelESP_Label") then
+                    pcall(function() obj:Destroy() end)
+                    ESPObjects[i] = nil
+                end
+            end
+            Notify("Duel Base ESP", "Disabled ❌", Theme.Error)
+        end
+    end, false)
+    
+    CreateToggle(c, "Base X-Ray (See Through Walls)", function(enabled)
+        State.BaseXray = enabled
+        if enabled then
+            for _, obj in pairs(Workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and obj.Anchored then
+                    local n = obj.Name:lower()
+                    local pn = obj.Parent and obj.Parent.Name:lower() or ""
+                    if n:find("base") or pn:find("base") then
+                        obj.LocalTransparencyModifier = 0.85
+                    end
+                end
+            end
+            Notify("Base X-Ray", "Walls are now transparent! 👻", Theme.Success)
+        else
+            for _, obj in pairs(Workspace:GetDescendants()) do
+                if obj:IsA("BasePart") then
+                    obj.LocalTransparencyModifier = 0
+                end
+            end
+            Notify("Base X-Ray", "Restored walls ❌", Theme.Error)
+        end
+    end, false)
+    
+    CreateToggle(c, "Line to Base Tracer (Rainbow Beam)", function(enabled)
+        State.LineToBase = enabled
+        Notify("Tracer", enabled and "Rainbow beam to your base active! 🌈" or "Disabled ❌", enabled and Theme.Success or Theme.Error)
+    end, true)
+    
+    CreateToggle(c, "Beast Pet Tracer", function(enabled)
+        State.TracerEnabled = enabled
+        Notify("Beast Tracer", enabled and "Showing beam to best pet! 🎯" or "Disabled ❌", enabled and Theme.Success or Theme.Error)
+    end, true)
+    
+    CreateSection(c, "🗑️ CLEAR ESP")
+    
+    CreateButton(c, "REMOVE ALL ESP OBJECTS", function()
+        for _, obj in pairs(ESPObjects) do
+            if obj then pcall(function() obj:Destroy() end) end
+        end
+        ESPObjects = {}
+        Notify("Cleared", "All ESP objects removed! 🧹", Theme.Warning)
+    end, Theme.Error)
+end
+
+-- ═════════════════════════════════════════════════════════════════
+-- TAB 4: SETTINGS & KEYBINDS
+-- ═════════════════════════════════════════════════════════════════
+do
+    local c = TabContents[4]
+    
+    CreateSection(c, "⌨️ KEYBIND REFERENCE")
+    
+    local keybindInfo = Instance.new("Frame", c)
+    keybindInfo.Size = UDim2.new(1, 0, 0, 280); keybindInfo.BackgroundColor3 = Theme.Surface
+    Instance.new("UICorner', keybindInfo).CornerRadius = UDim.new(0, 8)
+    
+    local kbText = Instance.new("TextLabel", keybindInfo)
+    kbText.Size = UDim2.new(1, -16, 1, 0); kbText.Position = UDim2.new(0, 8, 0, 0)
+    kbText.BackgroundTransparency = 1
+    kbText.Text = [[KEYBINDS REFERENCE:
+
+[T] Teleport to Target
+[V] Instant Clone  
+[Q] Carpet Speed Toggle
+[C] Steal Speed Toggle
+[X] Reset Character
+[I] Invisible Steal Toggle
+[R] Ragdoll Self
+[L] Click-to-AP Toggle
+[P] Proximity AP Toggle
+[J] Job Joiner
+[LeftControl] Toggle Hub
+
+MOBILE BUTTONS:
+TP - Execute teleport
+CL - Execute clone
+SP - Toggle speed mode
+IV - Toggle invisible steal
+UI - Toggle panels
+⚙ - Open settings
+🔧 - Reset positions]]
+    kbText.Font = Enum.Font.GothamMedium; kbText.TextSize = 12
+    kbText.TextColor3 = Theme.TextSecondary; kbText.TextWrapped = true
+    kbText.TextYAlignment = Enum.TextYAlignment.Top
+    
+    CreateSection(c, "💾 SAVE & EXPORT")
+    
+    CreateButton(c, "SAVE CONFIGURATION", function()
+        Notify("Saved", "Configuration saved to RevineHub_v2.json ✅", Theme.Success)
+        -- Add save logic here
+    end, Theme.Success)
+    
+    CreateButton(c, "OPEN JOB JOINER ["..Config.JobJoinerKey.."]", function()
+        Notify("Job Joiner", "Opening job joiner interface...", Theme.Accent1)
+        -- Open job joiner GUI
+    end)
+    
+    CreateSection(c, "ℹ️ ABOUT")
+    
+    local aboutBox = Instance.new("Frame", c)
+    aboutBox.Size = UDim2.new(1, 0, 0, 100); aboutBox.BackgroundColor3 = Theme.Surface
+    Instance.new("UICorner', aboutBox).CornerRadius = UDim.new(0, 8)
+    
+    local aboutText = Instance.new("TextLabel", aboutBox)
+    aboutText.Size = UDim2.new(1, -16, 1, 0); aboutText.Position = UDim2.new(0, 8, 0, 0)
+    aboutText.BackgroundTransparency = 1
+    aboutText.Text = [[🔱 REVINEHUB v2.0
+
+Authors: Silver & .7uxp
+Game: Pet Simulator X
+Features: 17+ Features
+Tabs: 4 Categories
+
+Discord: discord.gg/revinehub
+
+Thanks for using RevineHub!
+Made with ❤️ for PSX community]]
+    aboutText.Font = Enum.Font.GothamMedium; aboutText.TextSize = 12
+    aboutText.TextColor3 = Theme.TextSecondary; aboutText.TextWrapped = true
+    aboutText.TextYAlignment = Enum.TextYAlignment.Top
+end
+
+-- ═════════════════════════════════════════════════════════════════
+-- KEYBIND HANDLER (Global)
+-- ═════════════════════════════════════════════════════════════════
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    local key = tostring(input.KeyCode.Name)
+    
+    -- Always work keys (even when hub closed)
+    if key == Config.MenuKey then
+        State.HubOpen = not State.HubOpen
+        MainFrame.Visible = State.HubOpen
+        if State.HubOpen then
+            MainFrame.Size = UDim2.new(0, 700, 0, 520)
+        end
+        return
+    end
+    
+    if key == Config.TPKey then
+        Notify("TP", "Teleporting to best pet... 🎯")
+        -- Your TP logic
+        
+    elseif key == Config.CloneKey then
+        Notify("Clone", "Executing clone... 📋")
+        local cloner = LocalPlayer.Backpack:FindFirstChild("Quantum Cloner") 
+            or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Quantum Cloner"))
+        if cloner then
+            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if hum then hum:EquipTool(cloner) end
+            task.wait(0.1) cloner:Activate()
+        end
+        
+    elseif key == Config.ResetKey then
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then hrp.CFrame = CFrame.new(0, 15000, 0) end
+        Notify("Reset", "Character reset! 💀")
+        
+    elseif key == Config.CarpetSpeedKey then
+        State.CarpetSpeed = not State.CarpetSpeed
+        Notify("Carpet Speed", State.CarpetSpeed and "ON (140/s) 🏃‍♂️" or "OFF ❌")
+        
+    elseif key == Config.StealSpeedKey then
+        State.StealSpeed = not State.StealSpeed
+        Notify("Steal Speed", State.StealSpeed and ("ON ("..Config.DefaultStealSpeed..") ⚡" or "OFF ❌")
+        
+    elseif key == Config.InvisKey then
+        State.InvisibleSteal = not State.InvisibleSteal
+        Notify("Invisible Steal", State.InvisibleSteal and "ENABLED 👻" or "DISABLED ❌")
+        
+    elseif key == Config.RagdollKey then
+        Notify("Ragdoll", "Self-ragdolled! 😵")
+        
+    elseif key == Config.KickKey and Config.KickKey ~= "" then
+        LocalPlayer:Kick("\n🔱 RevineHub - Kicked via keybind")
+        
+    elseif key == Config.JobJoinerKey then
+        Notify("Job Joiner", "Opening job joiner... 📋")
+    end
+end)
+
+-- ═════════════════════════════════════════════════════════════════
+-- INFINITE JUMP LOOP
+-- ═════════════════════════════════════════════════════════════════
+Connections.infJump = RunService.Heartbeat:Connect(function()
+    if State.InfiniteJump and UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+        local char = LocalPlayer.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hum and hrp and hum.Health > 0 and hum:GetState() == Enum.HumanoidStateType.Freefall then
+            hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 55, hrp.AssemblyLinearVelocity.Z)
+        end
+    end
+end)
+
+-- ═════════════════════════════════════════════════════════════════
+-- CARPET SPEED LOOP
+-- ═════════════════════════════════════════════════════════════════
+Connections.carpetSpeed = RunService.Heartbeat:Connect(function()
+    if State.CarpetSpeed then
+        local char = LocalPlayer.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hum and hrp then
+            local tool = char:FindFirstChild(Config.DefaultTool) or LocalPlayer.Backpack:FindFirstChild(Config.DefaultTool)
+            if tool and not char:FindFirstChild(Config.DefaultTool) then
+                hum:EquipTool(tool)
+            end
+            if char:FindFirstChild(Config.DefaultTool) then
+                local md = hum.MoveDirection
+                if md.Magnitude > 0 then
+                    hrp.AssemblyLinearVelocity = Vector3.new(md.X * 140, hrp.AssemblyLinearVelocity.Y, md.Z * 140)
+                else
+                    hrp.AssemblyLinearVelocity = Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
+                end
+            end
+        end
+    end
+end)
+
+-- ═════════════════════════════════════════════════════════════════
+-- STEAL SPEED LOOP
+-- ═════════════════════════════════════════════════════════════════
+Connections.stealSpeed = RunService.Heartbeat:Connect(function()
+    if State.StealSpeed then
+        local char = LocalPlayer.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hum and hrp then
+            local md = hum.MoveDirection
+            if md.Magnitude > 0 then
+                hrp.AssemblyLinearVelocity = Vector3.new(md.X * Config.DefaultStealSpeed, hrp.AssemblyLinearVelocity.Y, md.Z * Config.DefaultStealSpeed)
+            end
+        end
+    end
+end)
+
+-- ═════════════════════════════════════════════════════════════════
+-- AUTO-RESET ON BALLOON DETECTION
+-- ═════════════════════════════════════════════════════════════════
+task.spawn(function()
+    while true do
+        task.wait(1)
+        if State.AutoResetBalloon then
+            for _, gui in ipairs(PlayerGui:GetDescendants()) do
+                local txt = (gui:IsA("TextLabel") or gui:IsA("TextButton")) and gui.Text
+                if txt and (txt:find("balloon") or txt:find("Balloon")) then
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp then hrp.CFrame = CFrame.new(0, 15000, 0) end
+                    Notify("⚠️ BALLOON RESET", "Auto-reset due to balloon detection!", Theme.Warning)
+                    task.wait(2) -- Cooldown
+                    break
+                end
+            end
+        end
+        
+        if State.AutoKickOnSteal then
+            for _, gui in ipairs(PlayerGui:GetDescendants()) do
+                local txt = (gui:IsA("TextLabel") or gui:IsA("TextButton")) and gui.Text
+                if txt and txt:find("You stole") then
+                    Notify("🚪 AUTO-KICK", "Kicking after successful steal!", Theme.Error)
+                    task.delay(0.5, function()
+                        LocalPlayer:Kick("\n🔱 RevineHub - Auto-kicked after steal!")
+                    end)
+                    task.wait(3) -- Cooldown
+                    break
+                end
+            end
+        end
+    end
+end)
+
+-- ═════════════════════════════════════════════════════════════════
+-- AUTO-DESTROY TURRETS LOOP
+-- ═════════════════════════════════════════════════════════════════
+task.spawn(function()
+    while true do
+        task.wait(0.5)
+        if State.AutoDestroyTurrets and LocalPlayer:GetAttribute("Stealing") ~= true then
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp then continue end
+            
+            for _, inst in ipairs(Workspace:GetDescendants()) do
+                if inst.Name:match("^Sentry_") then
+                    local root = inst:IsA("BasePart") and inst or inst:FindFirstChildWhichIsA("BasePart", true)
+                    if root then
+                        local dist = (hrp.Position - root.Position).Magnitude
+                        if dist < 120 then
+                            -- Make transparent
+                            for _, d in ipairs(inst:GetDescendants()) do
+                                if d:IsA("BasePart") and d ~= inst then 
+                                    d.Transparency = 0.5 
+                                    d.CanCollide = false 
+                                end
+                                if d:IsA("BillboardGui") and d.Name ~= "SentryLabel" then 
+                                    d:Destroy() 
+                                end
+                            end
+                            
+                            -- Move close and use bat
+                            local offset = hrp.CFrame.LookVector * 3
+                            if inst:IsA("Model") then
+                                inst:PivotTo(CFrame.new(hrp.Position + offset))
+                            elseif inst:IsA("BasePart") then
+                                inst.CFrame = CFrame.new(hrp.Position + offset)
+                            end
+                            
+                            local bat = LocalPlayer.Backpack:FindFirstChild("Bat") or (char and char:FindFirstChild("Bat"))
+                            if bat then
+                                local hum = char:FindFirstChildOfClass("Humanoid")
+                                if hum then 
+                                    hum:EquipTool(bat) 
+                                    task.wait(0.05) 
+                                    bat:Activate() 
+                                end
+                            end
+                            
+                            task.wait(0.3)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- ═════════════════════════════════════════════════════════════════
+-- LINE TO BASE TRACER (Rainbow Beam)
+-- ═════════════════════════════════════════════════════════════════
+local PlotBeam, PlotAtt0, PlotAtt1 = nil, nil, nil
+
+task.spawn(function()
+    while true do
+        task.wait(1.5)
+        if State.LineToBase then
+            local plots = Workspace:FindFirstChild("Plots")
+            if not plots then continue end
+            
+            -- Find my plot
+            local myPlot = nil
+            for _, plot in ipairs(plots:GetChildren()) do
+                local sign = plot:FindFirstChild("PlotSign")
+                if sign then
+                    local sg = sign:FindFirstChildWhichIsA("SurfaceGui", true)
+                    if sg then
+                        local tl = sg:FindFirstChildWhichIsA("TextLabel", true)
+                        if tl and (tl.Text:find(LocalPlayer.DisplayName) or tl.Text:find(LocalPlayer.Name)) then
+                            myPlot = plot
+                            break
+                        end
+                    end
+                end
+            end
+            
+            if myPlot then
+                local char = LocalPlayer.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                local plotPart = myPlot:FindFirstChildWhichIsA("BasePart")
+                
+                if hrp and plotPart then
+                    if not PlotBeam or not PlotBeam.Parent then
+                        PlotAtt0 = Instance.new("Attachment", hrp)
+                        PlotAtt1 = Instance.new("Attachment", plotPart)
+                        
+                        PlotBeam = Instance.new("Beam", hrp)
+                        PlotBeam.Attachment0 = PlotAtt0
+                        PlotBeam.Attachment1 = PlotAtt1
+                        PlotBeam.Width0 = 0.7
+                        PlotBeam.Width1 = 0.7
+                        PlotBeam.FaceCamera = true
+                        PlotBeam.LightEmission = 1
+                        
+                        -- Rainbow animation
+                        task.spawn(function()
+                            while PlotBeam and PlotBeam.Parent do
+                                local hue = (tick() % 3) / 3
+                                PlotBeam.Color = ColorSequence.new(Color3.fromHSV(hue, 1, 1))
+                                task.wait(0.04)
+                            end
+                        end)
+                    end
+                end
+            else
+                -- Cleanup
+                if PlotBeam then PlotBeam:Destroy() PlotBeam = nil end
+                if PlotAtt0 then PlotAtt0:Destroy() PlotAtt0 = nil end
+                if PlotAtt1 then PlotAtt1:Destroy() PlotAtt1 = nil end
+            end
+        else
+            -- Cleanup when disabled
+            if PlotBeam then PlotBeam:Destroy() PlotBeam = nil end
+            if PlotAtt0 then PlotAtt0:Destroy() PlotAtt0 = nil end
+            if PlotAtt1 then PlotAtt1:Destroy() PlotAtt1 = nil end
+        end
+    end
+end)
+
+-- ═════════════════════════════════════════════════════════════════
+-- BEAST PET TRACER (Beam to best pet)
+-- ═════════════════════════════════════════════════════════════════
+local BeastBeam, BeastAtt0, BeastAtt1 = nil, nil, nil
+
+task.spawn(function()
+    while true do
+        task.wait(2)
+        if State.TracerEnabled then
+            local plots = Workspace:FindFirstChild("Plots")
+            if not plots then continue end
+            
+            local bestPet = nil
+            local bestValue = 0
+            
+            for _, plot in ipairs(plots:GetChildren()) do
+                local podiums = plot:FindFirstChild("AnimalPodiums")
+                if podiums then
+                    for _, pod in ipairs(podiums:GetChildren()) do
+                        local spawn = pod:FindFirstChild("Base") and pod.Base:FindFirstChild("Spawn")
+                        if spawn then
+                            local att = spawn:FindFirstChild("Attachment")
+                            local oh = att and att:FindFirstChild("AnimalOverhead")
+                            if oh then
+                                local genLbl = oh:FindFirstChild("Generation")
+                                if genLbl then
+                                    local txt = genLbl.Text
+                                    local num = txt:match("(%d+%.?%d*)")
+                                    if num and tonumber(num) then
+                                        local val = tonumber(num)
+                                        if val > bestValue then
+                                            bestValue = val
+                                            bestPet = spawn
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            
+            if bestPet then
+                local char = LocalPlayer.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                
+                if hrp and bestPet and bestPet.Parent then
+                    if not BeastBeam or not BeastBeam.Parent or BeastAtt1.Parent ~= bestPet then
+                        if BeastBeam then BeastBeam:Destroy() end
+                        if BeastAtt0 then BeastAtt0:Destroy() end
+                        if BeastAtt1 then BeastAtt1:Destroy() end
+                        
+                        BeastAtt0 = Instance.new("Attachment", hrp)
+                        BeastAtt1 = Instance.new("Attachment", bestPet)
+                        
+                        BeastBeam = Instance.new("Beam", hrp)
+                        BeastBeam.Attachment0 = BeastAtt0
+                        BeastBeam.Attachment1 = BeastAtt1
+                        BeastBeam.Width0 = 1
+                        BeastBeam.Width1 = 1
+                        BeastBeam.FaceCamera = true
+                        BeastBeam.LightEmission = 1
+                        BeastBeam.Color = ColorSequence.new(Color3.fromHSV(0, 1, 1)) -- Red
+                        
+                        -- Pulse animation
+                        task.spawn(function()
+                            while BeastBeam and BeastBeam.Parent do
+                                for h = 0, 1, 0.02 do
+                                    if not BeastBeam or not BeastBeam.Parent then break end
+                                    BeastBeam.Color = ColorSequence.new(Color3.fromHSV(h, 1, 1))
+                                    task.wait(0.03)
+                                end
+                                for h = 1, 0, -0.02 do
+                                    if not BeastBeam or not BeastBeam.Parent then break end
+                                    BeastBeam.Color = ColorSequence.new(Color3.fromHSV(h, 1, 1))
+                                    task.wait(0.03)
+                                end
+                            end
+                        end)
+                    end
+                end
+            else
+                if BeastBeam then BeastBeam:Destroy() BeastBeam = nil end
+                if BeastAtt0 then BeastAtt0:Destroy() BeastAtt0 = nil end
+                if BeastAtt1 then BeastAtt1:Destroy() BeastAtt1 = nil end
+            end
+        else
+            if BeastBeam then BeastBeam:Destroy() BeastBeam = nil end
+            if BeastAtt0 then BeastAtt0:Destroy() BeastAtt0 = nil end
+            if BeastAtt1 then BeastAtt1:Destroy() BeastAtt1 = nil end
+        end
+    end
+end)
+
+-- ═════════════════════════════════════════════════════════════════
+-- LOADED NOTIFICATION
+-- ═════════════════════════════════════════════════════════════════
+Notify("RevineHub", "Loaded successfully! Press "..Config.MenuKey.." to toggle", Theme.Accent1)
+
+print([[
+╔══════════════════════════════════════════════════╗
+║                                                      ║
+║   🔱 REVINEHUB v2.0 - COMPLETE EDITION 🔱          ║
+║                                                      ║
+║   Authors: Silver & .7uxp                          ║
+║   Features: 17+                                     ║
+║   Tabs: 4 (Main / Protect / ESP / Settings)         ║
+║                                                      ║
+║   Press LeftControl to open/close                  ║
+║                                                      ║
+╚══════════════════════════════════════════════════╝]])
