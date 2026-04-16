@@ -77,8 +77,7 @@ FOV = 105.8, HoverHeight = 6
 }
 C.KEYBINDS = {
 SPEED = Enum.KeyCode.V, SPIN = Enum.KeyCode.N, GALAXY = Enum.KeyCode.M,
-BATAIMBOT = Enum.KeyCode.L, -- Changed default to L for Lock
-NUKE = Enum.KeyCode.Q,
+BATAIMBOT = Enum.KeyCode.L, NUKE = Enum.KeyCode.Q,
 AUTOLEFT = Enum.KeyCode.Z, AUTORIGHT = Enum.KeyCode.C,
 AUTOPLAYLEFT = Enum.KeyCode.F10, AUTOPLAYRIGHT = Enum.KeyCode.F11,
 ANTIRAGDOLL = Enum.KeyCode.F1, SPEEDSTEAL = Enum.KeyCode.F2,
@@ -2037,9 +2036,8 @@ local btnAAR,bsAAR=makePBtn("AUTO","R",2)
 local btnDR,bsDR=makePBtn("DROP","",3)
 local btnTP,bsTP=makePBtn("TP","DOWN",4)
 local btnLK,bsLK=makePBtn("LOCK","",5)
-local btnAG,bsAG=makePBtn("AUTO","GRAB",6)
--- ONLY 4 BUTTON STATES
-local pState={AAL=false,AAR=false,LK=false,AG=false}
+-- ONLY 5 BUTTON STATES (Removed Auto Grab)
+local pState={AAL=false,AAR=false,LK=false}
 mobBtnRefs["AUTO L"]={btn=btnAAL,bs=bsAAL,state=false}
 mobBtnRefs["AUTO R"]={btn=btnAAR,bs=bsAAR,state=false}
 local function mutualOff(keep)
@@ -2051,15 +2049,6 @@ btnAAR.MouseButton1Click:Connect(function() local ns=not pState.AAR; if ns then 
 btnDR.MouseButton1Click:Connect(function() setPH(btnDR,bsDR,true); task.delay(0.35,function() setPH(btnDR,bsDR,false) end); task.spawn(doDrop) end)
 btnTP.MouseButton1Click:Connect(function() setPH(btnTP,bsTP,true); task.delay(0.35,function() setPH(btnTP,bsTP,false) end); task.spawn(doTPDown) end)
 btnLK.MouseButton1Click:Connect(function() local ns=not pState.LK; if ns then mutualOff("LK") end; pState.LK=ns; setPH(btnLK,bsLK,ns); if toggleSetters["Lock"] then toggleSetters["Lock"](ns) end; if ns then startBatAimbot() else stopBatAimbot() end end)
-btnAG.MouseButton1Click:Connect(function()
-local ns=not pState.AG
-pState.AG=ns
-setPH(btnAG,bsAG,ns)
-autoStealEnabled=ns
-if toggleSetters["Auto Grab"] then toggleSetters["Auto Grab"](ns) end
-if ns then startAutoSteal() else stopAutoSteal() end
-saveConfig()
-end)
 -- ====================== KEYBIND INPUT ======================
 UserInputService.InputBegan:Connect(function(input,processed)
 if processed then return end
@@ -2075,13 +2064,6 @@ elseif kc==Keybinds.MobAutoR and Keybinds.MobAutoR~=Enum.KeyCode.Unknown then
 local ns=not pState.AAR; if ns then mutualOff("AAR") end; pState.AAR=ns; setPH(btnAAR,bsAAR,ns); mobBtnRefs["AUTO R"].state=ns; if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](ns) end; if ns then autoROn=true; startAutoR() else autoROn=false; stopAutoR() end
 elseif kc==Keybinds.BatAimbot then
 local ns=not pState.LK; if ns then mutualOff("LK") end; pState.LK=ns; setPH(btnLK,bsLK,ns); if toggleSetters["Lock"] then toggleSetters["Lock"](ns) end; if ns then startBatAimbot() else stopBatAimbot() end
-elseif kc==Keybinds.AutoSteal then
-autoStealEnabled=not autoStealEnabled
-pState.AG=autoStealEnabled
-setPH(btnAG,bsAG,autoStealEnabled)
-if toggleSetters["Auto Grab"] then toggleSetters["Auto Grab"](autoStealEnabled) end
-if autoStealEnabled then startAutoSteal() else stopAutoSteal() end
-saveConfig()
 elseif kc==Keybinds.Drop then task.spawn(doDrop)
 elseif kc==Keybinds.TPDown then task.spawn(doTPDown)
 elseif kc==Keybinds.AutoSteal then autoStealEnabled=not autoStealEnabled; if autoStealEnabled then startAutoSteal() else stopAutoSteal() end; if toggleSetters["Auto Steal"] then toggleSetters["Auto Steal"](autoStealEnabled) end; saveConfig()
