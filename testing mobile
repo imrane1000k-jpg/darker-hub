@@ -2053,6 +2053,8 @@ task.spawn(function()
     makeValueRow("Steal Radius",STEAL_RADIUS,function(v) STEAL_RADIUS=math.clamp(v,1,300); saveConfig() end)
     makeToggleRow("Auto Left",false,function(s) if s then if batAimbotEnabled then stopBatAimbot(); if toggleSetters["Lock"] then toggleSetters["Lock"](false) end end; if aprOn then stopAutoPlayRight(); if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end end; if autoROn then stopAutoR(); if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](false) end end; if aplOn then stopAutoPlayLeft(); if toggleSetters["Play Left"] then toggleSetters["Play Left"](false) end end; autoLOn=true; startAutoL() else autoLOn=false; stopAutoL() end end)
     makeToggleRow("Auto Right",false,function(s) if s then if batAimbotEnabled then stopBatAimbot(); if toggleSetters["Lock"] then toggleSetters["Lock"](false) end end; if aplOn then stopAutoPlayLeft(); if toggleSetters["Play Left"] then toggleSetters["Play Left"](false) end end; if autoLOn then stopAutoL(); if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](false) end end; if aprOn then stopAutoPlayRight(); if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end end; autoROn=true; startAutoR() else autoROn=false; stopAutoR() end end)
+    makeToggleRow("Play Left",false,function(s) if s then if batAimbotEnabled then stopBatAimbot(); if toggleSetters["Lock"] then toggleSetters["Lock"](false) end end; if aprOn then stopAutoPlayRight(); if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end end; if autoLOn then stopAutoL(); if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](false) end end; if autoROn then stopAutoR(); if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](false) end end; aplOn=true; startAutoPlayLeft() else aplOn=false; stopAutoPlayLeft() end end)
+    makeToggleRow("Play Right",false,function(s) if s then if batAimbotEnabled then stopBatAimbot(); if toggleSetters["Lock"] then toggleSetters["Lock"](false) end end; if aplOn then stopAutoPlayLeft(); if toggleSetters["Play Left"] then toggleSetters["Play Left"](false) end end; if autoLOn then stopAutoL(); if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](false) end end; if autoROn then stopAutoR(); if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](false) end end; aprOn=true; startAutoPlayRight() else aprOn=false; stopAutoPlayRight() end end)
 
     makeSectionHeader("DEFENSE")
     do
@@ -2164,10 +2166,10 @@ end)
         return btn,bs
     end
     local function setPH(btn,bs,isOn) btn.BackgroundColor3=isOn and PURPLE_ON or BLACK_OFF; bs.Color=isOn and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(40,40,50); bs.Transparency=isOn and 0 or 0.2 end
-    local btnAAL,bsAAL=makePBtn("AUTO","L",1); local btnAAR,bsAAR=makePBtn("AUTO","R",2)
-    local btnPL,bsPL=makePBtn("PLAY","L",3); local btnPR,bsPR=makePBtn("PLAY","R",4)
-    local btnDR,bsDR=makePBtn("DROP","",5); local btnTP,bsTP=makePBtn("TP","DOWN",6)
-    local btnAG,bsAG=makePBtn("AUTO","GRAB",8);
+    local btnAAL,bsAAL=makePBtn("AUTO","L",1)
+    local btnAAR,bsAAR=makePBtn("AUTO","R",2)
+    local btnDR,bsDR=makePBtn("DROP","",3)
+    local btnTP,bsTP=makePBtn("TP","DOWN",4)
     local pState={AAL=false,AAR=false,PL=false,PR=false,LK=false,AG=autoStealEnabled}
     mobBtnRefs["AUTO L"]={btn=btnAAL,bs=bsAAL,state=false}; mobBtnRefs["AUTO R"]={btn=btnAAR,bs=bsAAR,state=false}
     mobBtnRefs["PLAY L"]={btn=btnPL,bs=bsPL,state=false}; mobBtnRefs["PLAY R"]={btn=btnPR,bs=bsPR,state=false}
@@ -2223,7 +2225,13 @@ end)
     end)
 
     if espEnabled then enableESP() end
-    applyFOV()
+    applyFOV()-- AUTO SAVE (every 2 seconds, no button needed)
+task.spawn(function()
+    while true do
+        task.wait(2)
+        saveConfig()
+    end
+end)
     if brainrotDefenseEnabled then startBrainrotDefense() end
     if spinBotEnabled then startSpin() end
     if antiRagdollEnabled then startAntiRagdoll() end
