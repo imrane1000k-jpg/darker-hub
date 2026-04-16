@@ -2123,7 +2123,7 @@ end)
     -- ====================== MOBILE PANEL (draggable, smooth) ======================
     local PURPLE_ON=Color3.fromRGB(160, 0, 0); local BLACK_OFF=Color3.fromRGB(8,8,8)
     local panelGui=Instance.new("ScreenGui",player:WaitForChild("PlayerGui")); panelGui.Name="SomHub_MobilePanel"; panelGui.ResetOnSpawn=false; panelGui.IgnoreGuiInset=true; panelGui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling; panelGui.DisplayOrder=8
-    local panelFrame=Instance.new("Frame",panelGui); panelFrame.Name="MobilePanel"; panelFrame.Size=UDim2.new(0,130,0,250); panelFrame.Position=UDim2.new(1,-138,0.5,-125); panelFrame.BackgroundColor3=Color3.fromRGB(4,4,6); panelFrame.BackgroundTransparency=0.05; panelFrame.BorderSizePixel=0; panelFrame.Active=true; panelFrame.ZIndex=20
+    local panelFrame=Instance.new("Frame",panelGui); panelFrame.Name="MobilePanel"; ppanelFrame.Size=UDim2.new(0,180,0,320); panelFrame.Position=UDim2.new(1,-138,0.5,-125); panelFrame.BackgroundColor3=Color3.fromRGB(4,4,6); panelFrame.BackgroundTransparency=0.05; panelFrame.BorderSizePixel=0; panelFrame.Active=true; panelFrame.ZIndex=20
     Instance.new("UICorner",panelFrame).CornerRadius=UDim.new(0,14)
     local psk=Instance.new("UIStroke",panelFrame); psk.Color=Color3.fromRGB(160, 0, 0); psk.Thickness=1.2; psk.Transparency=0.3
     local pDragging=false; local pDragStart=nil; local pFrameStart=nil
@@ -2150,8 +2150,8 @@ end)
     end)
     local panelTitle=Instance.new("TextLabel",panelFrame); panelTitle.Size=UDim2.new(1,-4,0,13); panelTitle.Position=UDim2.new(0,2,0,2); panelTitle.BackgroundTransparency=1; panelTitle.Text="SOM HUB"; panelTitle.Font=Enum.Font.LuckiestGuy; panelTitle.TextSize=9; panelTitle.TextColor3=Color3.fromRGB(255, 50, 50); panelTitle.TextXAlignment=Enum.TextXAlignment.Center; panelTitle.ZIndex=26
     task.spawn(function() local t=0; while panelTitle and panelTitle.Parent do t=t+0.05; local p=(math.sin(t*2)+1)/2; panelTitle.TextColor3=Color3.fromRGB(math.floor(200+p*55), math.floor(50*p), math.floor(50*p)); task.wait(0.05) end end)
-    local btnGrid=Instance.new("Frame",panelFrame); btnGrid.Size=UDim2.new(1,-8,0,228); btnGrid.Position=UDim2.new(0,4,0,16); btnGrid.BackgroundTransparency=1; btnGrid.ZIndex=21
-    local gl=Instance.new("UIGridLayout",btnGrid); gl.CellSize=UDim2.new(0.5,-3,0,54); gl.CellPadding=UDim2.new(0,5,0,4); gl.SortOrder=Enum.SortOrder.LayoutOrder; gl.FillDirectionMaxCells=2
+    local btnGrid=Instance.new("Frame",panelFrame); btnGrid.Size=UDim2.new(1,-10,0,290); btnGrid.Position=UDim2.new(0,5,0,20); btnGrid.BackgroundTransparency=1; btnGrid.ZIndex=21
+    local gl=Instance.new("UIGridLayout",btnGrid); gl.CellSize=UDim2.new(0.5,-4,0,65); gl.CellPadding=UDim2.new(0,6,0,6); gl.SortOrder=Enum.SortOrder.LayoutOrder; gl.FillDirectionMaxCells=2
     local function makePBtn(l1,l2,order)
         local btn=Instance.new("TextButton",btnGrid); btn.LayoutOrder=order; btn.Size=UDim2.new(0,1,0,1); btn.BackgroundColor3=BLACK_OFF; btn.BackgroundTransparency=0; btn.BorderSizePixel=0; btn.Text=""; btn.ZIndex=22
         Instance.new("UICorner",btn).CornerRadius=UDim.new(0,10)
