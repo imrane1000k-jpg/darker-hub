@@ -2025,7 +2025,6 @@ task.spawn(function()
     makeToggleRow("Anti Ragdoll",antiRagdollEnabled,function(s) antiRagdollEnabled=s; if s then startAntiRagdoll() else stopAntiRagdoll() end; saveConfig() end)
     makeToggleRow("Unwalk",unwalkEnabled,function(s) unwalkEnabled=s; if s then startUnwalk() else stopUnwalk() end; saveConfig() end)
     makeToggleRow("Good Animation",goodAnimEnabled,function(s) goodAnimEnabled=s; if s then startGoodAnim() else stopGoodAnim() end; saveConfig() end)
-    makeToggleRow("Slow Hold",slowDownEnabled,function(s) slowDownEnabled=s; saveConfig() end)
     
     -- SPEED INPUTS
     local normalSpeedBox=makeValueRow("Normal Speed",NORMAL_SPEED,function(v) NORMAL_SPEED=math.clamp(v,1,300); saveConfig() end)
@@ -2105,10 +2104,9 @@ task.spawn(function()
 end)
 
     makeSectionHeader("KEYBINDS")
-    makeKeybindRow("Play Left","AutoLeft"); makeKeybindRow("Play Right","AutoRight"); makeKeybindRow("Lock","BatAimbot")
+    makeKeybindRow("Lock","BatAimbot")
     makeKeybindRow("Auto Left","MobAutoL"); makeKeybindRow("Auto Right","MobAutoR")
-    makeKeybindRow("Auto Grab","AutoSteal"); makeKeybindRow("Drop","Drop"); makeKeybindRow("TP Down","TPDown")
-    makeKeybindRow("Auto Steal","AutoSteal"); makeKeybindRow("Anti Ragdoll","AntiRagdoll"); makeKeybindRow("Unwalk","Unwalk")
+    makeKeybindRow("Drop","Drop"); makeKeybindRow("TP Down","TPDown")
 
     -- ====================== PROGRESS BAR ======================
     local PBC=Instance.new("Frame",PBGui)
