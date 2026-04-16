@@ -1,4 +1,4 @@
--- Som Hub – Full Merge (Updated) - Black/Grey/Red Theme
+-- Som Hub – Full Merge (Updated) - Black/Grey/Red Theme + Thief Speed System
 task.spawn(function()
 _G.SomHub = {}
 local C = _G.SomHub
@@ -65,7 +65,7 @@ AutoPlayLeftEnabled = false, AutoPlayRightEnabled = false, InfJump = false,
 ESP = false, Hover = false, Stats = false, SpeedMeter = false, TPDown = false
 }
 C.Values = {
-BoostSpeed = 30, SpinSpeed = 30, StealingSpeedValue = 29,
+BoostSpeed = 30, SpinSpeed = 30, StealingSpeedValue = 20, -- Defaulted to 20 for Thief Speed
 STEAL_RADIUS = 20, STEAL_DURATION = 1.3,
 AutoLeftSpeed = 59.5, AutoRightSpeed = 59.5,
 AutoWalkReturnSpeed = 30, AutoPlayReturnSpeed = 30,
@@ -229,9 +229,9 @@ C.ThemeNames = {"Royal Purple", "Crimson Red", "Cyberpunk Yellow", "Neon Green",
 C.Color = {
 bg = Color3.fromRGB(12,12,15),
 sidebar = Color3.fromRGB(18,18,22),
-primary = C.Themes["Royal Purple"].P,
-primaryLight = C.Themes["Royal Purple"].L,
-primaryDark = C.Themes["Royal Purple"].D,
+primary = C.Themes["Crimson Red"].P, -- Changed to Red theme base
+primaryLight = C.Themes["Crimson Red"].L,
+primaryDark = C.Themes["Crimson Red"].D,
 text = Color3.fromRGB(245,245,245),
 textMuted = Color3.fromRGB(130,130,140),
 elementBg = Color3.fromRGB(24,24,28),
@@ -998,7 +998,7 @@ C.RadiusVisualizer.CanCollide = false
 C.RadiusVisualizer.Anchored = true
 C.RadiusVisualizer.CastShadow = false
 C.RadiusVisualizer.Material = Enum.Material.ForceField
-C.RadiusVisualizer.Color = Color3.fromRGB(138,43,226)
+C.RadiusVisualizer.Color = Color3.fromRGB(255, 50, 50) -- Red
 C.RadiusVisualizer.Transparency = 0.5
 C.RunService.Heartbeat:Connect(function()
 if C.Enabled.AutoSteal and C.Player.Character and C.Player.Character:FindFirstChild("HumanoidRootPart") then
@@ -1212,7 +1212,7 @@ local h = Instance.new("BoxHandleAdornment", char)
 h.Name = "SomHubHitbox"
 h.Adornee = hrp
 h.Size = Vector3.new(4,6,2)
-h.Color3 = Color3.fromRGB(138,43,226)
+h.Color3 = Color3.fromRGB(255, 50, 50) -- Red
 h.Transparency = 0.6
 h.ZIndex = 10
 h.AlwaysOnTop = true
@@ -1226,7 +1226,7 @@ local l = Instance.new("TextLabel", b)
 l.Size = UDim2.new(1,0,1,0)
 l.BackgroundTransparency = 1
 l.Text = plr.DisplayName
-l.TextColor3 = Color3.fromRGB(138,43,226)
+l.TextColor3 = Color3.fromRGB(255, 50, 50) -- Red
 l.Font = Enum.Font.GothamBold
 l.TextSize = 14
 end
@@ -1528,7 +1528,7 @@ AntiRagdoll=Enum.KeyCode.X, Unwalk=Enum.KeyCode.N,
 CarrySpd=Enum.KeyCode.F7, Drop=Enum.KeyCode.F3, TPDown=Enum.KeyCode.G,
 MobAutoL=Enum.KeyCode.Unknown, MobAutoR=Enum.KeyCode.Unknown
 }
-local aimbotHighlight=Instance.new("Highlight"); aimbotHighlight.Name="SomHubAimbotESP"; aimbotHighlight.FillColor=Color3.fromRGB(138,43,226); aimbotHighlight.OutlineColor=Color3.fromRGB(255,255,255); aimbotHighlight.FillTransparency=0.5; aimbotHighlight.OutlineTransparency=0
+local aimbotHighlight=Instance.new("Highlight"); aimbotHighlight.Name="SomHubAimbotESP"; aimbotHighlight.FillColor=Color3.fromRGB(255,0,0); aimbotHighlight.OutlineColor=Color3.fromRGB(255,255,255); aimbotHighlight.FillTransparency=0.5; aimbotHighlight.OutlineTransparency=0
 pcall(function() aimbotHighlight.Parent=player:WaitForChild("PlayerGui") end)
 -- ====================== SAVE / LOAD ======================
 local function saveConfig()
@@ -1602,7 +1602,7 @@ local function stopAntiRagdoll() for _,conn in pairs(AntiRagdollConns) do conn:D
 local function startUnwalk() if not gChar then return end; local h2=gChar:FindFirstChildOfClass("Humanoid"); if not h2 then return end; local anim=h2:FindFirstChildOfClass("Animator"); if not anim then return end; for _,t in ipairs(anim:GetPlayingAnimationTracks()) do t:Stop(0) end; if unwalkConn then unwalkConn:Disconnect() end; unwalkConn=RunService.Heartbeat:Connect(function() if not unwalkEnabled then unwalkConn:Disconnect(); unwalkConn=nil; return end; local c=player.Character; if not c then return end; local hh=c:FindFirstChildOfClass("Humanoid"); if not hh then return end; local an=hh:FindFirstChildOfClass("Animator"); if not an then return end; for _,t in ipairs(an:GetPlayingAnimationTracks()) do t:Stop(0) end end) end
 local function stopUnwalk() if unwalkConn then unwalkConn:Disconnect(); unwalkConn=nil end end
 -- ====================== ESP ======================
-local function createESP(plr) if plr==player or not plr.Character then return end; local c=plr.Character; local root=c:FindFirstChild("HumanoidRootPart"); if not root then return end; local head=c:FindFirstChild("Head"); if not head then return end; if c:FindFirstChild("SomHubESP") then return end; local box=Instance.new("BoxHandleAdornment"); box.Name="SomHubESP"; box.Adornee=root; box.Size=Vector3.new(4,6,2); box.Color3=Color3.fromRGB(138,43,226); box.Transparency=0.45; box.ZIndex=10; box.AlwaysOnTop=true; box.Parent=c; local bb=Instance.new("BillboardGui"); bb.Name="SomHubESP_Name"; bb.Adornee=head; bb.Size=UDim2.new(0,200,0,45); bb.StudsOffset=Vector3.new(0,3,0); bb.AlwaysOnTop=true; bb.Parent=c; local lbl=Instance.new("TextLabel"); lbl.Size=UDim2.new(1,0,1,0); lbl.BackgroundTransparency=1; lbl.Text=plr.DisplayName; lbl.TextColor3=Color3.fromRGB(255,255,255); lbl.Font=Enum.Font.GothamBold; lbl.TextScaled=true; lbl.TextStrokeTransparency=0.5; lbl.TextStrokeColor3=Color3.fromRGB(138,43,226); lbl.Parent=bb end
+local function createESP(plr) if plr==player or not plr.Character then return end; local c=plr.Character; local root=c:FindFirstChild("HumanoidRootPart"); if not root then return end; local head=c:FindFirstChild("Head"); if not head then return end; if c:FindFirstChild("SomHubESP") then return end; local box=Instance.new("BoxHandleAdornment"); box.Name="SomHubESP"; box.Adornee=root; box.Size=Vector3.new(4,6,2); box.Color3=Color3.fromRGB(255,50,50); box.Transparency=0.45; box.ZIndex=10; box.AlwaysOnTop=true; box.Parent=c; local bb=Instance.new("BillboardGui"); bb.Name="SomHubESP_Name"; bb.Adornee=head; bb.Size=UDim2.new(0,200,0,45); bb.StudsOffset=Vector3.new(0,3,0); bb.AlwaysOnTop=true; bb.Parent=c; local lbl=Instance.new("TextLabel"); lbl.Size=UDim2.new(1,0,1,0); lbl.BackgroundTransparency=1; lbl.Text=plr.DisplayName; lbl.TextColor3=Color3.fromRGB(255,255,255); lbl.Font=Enum.Font.GothamBold; lbl.TextScaled=true; lbl.TextStrokeTransparency=0.5; lbl.TextStrokeColor3=Color3.fromRGB(255,50,50); lbl.Parent=bb end
 local function removeESP(plr) if not plr.Character then return end; local b=plr.Character:FindFirstChild("SomHubESP"); local n=plr.Character:FindFirstChild("SomHubESP_Name"); if b then b:Destroy() end; if n then n:Destroy() end end
 local function enableESP() for _,plr in ipairs(Players:GetPlayers()) do if plr~=player then if plr.Character then pcall(function() createESP(plr) end) end; table.insert(espConns,plr.CharacterAdded:Connect(function() task.wait(0.1); if espEnabled then pcall(function() createESP(plr) end) end end)) end end; table.insert(espConns,Players.PlayerAdded:Connect(function(plr) if plr==player then return end; table.insert(espConns,plr.CharacterAdded:Connect(function() task.wait(0.1); if espEnabled then pcall(function() createESP(plr) end) end end)) end)) end
 local function disableESP() for _,plr in ipairs(Players:GetPlayers()) do pcall(function() removeESP(plr) end) end; for _,c in ipairs(espConns) do if c and c.Connected then c:Disconnect() end end; espConns={} end
@@ -1874,7 +1874,7 @@ makeToggleRow("Infinite Jump",infJumpEnabled,function(s) infJumpEnabled=s; saveC
 makeToggleRow("Anti Ragdoll",antiRagdollEnabled,function(s) antiRagdollEnabled=s; if s then startAntiRagdoll() else stopAntiRagdoll() end; saveConfig() end)
 makeToggleRow("Unwalk",unwalkEnabled,function(s) unwalkEnabled=s; if s then startUnwalk() else stopUnwalk() end; saveConfig() end)
 makeToggleRow("Good Animation",goodAnimEnabled,function(s) goodAnimEnabled=s; if s then startGoodAnim() else stopGoodAnim() end; saveConfig() end)
-makeToggleRow("Slow Hold",slowDownEnabled,function(s) slowDownEnabled=s; saveConfig() end)
+-- Removed Slow Hold Toggle
 local normalSpeedBox=makeValueRow("Normal Speed",NORMAL_SPEED,function(v) NORMAL_SPEED=math.clamp(v,1,300); saveConfig() end)
 local carrySpeedBox=makeValueRow("SH Value",SLOW_SPEED,function(v) SLOW_SPEED=math.clamp(v,1,300); saveConfig() end)
 makeToggleRow("Desync Mode",desyncEnabled,function(s)
@@ -1897,6 +1897,21 @@ end)
 makeToggleRow("Auto Steal",autoStealEnabled,function(s) autoStealEnabled=s; if s then startAutoSteal() else stopAutoSteal() end; saveConfig() end)
 makeValueRow("Grab Time (s)",STEAL_DURATION,function(v) STEAL_DURATION=math.clamp(v,0.05,10); saveConfig() end)
 makeValueRow("Steal Radius",STEAL_RADIUS,function(v) STEAL_RADIUS=math.clamp(v,1,300); saveConfig() end)
+-- NEW THIEF SPEED SYSTEM INTEGRATED HERE
+makeToggleRow("Thief Speed",false,function(s) 
+    if s then 
+        if autoLOn then stopAutoL(); if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](false) end end
+        if autoROn then stopAutoR(); if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](false) end end
+        if aplOn then stopAutoPlayLeft(); if toggleSetters["Play Left"] then toggleSetters["Play Left"](false) end end
+        if aprOn then stopAutoPlayRight(); if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end end
+        C.Enabled.SpeedWhileStealing = true; C.startSpeedWhileStealing() 
+    else 
+        C.Enabled.SpeedWhileStealing = false; C.stopSpeedWhileStealing() 
+    end 
+    saveConfig() 
+end)
+makeValueRow("Steal Speed Value",C.Values.StealingSpeedValue,function(v) C.Values.StealingSpeedValue=v; saveConfig() end)
+
 makeToggleRow("Auto Left",false,function(s) if s then if batAimbotEnabled then stopBatAimbot(); if toggleSetters["Lock"] then toggleSetters["Lock"](false) end end; if aprOn then stopAutoPlayRight(); if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end end; if autoROn then stopAutoR(); if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](false) end end; if aplOn then stopAutoPlayLeft(); if toggleSetters["Play Left"] then toggleSetters["Play Left"](false) end end; autoLOn=true; startAutoL() else autoLOn=false; stopAutoL() end end)
 makeToggleRow("Auto Right",false,function(s) if s then if batAimbotEnabled then stopBatAimbot(); if toggleSetters["Lock"] then toggleSetters["Lock"](false) end end; if aplOn then stopAutoPlayLeft(); if toggleSetters["Play Left"] then toggleSetters["Play Left"](false) end end; if autoLOn then stopAutoL(); if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](false) end end; if aprOn then stopAutoPlayRight(); if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end end; autoROn=true; startAutoR() else autoROn=false; stopAutoR() end end)
 makeToggleRow("Play Left",false,function(s) if s then if batAimbotEnabled then stopBatAimbot(); if toggleSetters["Lock"] then toggleSetters["Lock"](false) end end; if aprOn then stopAutoPlayRight(); if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end end; if autoLOn then stopAutoL(); if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](false) end end; if autoROn then stopAutoR(); if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](false) end end; aplOn=true; startAutoPlayLeft() else aplOn=false; stopAutoPlayLeft() end end)
@@ -1931,7 +1946,7 @@ makeActionBtn("Save Config",function(btn) saveConfig(); btn.Text="Saved"; btn.Te
 makeSectionHeader("KEYBINDS")
 makeKeybindRow("Play Left","AutoLeft"); makeKeybindRow("Play Right","AutoRight"); makeKeybindRow("Lock","BatAimbot")
 makeKeybindRow("Auto Left","MobAutoL"); makeKeybindRow("Auto Right","MobAutoR")
-makeKeybindRow("Slow Hold","CarrySpd"); makeKeybindRow("Drop","Drop"); makeKeybindRow("TP Down","TPDown")
+makeKeybindRow("Drop","Drop"); makeKeybindRow("TP Down","TPDown")
 makeKeybindRow("Auto Steal","AutoSteal"); makeKeybindRow("Anti Ragdoll","AntiRagdoll"); makeKeybindRow("Unwalk","Unwalk")
 -- ====================== PROGRESS BAR ======================
 local PBC=Instance.new("Frame",PBGui)
@@ -1993,11 +2008,11 @@ local function setPH(btn,bs,isOn) btn.BackgroundColor3=isOn and PURPLE_ON or BLA
 local btnAAL,bsAAL=makePBtn("AUTO","L",1); local btnAAR,bsAAR=makePBtn("AUTO","R",2)
 local btnPL,bsPL=makePBtn("PLAY","L",3); local btnPR,bsPR=makePBtn("PLAY","R",4)
 local btnDR,bsDR=makePBtn("DROP","",5); local btnTP,bsTP=makePBtn("TP","DOWN",6)
-local btnLK,bsLK=makePBtn("LOCK","",7); local btnSH,bsSH=makePBtn("SLOW","HOLD",8)
-local pState={AAL=false,AAR=false,PL=false,PR=false,LK=false,SH=slowDownEnabled}
+local btnLK,bsLK=makePBtn("LOCK","",7); local btnTH,bsTH=makePBtn("THIEF","SPD",8) -- Replaced Slow Hold with Thief Speed
+local pState={AAL=false,AAR=false,PL=false,PR=false,LK=false,TH=false}
 mobBtnRefs["AUTO L"]={btn=btnAAL,bs=bsAAL,state=false}; mobBtnRefs["AUTO R"]={btn=btnAAR,bs=bsAAR,state=false}
 mobBtnRefs["PLAY L"]={btn=btnPL,bs=bsPL,state=false}; mobBtnRefs["PLAY R"]={btn=btnPR,bs=bsPR,state=false}
-if pState.SH then setPH(btnSH,bsSH,true) end
+-- Removed Slow Hold State
 local function mutualOff(keep)
 local map={AAL={btnAAL,bsAAL},AAR={btnAAR,bsAAR},PL={btnPL,bsPL},PR={btnPR,bsPR},LK={btnLK,bsLK}}
 for k,v in pairs(map) do if k~=keep and pState[k] then pState[k]=false; setPH(v[1],v[2],false); if k=="AAL" then autoLOn=false; stopAutoL(); if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](false) end elseif k=="AAR" then autoROn=false; stopAutoR(); if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](false) end elseif k=="PL" then aplOn=false; stopAutoPlayLeft(); if toggleSetters["Play Left"] then toggleSetters["Play Left"](false) end elseif k=="PR" then aprOn=false; stopAutoPlayRight(); if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end elseif k=="LK" then stopBatAimbot(); if toggleSetters["Lock"] then toggleSetters["Lock"](false) end end end end
@@ -2009,7 +2024,7 @@ btnPR.MouseButton1Click:Connect(function() local ns=not pState.PR; if ns then mu
 btnDR.MouseButton1Click:Connect(function() setPH(btnDR,bsDR,true); task.delay(0.35,function() setPH(btnDR,bsDR,false) end); task.spawn(doDrop) end)
 btnTP.MouseButton1Click:Connect(function() setPH(btnTP,bsTP,true); task.delay(0.35,function() setPH(btnTP,bsTP,false) end); task.spawn(doTPDown) end)
 btnLK.MouseButton1Click:Connect(function() local ns=not pState.LK; if ns then mutualOff("LK") end; pState.LK=ns; setPH(btnLK,bsLK,ns); if toggleSetters["Lock"] then toggleSetters["Lock"](ns) end; if ns then startBatAimbot() else stopBatAimbot() end end)
-btnSH.MouseButton1Click:Connect(function() local ns=not pState.SH; pState.SH=ns; setPH(btnSH,bsSH,ns); slowDownEnabled=ns; if toggleSetters["Slow Hold"] then toggleSetters["Slow Hold"](ns) end end)
+btnTH.MouseButton1Click:Connect(function() local ns=not pState.TH; pState.TH=ns; setPH(btnTH,bsTH,ns); C.Enabled.SpeedWhileStealing=ns; if toggleSetters["Thief Speed"] then toggleSetters["Thief Speed"](ns) end; if ns then C.startSpeedWhileStealing() else C.stopSpeedWhileStealing() end end)
 -- ====================== KEYBIND INPUT ======================
 UserInputService.InputBegan:Connect(function(input,processed)
 if processed then return end
@@ -2025,8 +2040,7 @@ elseif kc==Keybinds.MobAutoR and Keybinds.MobAutoR~=Enum.KeyCode.Unknown then
 local ns=not pState.AAR; if ns then mutualOff("AAR") end; pState.AAR=ns; setPH(btnAAR,bsAAR,ns); mobBtnRefs["AUTO R"].state=ns; if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](ns) end; if ns then autoROn=true; startAutoR() else autoROn=false; stopAutoR() end
 elseif kc==Keybinds.BatAimbot then
 local ns=not pState.LK; if ns then mutualOff("LK") end; pState.LK=ns; setPH(btnLK,bsLK,ns); if toggleSetters["Lock"] then toggleSetters["Lock"](ns) end; if ns then startBatAimbot() else stopBatAimbot() end
-elseif kc==Keybinds.CarrySpd then
-local ns=not pState.SH; pState.SH=ns; setPH(btnSH,bsSH,ns); slowDownEnabled=ns; if toggleSetters["Slow Hold"] then toggleSetters["Slow Hold"](ns) end
+-- Removed CarrySpd Keybind
 elseif kc==Keybinds.Drop then task.spawn(doDrop)
 elseif kc==Keybinds.TPDown then task.spawn(doTPDown)
 elseif kc==Keybinds.AutoSteal then autoStealEnabled=not autoStealEnabled; if autoStealEnabled then startAutoSteal() else stopAutoSteal() end; if toggleSetters["Auto Steal"] then toggleSetters["Auto Steal"](autoStealEnabled) end; saveConfig()
@@ -2046,4 +2060,74 @@ if optimizerEnabled then enableOptimizer() end
 if goodAnimEnabled then task.spawn(startGoodAnim) end
 if medusaCounterEnabled then task.spawn(function() task.wait(1); setupMedusaCounter(player.Character) end) end
 print("Som Hub loaded.")
+end)
+
+-- ====================== HEAD SPEED COUNTER ======================
+task.spawn(function()
+    local COLOR_GLOW = Color3.fromRGB(255, 50, 50) -- Red Glow
+    local currentLabel = nil
+
+    local function attachCounter(character)
+        if not character then return nil end
+        local head = character:WaitForChild("Head", 5)
+        if not head then return nil end
+        
+        -- Remove old counter if it exists
+        if head:FindFirstChild("SpeedCounterGui") then
+            head:FindFirstChild("SpeedCounterGui"):Destroy()
+        end
+        
+        -- Create Billboard GUI
+        local bb = Instance.new("BillboardGui")
+        bb.Name = "SpeedCounterGui"
+        bb.Adornee = head
+        bb.Size = UDim2.new(4, 0, 0.5, 0)
+        bb.StudsOffset = Vector3.new(0, 3, 0) -- Floats above head
+        bb.AlwaysOnTop = true
+        bb.MaxDistance = 100 -- Disappears if too far away
+        bb.Parent = head
+        
+        -- Create Text Label
+        local lbl = Instance.new("TextLabel", bb)
+        lbl.Size = UDim2.new(1, 0, 1, 0)
+        lbl.BackgroundTransparency = 1
+        lbl.Text = "Speed: 0"
+        lbl.TextColor3 = COLOR_GLOW
+        -- Add black outline so it's readable in bright areas
+        lbl.TextStrokeColor3 = Color3.new(0, 0, 0)
+        lbl.TextStrokeTransparency = 0.3
+        lbl.Font = Enum.Font.GothamBold
+        lbl.TextScaled = true
+        
+        return lbl
+    end
+
+    -- Setup on current character
+    currentLabel = attachCounter(player.Character)
+    
+    -- Setup on respawn
+    player.CharacterAdded:Connect(function(char)
+        currentLabel = attachCounter(char)
+    end)
+
+    -- Smoothly update the counter text
+    RunService.RenderStepped:Connect(function()
+        if not currentLabel or not currentLabel.Parent then return end
+        local char = player.Character
+        if not char then 
+            currentLabel.Text = "Speed: 0"
+            return 
+        end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then 
+            currentLabel.Text = "Speed: 0"
+            return 
+        end
+        
+        -- Calculate exact horizontal speed
+        local vel = hrp.AssemblyLinearVelocity
+        local speed = math.floor(Vector2.new(vel.X, vel.Z).Magnitude)
+        
+        currentLabel.Text = "Speed: " .. speed
+    end)
 end)
