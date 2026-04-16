@@ -2039,62 +2039,68 @@ task.spawn(function()
     local function makeActionBtn(text,cb) local row=Instance.new("Frame",scroll); row.Size=UDim2.new(1,0,0,30); row.BackgroundColor3=Color3.fromRGB(18,18,24); row.BorderSizePixel=0; row.LayoutOrder=nlo(); row.ZIndex=2; local div=Instance.new("Frame",row); div.Size=UDim2.new(1,-6,0,1); div.Position=UDim2.new(0,3,1,-1); div.BackgroundColor3=Color3.fromRGB(30,30,40); div.BorderSizePixel=0; div.ZIndex=3; local btn=Instance.new("TextButton",row); btn.Size=UDim2.new(1,-12,0,18); btn.Position=UDim2.new(0,6,0.5,-9); btn.BackgroundColor3=Color3.fromRGB(28,28,38); btn.Text=text; btn.TextColor3=Color3.fromRGB(215,215,215); btn.Font=Enum.Font.GothamBold; btn.TextSize=11; btn.ZIndex=3; Instance.new("UICorner",btn).CornerRadius=UDim.new(0,7); Instance.new("UIStroke",btn).Color=Color3.fromRGB(60,60,80); btn.MouseButton1Click:Connect(function() if cb then cb(btn) end end); return btn end
     local function makeKeybindRow(label,kbKey) local row=Instance.new("Frame",scroll); row.Size=UDim2.new(1,0,0,30); row.BackgroundColor3=Color3.fromRGB(18,18,24); row.BorderSizePixel=0; row.LayoutOrder=nlo(); row.ZIndex=2; local div=Instance.new("Frame",row); div.Size=UDim2.new(1,-6,0,1); div.Position=UDim2.new(0,3,1,-1); div.BackgroundColor3=Color3.fromRGB(30,30,40); div.BorderSizePixel=0; div.ZIndex=3; local lbl=Instance.new("TextLabel",row); lbl.Size=UDim2.new(0.55,0,1,0); lbl.Position=UDim2.new(0,8,0,0); lbl.BackgroundTransparency=1; lbl.Text=label; lbl.Font=Enum.Font.GothamSemibold; lbl.TextSize=10; lbl.TextColor3=Color3.fromRGB(200,200,200); lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.ZIndex=3; local kbBtn=Instance.new("TextButton",row); kbBtn.Size=UDim2.new(0,65,0,17); kbBtn.Position=UDim2.new(1,-69,0.5,-8.5); kbBtn.BackgroundColor3=Color3.fromRGB(22,22,32); kbBtn.Text=(Keybinds[kbKey] and Keybinds[kbKey]~=Enum.KeyCode.Unknown) and Keybinds[kbKey].Name or "—"; kbBtn.TextColor3=Color3.fromRGB(255,255,255); kbBtn.Font=Enum.Font.GothamBold; kbBtn.TextSize=9; kbBtn.ZIndex=4; Instance.new("UICorner",kbBtn).CornerRadius=UDim.new(0,4); Instance.new("UIStroke",kbBtn).Color=Color3.fromRGB(80,0,160); local waiting=false; kbBtn.MouseButton1Click:Connect(function() if waiting then return end; waiting=true; kbBtn.Text="..."; local con; con=UserInputService.InputBegan:Connect(function(inp,gpe) if gpe then return end; if inp.KeyCode~=Enum.KeyCode.Unknown then Keybinds[kbKey]=inp.KeyCode; kbBtn.Text=inp.KeyCode.Name; waiting=false; con:Disconnect(); saveConfig() end end) end) end
 
-    -- ====================== BIG AUTO LEFT & RIGHT BUTTONS ======================
-    makeSectionHeader("⚡ AUTO LEFT & RIGHT")
-    
-    local autoLeftRow=Instance.new("Frame",scroll)
-    autoLeftRow.Size=UDim2.new(1,0,0,42); autoLeftRow.BackgroundColor3=Color3.fromRGB(25,20,40)
-    autoLeftRow.BorderSizePixel=0; autoLeftRow.LayoutOrder=nlo(); autoLeftRow.ZIndex=2
-    Instance.new("UICorner",autoLeftRow).CornerRadius=UDim.new(0,10)
-    
-    local autoLeftBtn=Instance.new("TextButton",autoLeftRow)
-    autoLeftBtn.Size=UDim2.new(1,-14,0,32); autoLeftBtn.Position=UDim2.new(0,7,0,5)
-    autoLeftBtn.BackgroundColor3=Color3.fromRGB(138,43,226); autoLeftBtn.Text="◀ AUTO LEFT"
-    autoLeftBtn.TextColor3=Color3.fromRGB(255,255,255); autoLeftBtn.Font=Enum.Font.GothamBlack
-    autoLeftBtn.TextSize=13; autoLeftBtn.ZIndex=3
-    Instance.new("UICorner",autoLeftBtn).CornerRadius=UDim.new(0,8)
-    
-    local autoLeftState=false
-    autoLeftBtn.MouseButton1Click:Connect(function()
-        autoLeftState=not autoLeftState
-        if autoLeftState then
-            autoLeftBtn.BackgroundColor3=Color3.fromRGB(0,180,80)
-            autoLeftBtn.Text="✅ LEFT ON"
-            _G.SomHub.startAutoLeftMain()
-        else
-            autoLeftBtn.BackgroundColor3=Color3.fromRGB(138,43,226)
-            autoLeftBtn.Text="◀ AUTO LEFT"
-            _G.SomHub.stopAutoLeftMain()
-        end
-    end)
-    
-    local autoRightRow=Instance.new("Frame",scroll)
-    autoRightRow.Size=UDim2.new(1,0,0,42); autoRightRow.BackgroundColor3=Color3.fromRGB(25,20,40)
-    autoRightRow.BorderSizePixel=0; autoRightRow.LayoutOrder=nlo(); autoRightRow.ZIndex=2
-    Instance.new("UICorner",autoRightRow).CornerRadius=UDim.new(0,10)
-    
-    local autoRightBtn=Instance.new("TextButton",autoRightRow)
-    autoRightBtn.Size=UDim2.new(1,-14,0,32); autoRightBtn.Position=UDim2.new(0,7,0,5)
-    autoRightBtn.BackgroundColor3=Color3.fromRGB(138,43,226); autoRightBtn.Text="AUTO RIGHT ▶"
-    autoRightBtn.TextColor3=Color3.fromRGB(255,255,255); autoRightBtn.Font=Enum.Font.GothamBlack
-    autoRightBtn.TextSize=13; autoRightBtn.ZIndex=3
-    Instance.new("UICorner",autoRightBtn).CornerRadius=UDim.new(0,8)
-    
-    local autoRightState=false
-    autoRightBtn.MouseButton1Click:Connect(function()
-        autoRightState=not autoRightState
-        if autoRightState then
-            autoRightBtn.BackgroundColor3=Color3.fromRGB(0,180,80)
-            autoRightBtn.Text="✅ RIGHT ON"
-            _G.SomHub.startAutoRightMain()
-        else
-            autoRightBtn.BackgroundColor3=Color3.fromRGB(138,43,226)
-            autoRightBtn.Text="AUTO RIGHT ▶"
-            _G.SomHub.stopAutoRightMain()
-        end
-    end)
-
     -- LAYOUT
+    
+    -- Check if player is on phone
+    local isPhone = C.UserInputService.TouchEnabled and not C.UserInputService.KeyboardEnabled
+    
+    -- Only show Auto Left/Right buttons on PC (hide on phone)
+    if not isPhone then
+        makeSectionHeader("⚡ AUTO LEFT & RIGHT")
+        
+        local autoLeftRow=Instance.new("Frame",scroll)
+        autoLeftRow.Size=UDim2.new(1,0,0,42); autoLeftRow.BackgroundColor3=Color3.fromRGB(25,20,40)
+        autoLeftRow.BorderSizePixel=0; autoLeftRow.LayoutOrder=nlo(); autoLeftRow.ZIndex=2
+        Instance.new("UICorner",autoLeftRow).CornerRadius=UDim.new(0,10)
+        
+        local autoLeftBtn=Instance.new("TextButton",autoLeftRow)
+        autoLeftBtn.Size=UDim2.new(1,-14,0,32); autoLeftBtn.Position=UDim2.new(0,7,0,5)
+        autoLeftBtn.BackgroundColor3=Color3.fromRGB(138,43,226); autoLeftBtn.Text="◀ AUTO LEFT"
+        autoLeftBtn.TextColor3=Color3.fromRGB(255,255,255); autoLeftBtn.Font=Enum.Font.GothamBlack
+        autoLeftBtn.TextSize=13; autoLeftBtn.ZIndex=3
+        Instance.new("UICorner",autoLeftBtn).CornerRadius=UDim.new(0,8)
+        
+        local autoLeftState=false
+        autoLeftBtn.MouseButton1Click:Connect(function()
+            autoLeftState=not autoLeftState
+            if autoLeftState then
+                autoLeftBtn.BackgroundColor3=Color3.fromRGB(0,180,80)
+                autoLeftBtn.Text="✅ LEFT ON"
+                _G.SomHub.startAutoLeftMain()
+            else
+                autoLeftBtn.BackgroundColor3=Color3.fromRGB(138,43,226)
+                autoLeftBtn.Text="◀ AUTO LEFT"
+                _G.SomHub.stopAutoLeftMain()
+            end
+        end)
+        
+        local autoRightRow=Instance.new("Frame",scroll)
+        autoRightRow.Size=UDim2.new(1,0,0,42); autoRightRow.BackgroundColor3=Color3.fromRGB(25,20,40)
+        autoRightRow.BorderSizePixel=0; autoLeftRow.LayoutOrder=nlo(); autoRightRow.ZIndex=2
+        Instance.new("UICorner",autoRightRow).CornerRadius=UDim.new(0,10)
+        
+        local autoRightBtn=Instance.new("TextButton",autoRightRow)
+        autoRightBtn.Size=UDim2.new(1,-14,0,32); autoRightBtn.Position=UDim2.new(0,7,0,5)
+        autoRightBtn.BackgroundColor3=Color3.fromRGB(138,43,226); autoRightBtn.Text="AUTO RIGHT ▶"
+        autoRightBtn.TextColor3=Color3.fromRGB(255,255,255); autoRightBtn.Font=Enum.Font.GothamBlack
+        autoRightBtn.TextSize=13; autoRightBtn.ZIndex=3
+        Instance.new("UICorner",autoRightBtn).CornerRadius=UDim.new(0,8)
+        
+        local autoRightState=false
+        autoRightBtn.MouseButton1Click:Connect(function()
+            autoRightState=not autoRightState
+            if autoRightState then
+                autoRightBtn.BackgroundColor3=Color3.fromRGB(0,180,80)
+                autoRightBtn.Text="✅ RIGHT ON"
+                _G.SomHub.startAutoRightMain()
+            else
+                autoRightBtn.BackgroundColor3=Color3.fromRGB(138,43,226)
+                autoRightBtn.Text="AUTO RIGHT ▶"
+                _G.SomHub.stopAutoRightMain()
+            end
+        end)
+    end
+    
     makeSectionHeader("MOVEMENT")
     makeToggleRow("Spin Bot",spinBotEnabled,function(s) spinBotEnabled=s; if s then startSpin() else stopSpin() end; saveConfig() end)
     makeValueRow("Spin Speed",SPIN_SPEED,function(v) SPIN_SPEED=math.clamp(v,1,200); if spinBAV then spinBAV.AngularVelocity=Vector3.new(0,SPIN_SPEED,0) end; saveConfig() end)
