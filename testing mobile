@@ -1,5 +1,5 @@
--- Som Hub – Full Merge (Updated) - Black/Grey/Red Theme
--- Integrated Stealing & Normal Speed System
+-- Som Hub – Full Merge (Updated & Auto-Scaled)
+-- Fixed for Mobile Scaling & Removed Auto Grab from Mobile Panel
 task.spawn(function()
 _G.SomHub = {}
 local C = _G.SomHub
@@ -14,7 +14,8 @@ C.ReplicatedStorage = game:GetService("ReplicatedStorage")
 C.HttpService = game:GetService("HttpService")
 C.Player = C.Players.LocalPlayer
 C.isMobile = C.UserInputService.TouchEnabled and not C.UserInputService.KeyboardEnabled
-C.s = C.isMobile and 0.65 or 1
+-- AUTO SCALE FACTOR: 1.5x for Mobile, 1x for PC
+C.s = C.isMobile and 1.5 or 1 
 C.dragLocked = false
 C.CurrentBgEffect = "Stars"
 C.bgEffects = {"Stars", "Matrix", "Grid", "Pulse", "Circles", "None"}
@@ -1798,18 +1799,18 @@ ScreenGui.Name="SomHub_V1"; ScreenGui.ResetOnSpawn=false; ScreenGui.IgnoreGuiIns
 local PBGui=Instance.new("ScreenGui",player:WaitForChild("PlayerGui"))
 PBGui.Name="SomHub_ProgressBar"; PBGui.ResetOnSpawn=false; PBGui.IgnoreGuiInset=true; PBGui.DisplayOrder=5
 local toggleMenuBtn=Instance.new("TextButton",ScreenGui)
-toggleMenuBtn.Size=UDim2.new(0,34,0,34); toggleMenuBtn.Position=UDim2.new(1,-142,0,10)
+toggleMenuBtn.Size=UDim2.new(0,34*C.s,0,34*C.s); toggleMenuBtn.Position=UDim2.new(1,-142*C.s,0,10*C.s)
 toggleMenuBtn.BackgroundColor3=Color3.fromRGB(18,18,22); toggleMenuBtn.Text="SH"
 toggleMenuBtn.TextColor3=Color3.fromRGB(255, 50, 50); toggleMenuBtn.Font=Enum.Font.GothamBlack
-toggleMenuBtn.TextSize=13; toggleMenuBtn.BackgroundTransparency=0.1; toggleMenuBtn.ZIndex=10
-Instance.new("UICorner",toggleMenuBtn).CornerRadius=UDim.new(0,9)
+toggleMenuBtn.TextSize=13*C.s; toggleMenuBtn.BackgroundTransparency=0.1; toggleMenuBtn.ZIndex=10
+Instance.new("UICorner",toggleMenuBtn).CornerRadius=UDim.new(0,9*C.s)
 local tStroke=Instance.new("UIStroke",toggleMenuBtn); tStroke.Thickness=1.5; tStroke.Color=Color3.fromRGB(255, 0, 0)
 local lockBtn=Instance.new("TextButton",ScreenGui)
-lockBtn.Size=UDim2.new(0,34,0,34); lockBtn.Position=UDim2.new(1,-180,0,10)
+lockBtn.Size=UDim2.new(0,34*C.s,0,34*C.s); lockBtn.Position=UDim2.new(1,-180*C.s,0,10*C.s)
 lockBtn.BackgroundColor3=Color3.fromRGB(18,18,22); lockBtn.Text="🔓"
 lockBtn.TextColor3=Color3.fromRGB(200,200,200); lockBtn.Font=Enum.Font.GothamBold
-lockBtn.TextSize=18; lockBtn.BackgroundTransparency=0.1; lockBtn.ZIndex=10
-Instance.new("UICorner",lockBtn).CornerRadius=UDim.new(0,9)
+lockBtn.TextSize=18*C.s; lockBtn.BackgroundTransparency=0.1; lockBtn.ZIndex=10
+Instance.new("UICorner",lockBtn).CornerRadius=UDim.new(0,9*C.s)
 Instance.new("UIStroke",lockBtn).Color=Color3.fromRGB(60,60,70)
 local dragLocked=false
 lockBtn.MouseButton1Click:Connect(function()
@@ -1818,16 +1819,16 @@ lockBtn.Text=dragLocked and "🔒" or "🔓"
 lockBtn.TextColor3=dragLocked and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(200,200,200)
 end)
 local mainFrame=Instance.new("Frame",ScreenGui)
-mainFrame.Size=UDim2.new(0,220,0,440); mainFrame.Position=UDim2.new(0,10,0,55)
+mainFrame.Size=UDim2.new(0,220*C.s,0,440*C.s); mainFrame.Position=UDim2.new(0,10*C.s,0,55*C.s)
 mainFrame.BackgroundColor3=Color3.fromRGB(13,13,17); mainFrame.BackgroundTransparency=0; mainFrame.BorderSizePixel=0; mainFrame.Active=true
-Instance.new("UICorner",mainFrame).CornerRadius=UDim.new(0,14)
+Instance.new("UICorner",mainFrame).CornerRadius=UDim.new(0,14*C.s)
 local mfStroke=Instance.new("UIStroke",mainFrame); mfStroke.Thickness=1.5; mfStroke.Color=Color3.fromRGB(255, 0, 0)
 local leftDrag=Instance.new("Frame",mainFrame)
-leftDrag.Size=UDim2.new(0,6,1,-28); leftDrag.Position=UDim2.new(0,0,0,14)
+leftDrag.Size=UDim2.new(0,6*C.s,1,-28*C.s); leftDrag.Position=UDim2.new(0,0,0,14*C.s)
 leftDrag.BackgroundColor3=Color3.fromRGB(28,8,8); leftDrag.BorderSizePixel=0; leftDrag.ZIndex=10; leftDrag.Active=true
-Instance.new("UICorner",leftDrag).CornerRadius=UDim.new(0,6)
+Instance.new("UICorner",leftDrag).CornerRadius=UDim.new(0,6*C.s)
 local stripPip=Instance.new("Frame",leftDrag)
-stripPip.Size=UDim2.new(0,2,0,18); stripPip.Position=UDim2.new(0.5,-1,0.5,-9)
+stripPip.Size=UDim2.new(0,2*C.s,0,18*C.s); stripPip.Position=UDim2.new(0.5,-1*C.s,0.5,-9*C.s)
 stripPip.BackgroundColor3=Color3.fromRGB(255, 0, 0); stripPip.BorderSizePixel=0; stripPip.ZIndex=11
 Instance.new("UICorner",stripPip).CornerRadius=UDim.new(1,0)
 local stripDragging=false; local stripDragStart=nil; local stripStartPos=nil
@@ -1850,10 +1851,10 @@ mainFrame.Position=UDim2.new(0,stripStartPos.X+dx,0,stripStartPos.Y+dy)
 end
 end)
 local titleBar=Instance.new("Frame",mainFrame)
-titleBar.Size=UDim2.new(1,-6,0,22); titleBar.Position=UDim2.new(0,6,0,0)
+titleBar.Size=UDim2.new(1,-6*C.s,0,22*C.s); titleBar.Position=UDim2.new(0,6*C.s,0,0)
 titleBar.BackgroundColor3=Color3.fromRGB(18,18,24); titleBar.BorderSizePixel=0; titleBar.ZIndex=3; titleBar.Active=true
-Instance.new("UICorner",titleBar).CornerRadius=UDim.new(0,14)
-local tbFix=Instance.new("Frame",titleBar); tbFix.Size=UDim2.new(0,14,0.6,0); tbFix.Position=UDim2.new(0,0,0.4,0); tbFix.BackgroundColor3=Color3.fromRGB(18,18,24); tbFix.BorderSizePixel=0; tbFix.ZIndex=3
+Instance.new("UICorner",titleBar).CornerRadius=UDim.new(0,14*C.s)
+local tbFix=Instance.new("Frame",titleBar); tbFix.Size=UDim2.new(0,14*C.s,0.6,0); tbFix.Position=UDim2.new(0,0,0.4,0); tbFix.BackgroundColor3=Color3.fromRGB(18,18,24); tbFix.BorderSizePixel=0; tbFix.ZIndex=3
 local tbFix2=Instance.new("Frame",titleBar); tbFix2.Size=UDim2.new(1,0,0.5,0); tbFix2.Position=UDim2.new(0,0,0.5,0); tbFix2.BackgroundColor3=Color3.fromRGB(18,18,24); tbFix2.BorderSizePixel=0; tbFix2.ZIndex=3
 local tbDragging=false; local tbDragStart=nil; local tbStartPos=nil
 titleBar.InputBegan:Connect(function(inp)
@@ -1874,22 +1875,22 @@ local dx=inp.Position.X-tbDragStart.X; local dy=inp.Position.Y-tbDragStart.Y
 mainFrame.Position=UDim2.new(0,tbStartPos.X+dx,0,tbStartPos.Y+dy)
 end
 end)
-local titleLbl=Instance.new("TextLabel",titleBar); titleLbl.Size=UDim2.new(0,100,1,0); titleLbl.Position=UDim2.new(0,7,0,0); titleLbl.BackgroundTransparency=1; titleLbl.Text="SOM HUB"; titleLbl.Font=Enum.Font.LuckiestGuy; titleLbl.TextSize=12; titleLbl.TextColor3=Color3.fromRGB(255, 50, 50); titleLbl.TextXAlignment=Enum.TextXAlignment.Left; titleLbl.ZIndex=4
-local FPSLbl=Instance.new("TextLabel",titleBar); FPSLbl.Size=UDim2.new(0,44,1,0); FPSLbl.Position=UDim2.new(1,-62,0,0); FPSLbl.BackgroundTransparency=1; FPSLbl.Text="0 FPS"; FPSLbl.Font=Enum.Font.GothamBold; FPSLbl.TextSize=9; FPSLbl.TextColor3=Color3.fromRGB(255, 0, 0); FPSLbl.TextXAlignment=Enum.TextXAlignment.Right; FPSLbl.ZIndex=5
+local titleLbl=Instance.new("TextLabel",titleBar); titleLbl.Size=UDim2.new(0,100*C.s,1,0); titleLbl.Position=UDim2.new(0,7*C.s,0,0); titleLbl.BackgroundTransparency=1; titleLbl.Text="SOM HUB"; titleLbl.Font=Enum.Font.LuckiestGuy; titleLbl.TextSize=12*C.s; titleLbl.TextColor3=Color3.fromRGB(255, 50, 50); titleLbl.TextXAlignment=Enum.TextXAlignment.Left; titleLbl.ZIndex=4
+local FPSLbl=Instance.new("TextLabel",titleBar); FPSLbl.Size=UDim2.new(0,44*C.s,1,0); FPSLbl.Position=UDim2.new(1,-62*C.s,0,0); FPSLbl.BackgroundTransparency=1; FPSLbl.Text="0 FPS"; FPSLbl.Font=Enum.Font.GothamBold; FPSLbl.TextSize=9*C.s; FPSLbl.TextColor3=Color3.fromRGB(255, 0, 0); FPSLbl.TextXAlignment=Enum.TextXAlignment.Right; FPSLbl.ZIndex=5
 local fc,lft=0,tick(); RunService.RenderStepped:Connect(function() fc=fc+1; local ct=tick(); if ct-lft>=1 then FPSLbl.Text=fc.." FPS"; fc=0; lft=ct end end)
-local minBtn=Instance.new("TextButton",titleBar); minBtn.Size=UDim2.new(0,15,0,12); minBtn.Position=UDim2.new(1,-18,0.5,-6); minBtn.BackgroundColor3=Color3.fromRGB(30,30,40); minBtn.Text="−"; minBtn.TextColor3=Color3.fromRGB(180,180,180); minBtn.Font=Enum.Font.GothamBold; minBtn.TextSize=10; minBtn.ZIndex=5; Instance.new("UICorner",minBtn).CornerRadius=UDim.new(0,4)
+local minBtn=Instance.new("TextButton",titleBar); minBtn.Size=UDim2.new(0,15*C.s,0,12*C.s); minBtn.Position=UDim2.new(1,-18*C.s,0.5,-6*C.s); minBtn.BackgroundColor3=Color3.fromRGB(30,30,40); minBtn.Text="−"; minBtn.TextColor3=Color3.fromRGB(180,180,180); minBtn.Font=Enum.Font.GothamBold; minBtn.TextSize=10*C.s; minBtn.ZIndex=5; Instance.new("UICorner",minBtn).CornerRadius=UDim.new(0,4*C.s)
 local guiVisible=true; local function toggleVis() guiVisible=not guiVisible; mainFrame.Visible=guiVisible end
 minBtn.MouseButton1Click:Connect(toggleVis); toggleMenuBtn.MouseButton1Click:Connect(toggleVis)
-local sep=Instance.new("Frame",mainFrame); sep.Size=UDim2.new(1,-6,0,1); sep.Position=UDim2.new(0,6,0,22); sep.BackgroundColor3=Color3.fromRGB(120, 0, 0); sep.BorderSizePixel=0; sep.ZIndex=3
-local scroll=Instance.new("ScrollingFrame",mainFrame); scroll.Size=UDim2.new(1,-8,1,-26); scroll.Position=UDim2.new(0,7,0,24); scroll.BackgroundTransparency=1; scroll.ScrollBarThickness=2; scroll.ScrollBarImageColor3=Color3.fromRGB(255, 0, 0); scroll.BorderSizePixel=0; scroll.ZIndex=2; scroll.CanvasSize=UDim2.new(0,0,0,0)
-local ll=Instance.new("UIListLayout",scroll); ll.Padding=UDim.new(0,1); ll.SortOrder=Enum.SortOrder.LayoutOrder
-ll:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() scroll.CanvasSize=UDim2.new(0,0,0,ll.AbsoluteContentSize.Y+8) end)
+local sep=Instance.new("Frame",mainFrame); sep.Size=UDim2.new(1,-6*C.s,0,1*C.s); sep.Position=UDim2.new(0,6*C.s,0,22*C.s); sep.BackgroundColor3=Color3.fromRGB(120, 0, 0); sep.BorderSizePixel=0; sep.ZIndex=3
+local scroll=Instance.new("ScrollingFrame",mainFrame); scroll.Size=UDim2.new(1,-8*C.s,1,-26*C.s); scroll.Position=UDim2.new(0,7*C.s,0,24*C.s); scroll.BackgroundTransparency=1; scroll.ScrollBarThickness=2*C.s; scroll.ScrollBarImageColor3=Color3.fromRGB(255, 0, 0); scroll.BorderSizePixel=0; scroll.ZIndex=2; scroll.CanvasSize=UDim2.new(0,0,0,0)
+local ll=Instance.new("UIListLayout",scroll); ll.Padding=UDim.new(0,1*C.s); ll.SortOrder=Enum.SortOrder.LayoutOrder
+ll:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() scroll.CanvasSize=UDim2.new(0,0,0,ll.AbsoluteContentSize.Y+8*C.s) end)
 local lo=0; local function nlo() lo=lo+1; return lo end
-local function makeSectionHeader(text) local h=Instance.new("Frame",scroll); h.Size=UDim2.new(1,0,0,18); h.BackgroundTransparency=1; h.LayoutOrder=nlo(); local l=Instance.new("TextLabel",h); l.Size=UDim2.new(1,-8,1,0); l.Position=UDim2.new(0,8,0,0); l.BackgroundTransparency=1; l.Text=text; l.Font=Enum.Font.GothamBlack; l.TextSize=9; l.TextColor3=Color3.fromRGB(255, 50, 50); l.TextXAlignment=Enum.TextXAlignment.Left; l.ZIndex=3 end
-local function makeToggleRow(label,defaultState,onToggle) local row=Instance.new("Frame",scroll); row.Size=UDim2.new(1,0,0,30); row.BackgroundColor3=Color3.fromRGB(18,18,24); row.BorderSizePixel=0; row.LayoutOrder=nlo(); row.ZIndex=2; local div=Instance.new("Frame",row); div.Size=UDim2.new(1,-6,0,1); div.Position=UDim2.new(0,3,1,-1); div.BackgroundColor3=Color3.fromRGB(30,30,40); div.BorderSizePixel=0; div.ZIndex=3; local lbl=Instance.new("TextLabel",row); lbl.Size=UDim2.new(0.62,0,1,0); lbl.Position=UDim2.new(0,8,0,0); lbl.BackgroundTransparency=1; lbl.Text=label; lbl.Font=Enum.Font.GothamSemibold; lbl.TextSize=11; lbl.TextColor3=Color3.fromRGB(215,215,215); lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.ZIndex=3; local tBg=Instance.new("Frame",row); tBg.Size=UDim2.new(0,32,0,16); tBg.Position=UDim2.new(1,-36,0.5,-8); tBg.BackgroundColor3=defaultState and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(45,45,58); tBg.ZIndex=3; Instance.new("UICorner",tBg).CornerRadius=UDim.new(1,0); local tCirc=Instance.new("Frame",tBg); tCirc.Size=UDim2.new(0,11,0,11); tCirc.Position=defaultState and UDim2.new(1,-13,0.5,-5.5) or UDim2.new(0,2,0.5,-5.5); tCirc.BackgroundColor3=Color3.new(1,1,1); tCirc.ZIndex=4; Instance.new("UICorner",tCirc).CornerRadius=UDim.new(1,0); local click=Instance.new("TextButton",row); click.Size=UDim2.new(1,0,1,0); click.BackgroundTransparency=1; click.Text=""; click.ZIndex=5; local isOn=defaultState; local function setVis(state) isOn=state; tBg.BackgroundColor3=isOn and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(45,45,58); tCirc.Position=isOn and UDim2.new(1,-13,0.5,-5.5) or UDim2.new(0,2,0.5,-5.5) end; toggleSetters[label]=setVis; click.MouseButton1Click:Connect(function() isOn=not isOn; setVis(isOn); if onToggle then onToggle(isOn) end end); return setVis end
-local function makeValueRow(label,defaultVal,onChanged) local row=Instance.new("Frame",scroll); row.Size=UDim2.new(1,0,0,30); row.BackgroundColor3=Color3.fromRGB(18,18,24); row.BorderSizePixel=0; row.LayoutOrder=nlo(); row.ZIndex=2; local div=Instance.new("Frame",row); div.Size=UDim2.new(1,-6,0,1); div.Position=UDim2.new(0,3,1,-1); div.BackgroundColor3=Color3.fromRGB(30,30,40); div.BorderSizePixel=0; div.ZIndex=3; local lbl=Instance.new("TextLabel",row); lbl.Size=UDim2.new(0.6,0,1,0); lbl.Position=UDim2.new(0,8,0,0); lbl.BackgroundTransparency=1; lbl.Text=label; lbl.Font=Enum.Font.GothamSemibold; lbl.TextSize=11; lbl.TextColor3=Color3.fromRGB(215,215,215); lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.ZIndex=3; local vb=Instance.new("TextBox",row); vb.Size=UDim2.new(0,50,0,17); vb.Position=UDim2.new(1,-54,0.5,-8.5); vb.BackgroundColor3=Color3.fromRGB(22,22,32); vb.Text=tostring(defaultVal); vb.TextColor3=Color3.fromRGB(255, 100, 100); vb.Font=Enum.Font.GothamBold; vb.TextSize=11; vb.ClearTextOnFocus=false; vb.ZIndex=4; Instance.new("UICorner",vb).CornerRadius=UDim.new(0,5); Instance.new("UIStroke",vb).Color=Color3.fromRGB(160, 0, 0); vb.FocusLost:Connect(function() local n=tonumber(vb.Text); if n then if onChanged then onChanged(n,vb) end else vb.Text=tostring(defaultVal) end end); return vb end
-local function makeActionBtn(text,cb) local row=Instance.new("Frame",scroll); row.Size=UDim2.new(1,0,0,30); row.BackgroundColor3=Color3.fromRGB(18,18,24); row.BorderSizePixel=0; row.LayoutOrder=nlo(); row.ZIndex=2; local div=Instance.new("Frame",row); div.Size=UDim2.new(1,-6,0,1); div.Position=UDim2.new(0,3,1,-1); div.BackgroundColor3=Color3.fromRGB(30,30,40); div.BorderSizePixel=0; div.ZIndex=3; local btn=Instance.new("TextButton",row); btn.Size=UDim2.new(1,-12,0,18); btn.Position=UDim2.new(0,6,0.5,-9); btn.BackgroundColor3=Color3.fromRGB(28,28,38); btn.Text=text; btn.TextColor3=Color3.fromRGB(215,215,215); btn.Font=Enum.Font.GothamBold; btn.TextSize=11; btn.ZIndex=3; Instance.new("UICorner",btn).CornerRadius=UDim.new(0,7); Instance.new("UIStroke",btn).Color=Color3.fromRGB(160, 0, 0); btn.MouseButton1Click:Connect(function() if cb then cb(btn) end end); return btn end
-local function makeKeybindRow(label,kbKey) local row=Instance.new("Frame",scroll); row.Size=UDim2.new(1,0,0,30); row.BackgroundColor3=Color3.fromRGB(18,18,24); row.BorderSizePixel=0; row.LayoutOrder=nlo(); row.ZIndex=2; local div=Instance.new("Frame",row); div.Size=UDim2.new(1,-6,0,1); div.Position=UDim2.new(0,3,1,-1); div.BackgroundColor3=Color3.fromRGB(30,30,40); div.BorderSizePixel=0; div.ZIndex=3; local lbl=Instance.new("TextLabel",row); lbl.Size=UDim2.new(0.55,0,1,0); lbl.Position=UDim2.new(0,8,0,0); lbl.BackgroundTransparency=1; lbl.Text=label; lbl.Font=Enum.Font.GothamSemibold; lbl.TextSize=10; lbl.TextColor3=Color3.fromRGB(200,200,200); lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.ZIndex=3; local kbBtn=Instance.new("TextButton",row); kbBtn.Size=UDim2.new(0,65,0,17); kbBtn.Position=UDim2.new(1,-69,0.5,-8.5); kbBtn.BackgroundColor3=Color3.fromRGB(22,22,32); kbBtn.Text=(Keybinds[kbKey] and Keybinds[kbKey]~=Enum.KeyCode.Unknown) and Keybinds[kbKey].Name or "—"; kbBtn.TextColor3=Color3.fromRGB(255,255,255); kbBtn.Font=Enum.Font.GothamBold; kbBtn.TextSize=9; kbBtn.ZIndex=4; Instance.new("UICorner",kbBtn).CornerRadius=UDim.new(0,4); Instance.new("UIStroke",kbBtn).Color=Color3.fromRGB(160, 0, 0); local waiting=false; kbBtn.MouseButton1Click:Connect(function() if waiting then return end; waiting=true; kbBtn.Text="..."; local con; con=UserInputService.InputBegan:Connect(function(inp,gpe) if gpe then return end; if inp.KeyCode~=Enum.KeyCode.Unknown then Keybinds[kbKey]=inp.KeyCode; kbBtn.Text=inp.KeyCode.Name; waiting=false; con:Disconnect(); saveConfig() end end) end) end
+local function makeSectionHeader(text) local h=Instance.new("Frame",scroll); h.Size=UDim2.new(1,0,0,18*C.s); h.BackgroundTransparency=1; h.LayoutOrder=nlo(); local l=Instance.new("TextLabel",h); l.Size=UDim2.new(1,-8*C.s,1,0); l.Position=UDim2.new(0,8*C.s,0,0); l.BackgroundTransparency=1; l.Text=text; l.Font=Enum.Font.GothamBlack; l.TextSize=9*C.s; l.TextColor3=Color3.fromRGB(255, 50, 50); l.TextXAlignment=Enum.TextXAlignment.Left; l.ZIndex=3 end
+local function makeToggleRow(label,defaultState,onToggle) local row=Instance.new("Frame",scroll); row.Size=UDim2.new(1,0,0,30*C.s); row.BackgroundColor3=Color3.fromRGB(18,18,24); row.BorderSizePixel=0; row.LayoutOrder=nlo(); row.ZIndex=2; local div=Instance.new("Frame",row); div.Size=UDim2.new(1,-6*C.s,0,1*C.s); div.Position=UDim2.new(0,3*C.s,1,-1*C.s); div.BackgroundColor3=Color3.fromRGB(30,30,40); div.BorderSizePixel=0; div.ZIndex=3; local lbl=Instance.new("TextLabel",row); lbl.Size=UDim2.new(0.62,0,1,0); lbl.Position=UDim2.new(0,8*C.s,0,0); lbl.BackgroundTransparency=1; lbl.Text=label; lbl.Font=Enum.Font.GothamSemibold; lbl.TextSize=11*C.s; lbl.TextColor3=Color3.fromRGB(215,215,215); lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.ZIndex=3; local tBg=Instance.new("Frame",row); tBg.Size=UDim2.new(0,32*C.s,0,16*C.s); tBg.Position=UDim2.new(1,-36*C.s,0.5,-8*C.s); tBg.BackgroundColor3=defaultState and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(45,45,58); tBg.ZIndex=3; Instance.new("UICorner",tBg).CornerRadius=UDim.new(1,0); local tCirc=Instance.new("Frame",tBg); tCirc.Size=UDim2.new(0,11*C.s,0,11*C.s); tCirc.Position=defaultState and UDim2.new(1,-13*C.s,0.5,-5.5*C.s) or UDim2.new(0,2*C.s,0.5,-5.5*C.s); tCirc.BackgroundColor3=Color3.new(1,1,1); tCirc.ZIndex=4; Instance.new("UICorner",tCirc).CornerRadius=UDim.new(1,0); local click=Instance.new("TextButton",row); click.Size=UDim2.new(1,0,1,0); click.BackgroundTransparency=1; click.Text=""; click.ZIndex=5; local isOn=defaultState; local function setVis(state) isOn=state; tBg.BackgroundColor3=isOn and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(45,45,58); tCirc.Position=isOn and UDim2.new(1,-13*C.s,0.5,-5.5*C.s) or UDim2.new(0,2*C.s,0.5,-5.5*C.s) end; toggleSetters[label]=setVis; click.MouseButton1Click:Connect(function() isOn=not isOn; setVis(isOn); if onToggle then onToggle(isOn) end end); return setVis end
+local function makeValueRow(label,defaultVal,onChanged) local row=Instance.new("Frame",scroll); row.Size=UDim2.new(1,0,0,30*C.s); row.BackgroundColor3=Color3.fromRGB(18,18,24); row.BorderSizePixel=0; row.LayoutOrder=nlo(); row.ZIndex=2; local div=Instance.new("Frame",row); div.Size=UDim2.new(1,-6*C.s,0,1*C.s); div.Position=UDim2.new(0,3*C.s,1,-1*C.s); div.BackgroundColor3=Color3.fromRGB(30,30,40); div.BorderSizePixel=0; div.ZIndex=3; local lbl=Instance.new("TextLabel",row); lbl.Size=UDim2.new(0.6,0,1,0); lbl.Position=UDim2.new(0,8*C.s,0,0); lbl.BackgroundTransparency=1; lbl.Text=label; lbl.Font=Enum.Font.GothamSemibold; lbl.TextSize=11*C.s; lbl.TextColor3=Color3.fromRGB(215,215,215); lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.ZIndex=3; local vb=Instance.new("TextBox",row); vb.Size=UDim2.new(0,50*C.s,0,17*C.s); vb.Position=UDim2.new(1,-54*C.s,0.5,-8.5*C.s); vb.BackgroundColor3=Color3.fromRGB(22,22,32); vb.Text=tostring(defaultVal); vb.TextColor3=Color3.fromRGB(255, 100, 100); vb.Font=Enum.Font.GothamBold; vb.TextSize=11*C.s; vb.ClearTextOnFocus=false; vb.ZIndex=4; Instance.new("UICorner",vb).CornerRadius=UDim.new(0,5*C.s); Instance.new("UIStroke",vb).Color=Color3.fromRGB(160, 0, 0); vb.FocusLost:Connect(function() local n=tonumber(vb.Text); if n then if onChanged then onChanged(n,vb) end else vb.Text=tostring(defaultVal) end end); return vb end
+local function makeActionBtn(text,cb) local row=Instance.new("Frame",scroll); row.Size=UDim2.new(1,0,0,30*C.s); row.BackgroundColor3=Color3.fromRGB(18,18,24); row.BorderSizePixel=0; row.LayoutOrder=nlo(); row.ZIndex=2; local div=Instance.new("Frame",row); div.Size=UDim2.new(1,-6*C.s,0,1*C.s); div.Position=UDim2.new(0,3*C.s,1,-1*C.s); div.BackgroundColor3=Color3.fromRGB(30,30,40); div.BorderSizePixel=0; div.ZIndex=3; local btn=Instance.new("TextButton",row); btn.Size=UDim2.new(1,-12*C.s,0,18*C.s); btn.Position=UDim2.new(0,6*C.s,0.5,-9*C.s); btn.BackgroundColor3=Color3.fromRGB(28,28,38); btn.Text=text; btn.TextColor3=Color3.fromRGB(215,215,215); btn.Font=Enum.Font.GothamBold; btn.TextSize=11*C.s; btn.ZIndex=3; Instance.new("UICorner",btn).CornerRadius=UDim.new(0,7*C.s); Instance.new("UIStroke",btn).Color=Color3.fromRGB(160, 0, 0); btn.MouseButton1Click:Connect(function() if cb then cb(btn) end end); return btn end
+local function makeKeybindRow(label,kbKey) local row=Instance.new("Frame",scroll); row.Size=UDim2.new(1,0,0,30*C.s); row.BackgroundColor3=Color3.fromRGB(18,18,24); row.BorderSizePixel=0; row.LayoutOrder=nlo(); row.ZIndex=2; local div=Instance.new("Frame",row); div.Size=UDim2.new(1,-6*C.s,0,1*C.s); div.Position=UDim2.new(0,3*C.s,1,-1*C.s); div.BackgroundColor3=Color3.fromRGB(30,30,40); div.BorderSizePixel=0; div.ZIndex=3; local lbl=Instance.new("TextLabel",row); lbl.Size=UDim2.new(0.55,0,1,0); lbl.Position=UDim2.new(0,8*C.s,0,0); lbl.BackgroundTransparency=1; lbl.Text=label; lbl.Font=Enum.Font.GothamSemibold; lbl.TextSize=10*C.s; lbl.TextColor3=Color3.fromRGB(200,200,200); lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.ZIndex=3; local kbBtn=Instance.new("TextButton",row); kbBtn.Size=UDim2.new(0,65*C.s,0,17*C.s); kbBtn.Position=UDim2.new(1,-69*C.s,0.5,-8.5*C.s); kbBtn.BackgroundColor3=Color3.fromRGB(22,22,32); kbBtn.Text=(Keybinds[kbKey] and Keybinds[kbKey]~=Enum.KeyCode.Unknown) and Keybinds[kbKey].Name or "—"; kbBtn.TextColor3=Color3.fromRGB(255,255,255); kbBtn.Font=Enum.Font.GothamBold; kbBtn.TextSize=9*C.s; kbBtn.ZIndex=4; Instance.new("UICorner",kbBtn).CornerRadius=UDim.new(0,4*C.s); Instance.new("UIStroke",kbBtn).Color=Color3.fromRGB(160, 0, 0); local waiting=false; kbBtn.MouseButton1Click:Connect(function() if waiting then return end; waiting=true; kbBtn.Text="..."; local con; con=UserInputService.InputBegan:Connect(function(inp,gpe) if gpe then return end; if inp.KeyCode~=Enum.KeyCode.Unknown then Keybinds[kbKey]=inp.KeyCode; kbBtn.Text=inp.KeyCode.Name; waiting=false; con:Disconnect(); saveConfig() end end) end) end
 -- LAYOUT
 makeSectionHeader("MOVEMENT")
 makeToggleRow("Spin Bot",spinBotEnabled,function(s) spinBotEnabled=s; if s then startSpin() else stopSpin() end; saveConfig() end)
@@ -1927,15 +1928,15 @@ makeToggleRow("Play Left",false,function(s) if s then if batAimbotEnabled then s
 makeToggleRow("Play Right",false,function(s) if s then if batAimbotEnabled then stopBatAimbot(); if toggleSetters["Lock"] then toggleSetters["Lock"](false) end end; if aplOn then stopAutoPlayLeft(); if toggleSetters["Play Left"] then toggleSetters["Play Left"](false) end end; if autoLOn then stopAutoL(); if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](false) end end; if autoROn then stopAutoR(); if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](false) end end; aprOn=true; startAutoPlayRight() else aprOn=false; stopAutoPlayRight() end end)
 makeSectionHeader("DEFENSE")
 do
-local row=Instance.new("Frame",scroll); row.Size=UDim2.new(1,0,0,30); row.BackgroundColor3=Color3.fromRGB(18,18,24); row.BorderSizePixel=0; row.LayoutOrder=nlo(); row.ZIndex=2
-local div=Instance.new("Frame",row); div.Size=UDim2.new(1,-6,0,1); div.Position=UDim2.new(0,3,1,-1); div.BackgroundColor3=Color3.fromRGB(30,30,40); div.BorderSizePixel=0; div.ZIndex=3
-local lbl=Instance.new("TextLabel",row); lbl.Size=UDim2.new(0,80,1,0); lbl.Position=UDim2.new(0,8,0,0); lbl.BackgroundTransparency=1; lbl.Text="Brainrot Def"; lbl.Font=Enum.Font.GothamSemibold; lbl.TextSize=10; lbl.TextColor3=Color3.fromRGB(215,215,215); lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.ZIndex=3
-local sideBtn=Instance.new("TextButton",row); sideBtn.Size=UDim2.new(0,38,0,16); sideBtn.Position=UDim2.new(1,-76,0.5,-8); sideBtn.BackgroundColor3=Color3.fromRGB(60, 10, 10); sideBtn.Text=brainrotDefenseSide=="left" and "LEFT" or "RIGHT"; sideBtn.TextColor3=Color3.fromRGB(255, 100, 100); sideBtn.Font=Enum.Font.GothamBold; sideBtn.TextSize=8; sideBtn.BorderSizePixel=0; sideBtn.ZIndex=6; Instance.new("UICorner",sideBtn).CornerRadius=UDim.new(0,4); Instance.new("UIStroke",sideBtn).Color=Color3.fromRGB(180, 30, 30)
+local row=Instance.new("Frame",scroll); row.Size=UDim2.new(1,0,0,30*C.s); row.BackgroundColor3=Color3.fromRGB(18,18,24); row.BorderSizePixel=0; row.LayoutOrder=nlo(); row.ZIndex=2
+local div=Instance.new("Frame",row); div.Size=UDim2.new(1,-6*C.s,0,1*C.s); div.Position=UDim2.new(0,3*C.s,1,-1*C.s); div.BackgroundColor3=Color3.fromRGB(30,30,40); div.BorderSizePixel=0; div.ZIndex=3
+local lbl=Instance.new("TextLabel",row); lbl.Size=UDim2.new(0,80*C.s,1,0); lbl.Position=UDim2.new(0,8*C.s,0,0); lbl.BackgroundTransparency=1; lbl.Text="Brainrot Def"; lbl.Font=Enum.Font.GothamSemibold; lbl.TextSize=10*C.s; lbl.TextColor3=Color3.fromRGB(215,215,215); lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.ZIndex=3
+local sideBtn=Instance.new("TextButton",row); sideBtn.Size=UDim2.new(0,38*C.s,0,16*C.s); sideBtn.Position=UDim2.new(1,-76*C.s,0.5,-8*C.s); sideBtn.BackgroundColor3=Color3.fromRGB(60, 10, 10); sideBtn.Text=brainrotDefenseSide=="left" and "LEFT" or "RIGHT"; sideBtn.TextColor3=Color3.fromRGB(255, 100, 100); sideBtn.Font=Enum.Font.GothamBold; sideBtn.TextSize=8*C.s; sideBtn.BorderSizePixel=0; sideBtn.ZIndex=6; Instance.new("UICorner",sideBtn).CornerRadius=UDim.new(0,4*C.s); Instance.new("UIStroke",sideBtn).Color=Color3.fromRGB(180, 30, 30)
 sideBtn.MouseButton1Click:Connect(function() brainrotDefenseSide=brainrotDefenseSide=="left" and "right" or "left"; sideBtn.Text=brainrotDefenseSide=="left" and "LEFT" or "RIGHT"; saveConfig() end)
-local tBg=Instance.new("Frame",row); tBg.Size=UDim2.new(0,32,0,16); tBg.Position=UDim2.new(1,-36,0.5,-8); tBg.BackgroundColor3=brainrotDefenseEnabled and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(45,45,58); tBg.ZIndex=3; Instance.new("UICorner",tBg).CornerRadius=UDim.new(1,0)
-local tCirc=Instance.new("Frame",tBg); tCirc.Size=UDim2.new(0,11,0,11); tCirc.Position=brainrotDefenseEnabled and UDim2.new(1,-13,0.5,-5.5) or UDim2.new(0,2,0.5,-5.5); tCirc.BackgroundColor3=Color3.new(1,1,1); tCirc.ZIndex=4; Instance.new("UICorner",tCirc).CornerRadius=UDim.new(1,0)
-local isOn=brainrotDefenseEnabled; local function setVis(state) isOn=state; tBg.BackgroundColor3=isOn and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(45,45,58); tCirc.Position=isOn and UDim2.new(1,-13,0.5,-5.5) or UDim2.new(0,2,0.5,-5.5) end; toggleSetters["Brainrot Defense"]=setVis
-local click=Instance.new("TextButton",row); click.Size=UDim2.new(0,40,1,0); click.Position=UDim2.new(1,-42,0,0); click.BackgroundTransparency=1; click.Text=""; click.ZIndex=5
+local tBg=Instance.new("Frame",row); tBg.Size=UDim2.new(0,32*C.s,0,16*C.s); tBg.Position=UDim2.new(1,-36*C.s,0.5,-8*C.s); tBg.BackgroundColor3=brainrotDefenseEnabled and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(45,45,58); tBg.ZIndex=3; Instance.new("UICorner",tBg).CornerRadius=UDim.new(1,0)
+local tCirc=Instance.new("Frame",tBg); tCirc.Size=UDim2.new(0,11*C.s,0,11*C.s); tCirc.Position=brainrotDefenseEnabled and UDim2.new(1,-13*C.s,0.5,-5.5*C.s) or UDim2.new(0,2*C.s,0.5,-5.5*C.s); tCirc.BackgroundColor3=Color3.new(1,1,1); tCirc.ZIndex=4; Instance.new("UICorner",tCirc).CornerRadius=UDim.new(1,0)
+local isOn=brainrotDefenseEnabled; local function setVis(state) isOn=state; tBg.BackgroundColor3=isOn and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(45,45,58); tCirc.Position=isOn and UDim2.new(1,-13*C.s,0.5,-5.5*C.s) or UDim2.new(0,2*C.s,0.5,-5.5*C.s) end; toggleSetters["Brainrot Defense"]=setVis
+local click=Instance.new("TextButton",row); click.Size=UDim2.new(0,40*C.s,1,0); click.Position=UDim2.new(1,-42*C.s,0,0); click.BackgroundTransparency=1; click.Text=""; click.ZIndex=5
 click.MouseButton1Click:Connect(function() isOn=not isOn; setVis(isOn); brainrotDefenseEnabled=isOn; if isOn then startBrainrotDefense() else stopBrainrotDefense() end; saveConfig() end)
 end
 makeToggleRow("Medusa Counter",medusaCounterEnabled,function(s) medusaCounterEnabled=s; if s then setupMedusaCounter(player.Character) else stopMedusaCounter() end; saveConfig() end)
@@ -1976,20 +1977,20 @@ makeKeybindRow("TP Down","TPDown")
 makeKeybindRow("Lock (Bat)","BatAimbot")
 -- ====================== PROGRESS BAR ======================
 local PBC=Instance.new("Frame",PBGui)
-PBC.Size=UDim2.new(0,220,0,40); PBC.Position=UDim2.new(0.5,-110,1,-120)
+PBC.Size=UDim2.new(0,220*C.s,0,40*C.s); PBC.Position=UDim2.new(0.5,-110*C.s,1,-120*C.s)
 PBC.BackgroundColor3=Color3.fromRGB(8,8,12); PBC.BackgroundTransparency=0.1; PBC.BorderSizePixel=0; PBC.Active=true
-Instance.new("UICorner",PBC).CornerRadius=UDim.new(0,12)
+Instance.new("UICorner",PBC).CornerRadius=UDim.new(0,12*C.s)
 local pbs=Instance.new("UIStroke",PBC); pbs.Color=Color3.fromRGB(255, 0, 0); pbs.Thickness=1.5
-local somHubText=Instance.new("TextLabel",PBC); somHubText.Size=UDim2.new(0.38,0,0.55,0); somHubText.Position=UDim2.new(0.62,0,0,3); somHubText.BackgroundTransparency=1; somHubText.Text="SOM HUB"; somHubText.TextColor3=Color3.fromRGB(255,255,255); somHubText.Font=Enum.Font.GothamBlack; somHubText.TextSize=12; somHubText.TextXAlignment=Enum.TextXAlignment.Right; somHubText.ZIndex=3
-ProgressLabel=Instance.new("TextLabel",PBC); ProgressLabel.Size=UDim2.new(0.55,0,0.55,0); ProgressLabel.Position=UDim2.new(0,8,0,3); ProgressLabel.BackgroundTransparency=1; ProgressLabel.Text="READY"; ProgressLabel.TextColor3=Color3.fromRGB(220,220,220); ProgressLabel.Font=Enum.Font.GothamBold; ProgressLabel.TextSize=11; ProgressLabel.TextXAlignment=Enum.TextXAlignment.Left; ProgressLabel.ZIndex=3
+local somHubText=Instance.new("TextLabel",PBC); somHubText.Size=UDim2.new(0.38,0,0.55,0); somHubText.Position=UDim2.new(0.62,0,0,3*C.s); somHubText.BackgroundTransparency=1; somHubText.Text="SOM HUB"; somHubText.TextColor3=Color3.fromRGB(255,255,255); somHubText.Font=Enum.Font.GothamBlack; somHubText.TextSize=12*C.s; somHubText.TextXAlignment=Enum.TextXAlignment.Right; somHubText.ZIndex=3
+ProgressLabel=Instance.new("TextLabel",PBC); ProgressLabel.Size=UDim2.new(0.55,0,0.55,0); ProgressLabel.Position=UDim2.new(0,8*C.s,0,3*C.s); ProgressLabel.BackgroundTransparency=1; ProgressLabel.Text="READY"; ProgressLabel.TextColor3=Color3.fromRGB(220,220,220); ProgressLabel.Font=Enum.Font.GothamBold; ProgressLabel.TextSize=11*C.s; ProgressLabel.TextXAlignment=Enum.TextXAlignment.Left; ProgressLabel.ZIndex=3
 ProgressPctLabel=Instance.new("TextLabel",PBC); ProgressPctLabel.Size=UDim2.new(0,0,0,0); ProgressPctLabel.Visible=false
-local pt=Instance.new("Frame",PBC); pt.Size=UDim2.new(0.9,0,0,5); pt.Position=UDim2.new(0.05,0,1,-11); pt.BackgroundColor3=Color3.fromRGB(25,22,38); pt.BorderSizePixel=0; pt.ZIndex=2; Instance.new("UICorner",pt).CornerRadius=UDim.new(1,0)
+local pt=Instance.new("Frame",PBC); pt.Size=UDim2.new(0.9,0,0,5*C.s); pt.Position=UDim2.new(0.05,0,1,-11*C.s); pt.BackgroundColor3=Color3.fromRGB(25,22,38); pt.BorderSizePixel=0; pt.ZIndex=2; Instance.new("UICorner",pt).CornerRadius=UDim.new(1,0)
 ProgressBarFill=Instance.new("Frame",pt); ProgressBarFill.Size=UDim2.new(0,0,1,0); ProgressBarFill.BackgroundColor3=Color3.fromRGB(255, 0, 0); ProgressBarFill.BorderSizePixel=0; ProgressBarFill.ZIndex=3; Instance.new("UICorner",ProgressBarFill).CornerRadius=UDim.new(1,0)
 -- ====================== MOBILE PANEL (draggable, smooth) ======================
 local PURPLE_ON=Color3.fromRGB(160, 0, 0); local BLACK_OFF=Color3.fromRGB(8,8,8)
 local panelGui=Instance.new("ScreenGui",player:WaitForChild("PlayerGui")); panelGui.Name="SomHub_MobilePanel"; panelGui.ResetOnSpawn=false; panelGui.IgnoreGuiInset=true; panelGui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling; panelGui.DisplayOrder=8
-local panelFrame=Instance.new("Frame",panelGui); panelFrame.Name="MobilePanel"; panelFrame.Size=UDim2.new(0,130,0,250); panelFrame.Position=UDim2.new(1,-138,0.5,-125); panelFrame.BackgroundColor3=Color3.fromRGB(4,4,6); panelFrame.BackgroundTransparency=0.05; panelFrame.BorderSizePixel=0; panelFrame.Active=true; panelFrame.ZIndex=20
-Instance.new("UICorner",panelFrame).CornerRadius=UDim.new(0,14)
+local panelFrame=Instance.new("Frame",panelGui); panelFrame.Name="MobilePanel"; panelFrame.Size=UDim2.new(0,130*C.s,0,250*C.s); panelFrame.Position=UDim2.new(1,-138*C.s,0.5,-125*C.s); panelFrame.BackgroundColor3=Color3.fromRGB(4,4,6); panelFrame.BackgroundTransparency=0.05; panelFrame.BorderSizePixel=0; panelFrame.Active=true; panelFrame.ZIndex=20
+Instance.new("UICorner",panelFrame).CornerRadius=UDim.new(0,14*C.s)
 local psk=Instance.new("UIStroke",panelFrame); psk.Color=Color3.fromRGB(160, 0, 0); psk.Thickness=1.2; psk.Transparency=0.3
 local pDragging=false; local pDragStart=nil; local pFrameStart=nil
 local panelDragConn1=panelFrame.InputBegan:Connect(function(inp)
@@ -2013,16 +2014,16 @@ panelFrame.Position=UDim2.new(panelFrame.Position.X.Scale,pFrameStart.X+dx,panel
 end
 end
 end)
-local panelTitle=Instance.new("TextLabel",panelFrame); panelTitle.Size=UDim2.new(1,-4,0,13); panelTitle.Position=UDim2.new(0,2,0,2); panelTitle.BackgroundTransparency=1; panelTitle.Text="SOM HUB"; panelTitle.Font=Enum.Font.LuckiestGuy; panelTitle.TextSize=9; panelTitle.TextColor3=Color3.fromRGB(255, 50, 50); panelTitle.TextXAlignment=Enum.TextXAlignment.Center; panelTitle.ZIndex=26
+local panelTitle=Instance.new("TextLabel",panelFrame); panelTitle.Size=UDim2.new(1,-4*C.s,0,13*C.s); panelTitle.Position=UDim2.new(0,2*C.s,0,2*C.s); panelTitle.BackgroundTransparency=1; panelTitle.Text="SOM HUB"; panelTitle.Font=Enum.Font.LuckiestGuy; panelTitle.TextSize=9*C.s; panelTitle.TextColor3=Color3.fromRGB(255, 50, 50); panelTitle.TextXAlignment=Enum.TextXAlignment.Center; panelTitle.ZIndex=26
 task.spawn(function() local t=0; while panelTitle and panelTitle.Parent do t=t+0.05; local p=(math.sin(t*2)+1)/2; panelTitle.TextColor3=Color3.fromRGB(math.floor(200+p*55), math.floor(50*p), math.floor(50*p)); task.wait(0.05) end end)
-local btnGrid=Instance.new("Frame",panelFrame); btnGrid.Size=UDim2.new(1,-8,0,228); btnGrid.Position=UDim2.new(0,4,0,16); btnGrid.BackgroundTransparency=1; btnGrid.ZIndex=21
-local gl=Instance.new("UIGridLayout",btnGrid); gl.CellSize=UDim2.new(0.5,-3,0,54); gl.CellPadding=UDim2.new(0,5,0,4); gl.SortOrder=Enum.SortOrder.LayoutOrder; gl.FillDirectionMaxCells=2
+local btnGrid=Instance.new("Frame",panelFrame); btnGrid.Size=UDim2.new(1,-8*C.s,0,228*C.s); btnGrid.Position=UDim2.new(0,4*C.s,0,16*C.s); btnGrid.BackgroundTransparency=1; btnGrid.ZIndex=21
+local gl=Instance.new("UIGridLayout",btnGrid); gl.CellSize=UDim2.new(0.5,-3*C.s,0,54*C.s); gl.CellPadding=UDim2.new(0,5*C.s,0,4*C.s); gl.SortOrder=Enum.SortOrder.LayoutOrder; gl.FillDirectionMaxCells=2
 local function makePBtn(l1,l2,order)
 local btn=Instance.new("TextButton",btnGrid); btn.LayoutOrder=order; btn.Size=UDim2.new(0,1,0,1); btn.BackgroundColor3=BLACK_OFF; btn.BackgroundTransparency=0; btn.BorderSizePixel=0; btn.Text=""; btn.ZIndex=22
-Instance.new("UICorner",btn).CornerRadius=UDim.new(0,10)
+Instance.new("UICorner",btn).CornerRadius=UDim.new(0,10*C.s)
 local bs=Instance.new("UIStroke",btn); bs.Color=Color3.fromRGB(40,40,50); bs.Thickness=1; bs.Transparency=0.2
-local t1=Instance.new("TextLabel",btn); t1.Size=UDim2.new(1,0,0.52,0); t1.Position=UDim2.new(0,0,0.06,0); t1.BackgroundTransparency=1; t1.Text=l1; t1.TextColor3=Color3.fromRGB(255,255,255); t1.Font=Enum.Font.GothamBlack; t1.TextSize=11; t1.TextXAlignment=Enum.TextXAlignment.Center; t1.ZIndex=23
-local t2=Instance.new("TextLabel",btn); t2.Size=UDim2.new(1,0,0.44,0); t2.Position=UDim2.new(0,0,0.52,0); t2.BackgroundTransparency=1; t2.Text=l2; t2.TextColor3=Color3.fromRGB(255,255,255); t2.Font=Enum.Font.GothamBlack; t2.TextSize=11; t2.TextXAlignment=Enum.TextXAlignment.Center; t2.ZIndex=23
+local t1=Instance.new("TextLabel",btn); t1.Size=UDim2.new(1,0,0.52,0); t1.Position=UDim2.new(0,0,0.06,0); t1.BackgroundTransparency=1; t1.Text=l1; t1.TextColor3=Color3.fromRGB(255,255,255); t1.Font=Enum.Font.GothamBlack; t1.TextSize=11*C.s; t1.TextXAlignment=Enum.TextXAlignment.Center; t1.ZIndex=23
+local t2=Instance.new("TextLabel",btn); t2.Size=UDim2.new(1,0,0.44,0); t2.Position=UDim2.new(0,0,0.52,0); t2.BackgroundTransparency=1; t2.Text=l2; t2.TextColor3=Color3.fromRGB(255,255,255); t2.Font=Enum.Font.GothamBlack; t2.TextSize=11*C.s; t2.TextXAlignment=Enum.TextXAlignment.Center; t2.ZIndex=23
 btn.InputBegan:Connect(function(inp)
 if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
 pDragging=false
