@@ -1618,13 +1618,12 @@ local function stopBrainrotDefense() if brainrotDefenseConn then brainrotDefense
 
 -- Keybinds: MobAutoL and MobAutoR default to Unknown (unbound) to prevent random controller bleed
 -- SIMPLIFIED KEYBINDS (Same on PC & Mobile)
+-- ONLY 4 KEYBINDS - Auto L, Auto R, Drop, TP Down
 Keybinds={
-    AutoLeft=Enum.KeyCode.Q,       -- Auto Left (PC + Mobile)
-    AutoRight=Enum.KeyCode.E,      -- Auto Right (PC + Mobile)
-    BatAimbot=Enum.KeyCode.Z,      -- Lock/Aimbot (PC + Mobile)
-    Drop=Enum.KeyCode.F3,          -- Drop (PC + Mobile)
-    TPDown=Enum.KeyCode.G,         -- TP Down (PC + Mobile)
-    AutoSteal=Enum.KeyCode.V       -- Auto Grab/Steal (PC + Mobile)
+    AutoLeft=Enum.KeyCode.Q,       -- Q = Auto Left
+    AutoRight=Enum.KeyCode.E,      -- E = Auto Right  
+    Drop=Enum.KeyCode.X,          -- F3 = Drop
+    TPDown=Enum.KeyCode.G          -- G = TP Down
 }
 local aimbotHighlight=Instance.new("Highlight"); aimbotHighlight.Name="SomHubAimbotESP"; aimbotHighlight.FillColor=Color3.fromRGB(138,43,226); aimbotHighlight.OutlineColor=Color3.fromRGB(255,255,255); aimbotHighlight.FillTransparency=0.5; aimbotHighlight.OutlineTransparency=0
 pcall(function() aimbotHighlight.Parent=player:WaitForChild("PlayerGui") end)
@@ -2104,9 +2103,10 @@ task.spawn(function()
 end)
 
     makeSectionHeader("KEYBINDS")
-    makeKeybindRow("Lock","BatAimbot")
-    makeKeybindRow("Auto Left","MobAutoL"); makeKeybindRow("Auto Right","MobAutoR")
-    makeKeybindRow("Drop","Drop"); makeKeybindRow("TP Down","TPDown")
+    makeKeybindRow("Auto L","AutoLeft")
+    makeKeybindRow("Auto R","AutoRight")
+    makeKeybindRow("Drop","Drop")
+    makeKeybindRow("TP Down","TPDown")
 
     -- ====================== PROGRESS BAR ======================
     local PBC=Instance.new("Frame",PBGui)
@@ -2166,22 +2166,22 @@ end)
         return btn,bs
     end
     local function setPH(btn,bs,isOn) btn.BackgroundColor3=isOn and PURPLE_ON or BLACK_OFF; bs.Color=isOn and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(40,40,50); bs.Transparency=isOn and 0 or 0.2 end
-    local btnAAL,bsAAL=makePBtn("AUTO","L",1)
-    local btnAAR,bsAAR=makePBtn("AUTO","R",2)
-    local btnDR,bsDR=makePBtn("DROP","",3)
-    local btnTP,bsTP=makePBtn("TP","DOWN",4)
-    local pState={AAL=false,AAR=false,PL=false,PR=false,LK=false,AG=autoStealEnabled}
-    mobBtnRefs["AUTO L"]={btn=btnAAL,bs=bsAAL,state=false}; mobBtnRefs["AUTO R"]={btn=btnAAR,bs=bsAAR,state=false}
-    mobBtnRefs["PLAY L"]={btn=btnPL,bs=bsPL,state=false}; mobBtnRefs["PLAY R"]={btn=btnPR,bs=bsPR,state=false}
-    if pState.AG then setPH(btnAG,bsAG,true) end
+local btnAAL,bsAAL=makePBtn("AUTO","L",1)
+local btnAAR,bsAAR=makePBtn("AUTO","R",2)
+local btnDR,bsDR=makePBtn("DROP","",3)
+local btnTP,bsTP=makePBtn("TP","DOWN",4)
+
+-- ONLY 4 BUTTON STATES
+local pState={AAL=false,AAR=false}
+
+mobBtnRefs["AUTO L"]={btn=btnAAL,bs=bsAAL,state=false}
+mobBtnRefs["AUTO R"]={btn=btnAAR,bs=bsAAR,state=false}
     local function mutualOff(keep)
         local map={AAL={btnAAL,bsAAL},AAR={btnAAR,bsAAR},PL={btnPL,bsPL},PR={btnPR,bsPR},LK={btnLK,bsLK}}
         for k,v in pairs(map) do if k~=keep and pState[k] then pState[k]=false; setPH(v[1],v[2],false); if k=="AAL" then autoLOn=false; stopAutoL(); if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](false) end elseif k=="AAR" then autoROn=false; stopAutoR(); if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](false) end elseif k=="PL" then aplOn=false; stopAutoPlayLeft(); if toggleSetters["Play Left"] then toggleSetters["Play Left"](false) end elseif k=="PR" then aprOn=false; stopAutoPlayRight(); if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end elseif k=="LK" then stopBatAimbot(); if toggleSetters["Lock"] then toggleSetters["Lock"](false) end end end end
     end
     btnAAL.MouseButton1Click:Connect(function() local ns=not pState.AAL; if ns then mutualOff("AAL") end; pState.AAL=ns; setPH(btnAAL,bsAAL,ns); mobBtnRefs["AUTO L"].state=ns; if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](ns) end; if ns then autoLOn=true; startAutoL() else autoLOn=false; stopAutoL() end end)
     btnAAR.MouseButton1Click:Connect(function() local ns=not pState.AAR; if ns then mutualOff("AAR") end; pState.AAR=ns; setPH(btnAAR,bsAAR,ns); mobBtnRefs["AUTO R"].state=ns; if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](ns) end; if ns then autoROn=true; startAutoR() else autoROn=false; stopAutoR() end end)
-    btnPL.MouseButton1Click:Connect(function() local ns=not pState.PL; if ns then mutualOff("PL") end; pState.PL=ns; setPH(btnPL,bsPL,ns); mobBtnRefs["PLAY L"].state=ns; if toggleSetters["Play Left"] then toggleSetters["Play Left"](ns) end; if ns then aplOn=true; startAutoPlayLeft() else aplOn=false; stopAutoPlayLeft() end end)
-    btnPR.MouseButton1Click:Connect(function() local ns=not pState.PR; if ns then mutualOff("PR") end; pState.PR=ns; setPH(btnPR,bsPR,ns); mobBtnRefs["PLAY R"].state=ns; if toggleSetters["Play Right"] then toggleSetters["Play Right"](ns) end; if ns then aprOn=true; startAutoPlayRight() else aprOn=false; stopAutoPlayRight() end end)
     btnDR.MouseButton1Click:Connect(function() setPH(btnDR,bsDR,true); task.delay(0.35,function() setPH(btnDR,bsDR,false) end); task.spawn(doDrop) end)
     btnTP.MouseButton1Click:Connect(function() setPH(btnTP,bsTP,true); task.delay(0.35,function() setPH(btnTP,bsTP,false) end); task.spawn(doTPDown) end)
     btnLK.MouseButton1Click:Connect(function() local ns=not pState.LK; if ns then mutualOff("LK") end; pState.LK=ns; setPH(btnLK,bsLK,ns); if toggleSetters["Lock"] then toggleSetters["Lock"](ns) end; if ns then startBatAimbot() else stopBatAimbot() end end)
