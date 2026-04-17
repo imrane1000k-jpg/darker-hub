@@ -1794,7 +1794,14 @@ local function enableOptimizer() pcall(function() settings().Rendering.QualityLe
 local function disableOptimizer() pcall(function() settings().Rendering.QualityLevel=Enum.QualityLevel.Automatic; Lighting.GlobalShadows=true end); for part,val in pairs(xrayOrig) do if part and part.Parent then part.LocalTransparencyModifier=val end end; xrayOrig={} end
 
 -- ====================== FOV ======================
-local function applyFOV() if fovConn then fovConn:Disconnect() end; fovConn=RunService.RenderStepped:Connect(function() workspace.CurrentCamera.FieldOfView=fovValue end) end
+-- Auto-refresh FOV every frame (always keeps your value)
+local function applyFOV() 
+    if fovConn then fovConn:Disconnect() end
+    fovConn = RunService.RenderStepped:Connect(function()
+        local cam = workspace.CurrentCamera
+        if cam then cam.FieldOfView = fovValue end
+    end)
+end
 
 -- ====================== GALAXY ======================
 local function setupGalaxyForce() local h=getHRP(); if not h then return end; if galaxyVF then galaxyVF:Destroy() end; if galaxyAtt then galaxyAtt:Destroy() end; galaxyAtt=Instance.new("Attachment"); galaxyAtt.Parent=h; galaxyVF=Instance.new("VectorForce"); galaxyVF.Attachment0=galaxyAtt; galaxyVF.ApplyAtCenterOfMass=true; galaxyVF.RelativeTo=Enum.ActuatorRelativeTo.World; galaxyVF.Force=Vector3.zero; galaxyVF.Parent=h end
@@ -2149,7 +2156,7 @@ task.spawn(function()
     local mfStroke=Instance.new("UIStroke",mainFrame); mfStroke.Thickness=1.5; mfStroke.Color=Color3.fromRGB(255, 0, 0)
     
     local leftDrag=Instance.new("Frame",mainFrame)
-    leftDrag.Size=UDim2.new(0,5,1,-24)
+    leftDrag.Size=UDim2.new(0,5,1,-18)  -- Shorter
     leftDrag.Position=UDim2.new(0,0,0,12)
     leftDrag.BackgroundColor3=Color3.fromRGB(28,8,8)
     leftDrag.BorderSizePixel=0
@@ -2186,7 +2193,7 @@ task.spawn(function()
     end)
     
     local titleBar=Instance.new("Frame",mainFrame)
-    titleBar.Size=UDim2.new(1,-5,0,18)
+    titleBar.Size=UDim2.new(1,-5,0,16)
     titleBar.Position=UDim2.new(0,5,0,0)
     titleBar.BackgroundColor3=Color3.fromRGB(18,18,24)
     titleBar.BorderSizePixel=0
@@ -2257,14 +2264,14 @@ task.spawn(function()
     
     local sep=Instance.new("Frame",mainFrame)
     sep.Size=UDim2.new(1,-5,0,1)
-    sep.Position=UDim2.new(0,5,0,20)
+    sep.Position=UDim2.new(0,5,0,16)
     sep.BackgroundColor3=Color3.fromRGB(120, 0, 0)
     sep.BorderSizePixel=0
     sep.ZIndex=3
     
     local scroll=Instance.new("ScrollingFrame",mainFrame)
-    scroll.Size=UDim2.new(1,-6,1,-22)
-    scroll.Position=UDim2.new(0,6,0,22)
+    scroll.Size=UDim2.new(1,-6,1,-18)  -- Taller fill area
+    scroll.Position=UDim2.new(0,6,0,18)  -- Move up
     scroll.BackgroundTransparency=1
     scroll.ScrollBarThickness=2
     scroll.ScrollBarImageColor3=Color3.fromRGB(255, 0, 0)
@@ -2353,7 +2360,7 @@ task.spawn(function()
     
     local function makeValueRow(label,defaultVal,onChanged)
         local row=Instance.new("Frame",scroll)
-        row.Size=UDim2.new(1,0,0,26)
+        row.Size=UDim2.new(1,0,0,22)
         row.BackgroundColor3=Color3.fromRGB(18,18,24)
         row.BorderSizePixel=0
         row.LayoutOrder=nlo()
@@ -2399,7 +2406,7 @@ task.spawn(function()
     
     local function makeActionBtn(text,cb)
         local row=Instance.new("Frame",scroll)
-        row.Size=UDim2.new(1,0,0,26)
+        row.Size=UDim2.new(1,0,0,22)
         row.BackgroundColor3=Color3.fromRGB(18,18,24)
         row.BorderSizePixel=0
         row.LayoutOrder=nlo()
@@ -2429,7 +2436,7 @@ task.spawn(function()
     
     local function makeKeybindRow(label,kbKey)
         local row=Instance.new("Frame",scroll)
-        row.Size=UDim2.new(1,0,0,26)
+        row.Size=UDim2.new(1,0,0,22)
         row.BackgroundColor3=Color3.fromRGB(18,18,24)
         row.BorderSizePixel=0
         row.LayoutOrder=nlo()
@@ -2517,36 +2524,13 @@ end)
     makeToggleRow("Auto Steal",autoStealEnabled,function(s) autoStealEnabled=s; if s then startAutoSteal() else stopAutoSteal() end; saveConfig() end)
     makeValueRow("Grab Time (s)",STEAL_DURATION,function(v) STEAL_DURATION=math.clamp(v,0.05,10); saveConfig() end)
     makeValueRow("Steal Radius",STEAL_RADIUS,function(v) STEAL_RADIUS=math.clamp(v,1,300); saveConfig() end)
-    
-    makeToggleRow("Play Left",false,function(s)
-        if s then
-            if batAimbotEnabled then stopBatAimbot(); if toggleSetters["Lock"] then toggleSetters["Lock"](false) end end;
-            if aprOn then stopAutoPlayRight(); if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end end;
-            if autoLOn then stopAutoL(); if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](false) end end;
-            if autoROn then stopAutoR(); if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](false) end end;
-            aplOn=true; startAutoPlayLeft()
-        else
-            aplOn=false; stopAutoPlayLeft()
-        end
-    end)
-    makeToggleRow("Play Right",false,function(s)
-        if s then
-            if batAimbotEnabled then stopBatAimbot(); if toggleSetters["Lock"] then toggleSetters["Lock"](false) end end;
-            if aplOn then stopAutoPlayLeft(); if toggleSetters["Play Left"] then toggleSetters["Play Left"](false) end end;
-            if autoLOn then stopAutoL(); if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](false) end end;
-            if aprOn then stopAutoPlayRight(); if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end end;
-            aprOn=true; startAutoPlayRight()
-        else
-            aprOn=false; stopAutoPlayRight()
-        end
-    end)
     makeToggleRow("Auto Left",false,function(s) if s then if batAimbotEnabled then stopBatAimbot(); if toggleSetters["Lock"] then toggleSetters["Lock"](false) end end; if aprOn then stopAutoPlayRight(); if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end end; if autoROn then stopAutoR(); if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](false) end end; if aplOn then stopAutoPlayLeft(); if toggleSetters["Play Left"] then toggleSetters["Play Left"](false) end end; autoLOn=true; startAutoL() else autoLOn=false; stopAutoL() end end)
     makeToggleRow("Auto Right",false,function(s) if s then if batAimbotEnabled then stopBatAimbot(); if toggleSetters["Lock"] then toggleSetters["Lock"](false) end end; if aplOn then stopAutoPlayLeft(); if toggleSetters["Play Left"] then toggleSetters["Play Left"](false) end end; if autoLOn then stopAutoL(); if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](false) end end; if aprOn then stopAutoPlayRight(); if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end end; autoROn=true; startAutoR() else autoROn=false; stopAutoR() end end)
     
     makeSectionHeader("DEFENSE")
     do
         local row=Instance.new("Frame",scroll)
-        row.Size=UDim2.new(1,0,0,26)
+        row.Size=UDim2.new(1,0,0,22)
         row.BackgroundColor3=Color3.fromRGB(18,18,24)
         row.BorderSizePixel=0
         row.LayoutOrder=nlo()
@@ -2563,7 +2547,7 @@ end)
         lbl.BackgroundTransparency=1
         lbl.Text="Brainrot Def"
         lbl.Font=Enum.Font.GothamSemibold
-        lbl.TextSize=9
+        lbl.TextSize=8
         lbl.TextColor3=Color3.fromRGB(215,215,215)
         lbl.TextXAlignment=Enum.TextXAlignment.Left
         lbl.ZIndex=3
@@ -2717,8 +2701,8 @@ end)
     
     local panelFrame=Instance.new("Frame",panelGui)
     panelFrame.Name="MobilePanel"
-    panelFrame.Size=UDim2.new(0,110,0,220)
-    panelFrame.Position=UDim2.new(1,-118,0.5,-110)
+    panelFrame.Size=UDim2.new(0,100,0,180)  -- Smaller!
+    panelFrame.Position=UDim2.new(1,-108,0.5,-90)  -- Adjusted position
     panelFrame.BackgroundColor3=Color3.fromRGB(4,4,6)
     panelFrame.BackgroundTransparency=0.05
     panelFrame.BorderSizePixel=0
@@ -2770,8 +2754,8 @@ end)
     btnGrid.BackgroundTransparency=1
     btnGrid.ZIndex=21
     local gl=Instance.new("UIGridLayout",btnGrid)
-    gl.CellSize=UDim2.new(0.5,-3,0,48)
-    gl.CellPadding=UDim2.new(0,4,0,3)
+    gl.CellSize=UDim2.new(0.5,-2,0,40)  -- Smaller cells
+    gl.CellPadding=UDim2.new(0,3,0,2)  -- Less padding
     gl.SortOrder=Enum.SortOrder.LayoutOrder
     gl.FillDirectionMaxCells=2
     
