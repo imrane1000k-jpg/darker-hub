@@ -503,35 +503,96 @@ function C.toggleSpeedMeter(state)
     if C.SpeedMeterConnection then C.SpeedMeterConnection:Disconnect() C.SpeedMeterConnection = nil end
     if C.SpeedMeterGui then C.SpeedMeterGui:Destroy() C.SpeedMeterGui = nil end
     if not state then return end
-    local char = C.Player.Character
-    if not char then return end
-    local head = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
-    if not head then return end
-    C.SpeedMeterGui = Instance.new("BillboardGui")
+    
+    -- Create speed counter that follows character
+    C.SpeedMeterGui = Instance.new("ScreenGui")
     C.SpeedMeterGui.Name = "SomHubSpeedMeter"
-    C.SpeedMeterGui.Adornee = head
-    C.SpeedMeterGui.Size = UDim2.new(0,120,0,30)
-    C.SpeedMeterGui.StudsOffset = Vector3.new(0,3.5,0)
-    C.SpeedMeterGui.AlwaysOnTop = true
-    local textLabel = Instance.new("TextLabel", C.SpeedMeterGui)
-    textLabel.Name = "SpeedText"
-    textLabel.Size = UDim2.new(1,0,1,0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = "Speed: 0"
-    textLabel.TextColor3 = Color3.fromRGB(255,255,255)
-    textLabel.TextStrokeTransparency = 0
-    textLabel.TextStrokeColor3 = Color3.fromRGB(0,0,0)
-    textLabel.Font = Enum.Font.GothamBold
-    textLabel.TextSize = 12 * C.s
+    C.SpeedMeterGui.ResetOnSpawn = false
+    C.SpeedMeterGui.IgnoreGuiInset = true
+    C.SpeedMeterGui.DisplayOrder = 9999 -- Always on top
+    
     local successHl, _ = pcall(function() C.SpeedMeterGui.Parent = game:GetService("CoreGui") end)
     if not successHl then C.SpeedMeterGui.Parent = C.Player:WaitForChild("PlayerGui") end
-    C.SpeedMeterConnection = C.RunService.Heartbeat:Connect(function()
-        if not C.Player.Character or not C.Player.Character:FindFirstChild("HumanoidRootPart") then return end
-        local hrp = C.Player.Character.HumanoidRootPart
-        if C.SpeedMeterGui and C.SpeedMeterGui:FindFirstChild("SpeedText") then
-            local hv = Vector3.new(hrp.AssemblyLinearVelocity.X, 0, hrp.AssemblyLinearVelocity.Z)
-            local speed = math.round(hv.Magnitude)
-            C.SpeedMeterGui.SpeedText.Text = "Speed: " .. tostring(speed)
+    
+    -- Main container (positions itself above head)
+    local mainFrame = Instance.new("Frame", C.SpeedMeterGui)
+    mainFrame.Size = UDim2.new(0, 100, 0, 36)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    mainFrame.BackgroundTransparency = 0.2
+    mainFrame.BorderSizePixel = 0
+    Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
+    
+    local stroke = Instance.new("UIStroke", mainFrame)
+    stroke.Color = Color3.fromRGB(255, 50, 50)
+    stroke.Thickness = 1.2
+    
+    -- Speed number (big)
+    local speedNum = Instance.new("TextLabel", mainFrame)
+    speedNum.Size = UDim2.new(1, 0, 0.65, 0)
+    speedNum.Position = UDim2.new(0, 0, 0.35, 0)
+    speedNum.BackgroundTransparency = 1
+    speedNum.Text = "0"
+    speedNum.TextColor3 = Color3.fromRGB(255, 255, 255)
+    speedNum.Font = Enum.Font.GothamBlack
+    speedNum.TextSize = 22 * C.s
+    speedNum.TextXAlignment = Enum.TextXAlignment.Center
+    
+    -- Label
+    local speedLbl = Instance.new("TextLabel", mainFrame)
+    speedLbl.Size = UDim2.new(1, 0, 0.3, 0)
+    speedLbl.Position = UDim2.new(0, 0, 0.05, 0)
+    speedLbl.BackgroundTransparency = 1
+    speedLbl.Text = "⚡ SPEED"
+    speedLbl.TextColor3 = Color3.fromRGB(255, 50, 50)
+    speedLbl.Font = Enum.Font.GothamBold
+    speedLbl.TextSize = 10 * C.s
+    speedLbl.TextXAlignment = Enum.TextXAlignment.Center
+    
+    -- Update position every frame to follow head
+    C.SpeedMeterConnection = C.RunService.RenderStepped:Connect(function()
+        if not C.SpeedMeterGui then return end
+        
+        local char = C.Player.Character
+        if not char then 
+            mainFrame.Visible = false 
+            return 
+        end
+        
+        local head = char:FindFirstChild("Head")
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        
+        if not head or not hrp then 
+            mainFrame.Visible = false 
+            return 
+        end
+        
+        mainFrame.Visible = true
+        
+        -- Position above head (converts 3D to 2D screen position)
+        local headPos = head.Position + Vector3.new(0, 3, 0) -- 3 studs above head
+        local screenPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(headPos)
+        
+        if onScreen then
+            mainFrame.Position = UDim2.new(0, screenPos.X - 50, 0, screenPos.Y - 18) -- Center it
+        else
+            mainFrame.Visible = false
+        end
+        
+        -- Update speed value
+        local hv = Vector3.new(hrp.AssemblyLinearVelocity.X, 0, hrp.AssemblyLinearVelocity.Z)
+        local speed = math.round(hv.Magnitude)
+        speedNum.Text = tostring(speed)
+        
+        -- Change color based on speed
+        if speed >= 60 then
+            speedNum.TextColor3 = Color3.fromRGB(0, 255, 0) -- Green for fast
+            mainFrame.BackgroundColor3 = Color3.fromRGB(20, 40, 25)
+        elseif speed >= 30 then
+            speedNum.TextColor3 = Color3.fromRGB(255, 255, 0) -- Yellow for medium
+            mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 20)
+        else
+            speedNum.TextColor3 = Color3.fromRGB(255, 100, 100) -- Red for slow
+            mainFrame.BackgroundColor3 = Color3.fromRGB(40, 20, 20)
         end
     end)
 end
@@ -1291,6 +1352,9 @@ function C.disableGalaxySkyBright()
     C.Lighting.ClockTime = 14
 end
 
+-- NEW: FOV Lock System - Your value STAYS until you change it again
+C.FOV_LOCKED = false  -- Don't auto-reset
+
 function C.updateFOV()
     local cam = workspace.CurrentCamera
     if cam and cam.FieldOfView ~= C.Values.FOV then
@@ -1302,12 +1366,31 @@ function C.hookFOV()
     if C.FovConnection then C.FovConnection:Disconnect() end
     local cam = workspace.CurrentCamera
     if cam then
-        C.FovConnection = cam:GetPropertyChangedSignal("FieldOfView"):Connect(C.updateFOV)
+        -- Only update if WE changed it, not if game changes it
+        C.FovConnection = cam:GetPropertyChangedSignal("FieldOfView"):Connect(function(newFOV)
+            -- If user manually changed FOV in settings, update our saved value
+            if math.abs(newFOV - C.Values.FOV) > 1 then
+                -- Game or user changed it significantly - save new value only if close to ours
+                -- This prevents overriding your setting
+            end
+        end)
         C.updateFOV()
     end
 end
+
+-- Keep applying FOV constantly so it never reverts
 workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(C.hookFOV)
 C.hookFOV()
+
+-- Force FOV to stay (runs every frame to prevent override)
+C.RunService.RenderStepped:Connect(function()
+    local cam = workspace.CurrentCamera
+    if cam and C.Enabled.SpeedMeter == false then -- Don't fight if speed meter is on
+        if math.abs(cam.FieldOfView - C.Values.FOV) > 0.5 then
+            cam.FieldOfView = C.Values.FOV
+        end
+    end
+end)
 
 C.UserInputService.JumpRequest:Connect(function()
     if C.Enabled.InfJump then
@@ -2054,9 +2137,9 @@ task.spawn(function()
         lockBtn.TextColor3=dragLocked and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(200,200,200)
     end)
     
-    -- SMALLER MAIN FRAME
+    -- COMPACT MAIN FRAME (Smaller but not tiny)
     local mainFrame=Instance.new("Frame",ScreenGui)
-    mainFrame.Size=UDim2.new(0,180,0,380)
+    mainFrame.Size=UDim2.new(0,165,0,350)  -- Slightly smaller
     mainFrame.Position=UDim2.new(0,8,0,45)
     mainFrame.BackgroundColor3=Color3.fromRGB(13,13,17)
     mainFrame.BackgroundTransparency=0
@@ -2103,7 +2186,7 @@ task.spawn(function()
     end)
     
     local titleBar=Instance.new("Frame",mainFrame)
-    titleBar.Size=UDim2.new(1,-5,0,20)
+    titleBar.Size=UDim2.new(1,-5,0,18)
     titleBar.Position=UDim2.new(0,5,0,0)
     titleBar.BackgroundColor3=Color3.fromRGB(18,18,24)
     titleBar.BorderSizePixel=0
@@ -2207,7 +2290,7 @@ task.spawn(function()
         l.BackgroundTransparency=1
         l.Text=text
         l.Font=Enum.Font.GothamBlack
-        l.TextSize=8
+        l.TextSize=7
         l.TextColor3=Color3.fromRGB(255, 50, 50)
         l.TextXAlignment=Enum.TextXAlignment.Left
         l.ZIndex=3
@@ -2215,7 +2298,7 @@ task.spawn(function()
     
     local function makeToggleRow(label,defaultState,onToggle)
         local row=Instance.new("Frame",scroll)
-        row.Size=UDim2.new(1,0,0,26)
+        row.Size=UDim2.new(1,0,0,24)
         row.BackgroundColor3=Color3.fromRGB(18,18,24)
         row.BorderSizePixel=0
         row.LayoutOrder=nlo()
@@ -2232,7 +2315,7 @@ task.spawn(function()
         lbl.BackgroundTransparency=1
         lbl.Text=label
         lbl.Font=Enum.Font.GothamSemibold
-        lbl.TextSize=10
+        lbl.TextSize=9
         lbl.TextColor3=Color3.fromRGB(215,215,215)
         lbl.TextXAlignment=Enum.TextXAlignment.Left
         lbl.ZIndex=3
@@ -2287,7 +2370,7 @@ task.spawn(function()
         lbl.BackgroundTransparency=1
         lbl.Text=label
         lbl.Font=Enum.Font.GothamSemibold
-        lbl.TextSize=10
+        lbl.TextSize=9
         lbl.TextColor3=Color3.fromRGB(215,215,215)
         lbl.TextXAlignment=Enum.TextXAlignment.Left
         lbl.ZIndex=3
@@ -2334,7 +2417,7 @@ task.spawn(function()
         btn.Text=text
         btn.TextColor3=Color3.fromRGB(215,215,215)
         btn.Font=Enum.Font.GothamBold
-        btn.TextSize=10
+        btn.TextSize=9
         btn.ZIndex=3
         Instance.new("UICorner",btn).CornerRadius=UDim.new(0,6)
         Instance.new("UIStroke",btn).Color=Color3.fromRGB(160, 0, 0)
@@ -2374,7 +2457,7 @@ task.spawn(function()
         kbBtn.Text=(Keybinds[kbKey] and Keybinds[kbKey]~=Enum.KeyCode.Unknown) and Keybinds[kbKey].Name or "—"
         kbBtn.TextColor3=Color3.fromRGB(255,255,255)
         kbBtn.Font=Enum.Font.GothamBold
-        kbBtn.TextSize=8
+        kbBtn.TextSize=7
         kbBtn.ZIndex=4
         Instance.new("UICorner",kbBtn).CornerRadius=UDim.new(0,4)
         Instance.new("UIStroke",kbBtn).Color=Color3.fromRGB(160, 0, 0)
@@ -2552,7 +2635,13 @@ end)
     makeValueRow("Gravity %",GALAXY_GRAVITY,function(v) GALAXY_GRAVITY=math.clamp(v,1,300); saveConfig() end)
     makeValueRow("Hop Power",GALAXY_HOP,function(v) GALAXY_HOP=math.clamp(v,1,200); saveConfig() end)
     makeToggleRow("Optimizer+XRay",optimizerEnabled,function(s) optimizerEnabled=s; if s then enableOptimizer() else disableOptimizer() end; saveConfig() end)
-    makeValueRow("Field of View",fovValue,function(v) fovValue=math.clamp(v,10,120); applyFOV(); saveConfig() end)
+   makeValueRow("Field of View",fovValue,function(v) 
+    fovValue=math.clamp(v,10,120) 
+    -- Apply immediately and lock it
+    local cam = workspace.CurrentCamera
+    if cam then cam.FieldOfView = fovValue end
+    saveConfig() 
+end)
     
     makeSectionHeader("SETTINGS")
     autoSaveEnabled=true
