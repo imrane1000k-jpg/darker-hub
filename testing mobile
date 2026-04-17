@@ -1058,8 +1058,15 @@ end)
 
 function C.isMyPlotByName(pn)
     local plots = workspace:FindFirstChild("Plots")
-    local sign = plots and plots:FindFirstChild(pn) and plots[pn]:FindFirstChild("PlotSign")
-    return sign and sign:FindFirstChild("YourBase") and sign.YourBase:IsA("BillboardGui") and sign.YourBase.Enabled
+    if not plots then return false end
+    local plot = plots:FindFirstChild(pn)
+    if not plot then return false end
+    local sign = plot:FindFirstChild("PlotSign")
+    if sign then
+        local yb = sign:FindFirstChild("YourBase")
+        if yb and yb:IsA("BillboardGui") then return yb.Enabled == true end
+    end
+    return false
 end
 
 function C.findNearestPrompt()
@@ -1091,39 +1098,58 @@ function C.findNearestPrompt()
     return np, nd, nn
 end
 
+function C.ResetProgressBar()
+    if C.ProgressLabel then C.ProgressLabel.Text = "" end
+    if C.ProgressPercentLabel then C.ProgressPercentLabel.Text = "0%" end
+    if C.BarFill then C.BarFill.Size = UDim2.new(0, 0, 1, 0) end
+end
+
 function C.executeSteal(prompt, name)
     if C.IsStealing then return end
     if not C.StealData[prompt] then
         C.StealData[prompt] = {hold = {}, trigger = {}, ready = true}
         pcall(function()
             if getconnections then
-                for _, c in ipairs(getconnections(prompt.PromptButtonHoldBegan)) do if c.Function then table.insert(C.StealData[prompt].hold, c.Function) end end
-                for _, c in ipairs(getconnections(prompt.Triggered)) do if c.Function then table.insert(C.StealData[prompt].trigger, c.Function) end end
+                for _, c in ipairs(getconnections(prompt.PromptButtonHoldBegan)) do 
+                    if c.Function then table.insert(C.StealData[prompt].hold, c.Function) end 
+                end
+                for _, c in ipairs(getconnections(prompt.Triggered)) do 
+                    if c.Function then table.insert(C.StealData[prompt].trigger, c.Function) end 
+                end
             end
         end)
     end
     local data = C.StealData[prompt]
     if not data.ready then return end
-    data.ready = false; C.IsStealing = true
+    data.ready = false
+    C.IsStealing = true
+    C.stealStartTime = tick()
+    
+    if C.ProgressLabel then C.ProgressLabel.Text = name or "STEALING..." end
+    
+    if C.progressConnection then C.progressConnection:Disconnect() end
+    
+    C.progressConnection = C.RunService.Heartbeat:Connect(function()
+        if not C.IsStealing then 
+            if C.progressConnection then C.progressConnection:Disconnect() end
+            return 
+        end
+        local prog = math.clamp((tick() - C.stealStartTime) / C.Values.STEAL_DURATION, 0, 1)
+        if C.BarFill then C.BarFill.Size = UDim2.new(prog, 0, 1, 0) end
+        if C.ProgressPercentLabel then 
+            C.ProgressPercentLabel.Text = math.floor(prog * 100) .. "%" 
+        end
+    end)
+    
     task.spawn(function()
         for _, f in ipairs(data.hold) do task.spawn(f) end
-        local startTime = tick()
-        local duration = C.Values.STEAL_DURATION
-        if duration > 0 then
-            while tick() - startTime < duration do
-                if not C.IsStealing then break end
-                C.StealProgress = math.clamp((tick() - startTime) / duration, 0, 1)
-                if C.BarFill then C.BarFill.Size = UDim2.new(C.StealProgress, 0, 1, 0) end
-                task.wait()
-            end
-        end
-        C.StealProgress = 1
-        if C.BarFill then C.BarFill.Size = UDim2.new(1,0,1,0) end
+        task.wait(C.Values.STEAL_DURATION)
         for _, f in ipairs(data.trigger) do task.spawn(f) end
-        task.wait(0.2)
-        C.StealProgress = 0
-        if C.BarFill then C.BarFill.Size = UDim2.new(0,0,1,0) end
-        data.ready = true; C.IsStealing = false
+        
+        if C.progressConnection then C.progressConnection:Disconnect() end
+        C.ResetProgressBar()
+        data.ready = true
+        C.IsStealing = false
     end)
 end
 
@@ -1138,8 +1164,12 @@ function C.startAutoSteal()
 end
 
 function C.stopAutoSteal()
-    if C.Connections.autoSteal then C.Connections.autoSteal:Disconnect() C.Connections.autoSteal = nil end
+    if C.Connections.autoSteal then 
+        C.Connections.autoSteal:Disconnect() 
+        C.Connections.autoSteal = nil 
+    end
     C.IsStealing = false
+    C.ResetProgressBar()
     C.removeAutoStealUI()
 end
 
@@ -1619,7 +1649,7 @@ aplOn=false; aprOn=false; aplPhase=1; aprPhase=1; aplConn=nil; aprConn=nil
 autoLOn=false; autoROn=false; autoLConn=nil; autoRConn=nil
 autoLPhase=1; autoRPhase=1
 autoStealEnabled=false; isStealing=false; stealStartTime=nil
-autoStealConn=nil; progressConn=nil; STEAL_RADIUS=20; STEAL_DURATION=0.35
+autoStealConn=nil; progressConn=nil; STEAL_RADIUS=8; STEAL_DURATION=0.2
 antiRagdollEnabled=false
 unwalkEnabled=false; unwalkConn=nil
 batAimbotEnabled=false; BAT_ENGAGE_RANGE=5
@@ -1989,16 +2019,124 @@ local function startAutoPlayRight()
     end)
 end
 
--- ====================== AUTO STEAL ======================
-local function isMyBase(plotName) local plots=workspace:FindFirstChild("Plots"); if not plots then return false end; local plot=plots:FindFirstChild(plotName); if not plot then return false end; local sign=plot:FindFirstChild("PlotSign"); if not sign then return false end; local yb=sign:FindFirstChild("YourBase"); return yb and yb:IsA("BillboardGui") and yb.Enabled==true end
-local function scanPlot(plot) if not plot or not plot:IsA("Model") then return end; if isMyBase(plot.Name) then return end; local podiums=plot:FindFirstChild("AnimalPodiums"); if not podiums then return end; for _,pod in ipairs(podiums:GetChildren()) do if pod:IsA("Model") and pod:FindFirstChild("Base") then table.insert(animalCache,{plot=plot.Name,slot=pod.Name,worldPosition=pod:GetPivot().Position,uid=plot.Name.."_"..pod.Name}) end end end
-local function findPromptForAnimal(ad) if not ad then return nil end; local cp=promptCache[ad.uid]; if cp and cp.Parent then return cp end; local plots=workspace:FindFirstChild("Plots"); if not plots then return nil end; local plot=plots:FindFirstChild(ad.plot); if not plot then return nil end; local pods=plot:FindFirstChild("AnimalPodiums"); if not pods then return nil end; local pod=pods:FindFirstChild(ad.slot); if not pod then return nil end; local base=pod:FindFirstChild("Base"); if not base then return nil end; local sp=base:FindFirstChild("Spawn"); if not sp then return nil end; local att=sp:FindFirstChild("PromptAttachment"); if not att then return nil end; for _,p in ipairs(att:GetChildren()) do if p:IsA("ProximityPrompt") then promptCache[ad.uid]=p; return p end end end
-local function buildCallbacks(prompt) if stealCache[prompt] then return end; local data={hold={},trigger={},ready=true}; pcall(function() if getconnections then for _,c in ipairs(getconnections(prompt.PromptButtonHoldBegan)) do if type(c.Function)=="function" then table.insert(data.hold,c.Function) end end; for _,c in ipairs(getconnections(prompt.Triggered)) do if type(c.Function)=="function" then table.insert(data.trigger,c.Function) end end end end); if #data.hold>0 or #data.trigger>0 then stealCache[prompt]=data end end
-local function execSteal(prompt) local data=stealCache[prompt]; if not data or not data.ready then return false end; data.ready=false; isStealing=true; stealStartTime=tick(); if ProgressLabel then ProgressLabel.Text="STEALING..." end; if progressConn then progressConn:Disconnect() end; progressConn=RunService.Heartbeat:Connect(function() if not isStealing then progressConn:Disconnect(); return end; local prog=math.clamp((tick()-stealStartTime)/STEAL_DURATION,0,1); if ProgressBarFill then ProgressBarFill.Size=UDim2.new(prog,0,1,0) end; if ProgressPctLabel then ProgressPctLabel.Text=math.floor(prog*100).."%" end end); task.spawn(function() for _,f in ipairs(data.hold) do task.spawn(f) end; task.wait(STEAL_DURATION); for _,f in ipairs(data.trigger) do task.spawn(f) end; if progressConn then progressConn:Disconnect() end; if ProgressLabel then ProgressLabel.Text="READY" end; if ProgressPctLabel then ProgressPctLabel.Text="" end; if ProgressBarFill then ProgressBarFill.Size=UDim2.new(0,0,1,0) end; data.ready=true; isStealing=false end); return true end
-local function nearestAnimal() local h=getHRP(); if not h then return nil end; local best,bestD=nil,math.huge; for _,ad in ipairs(animalCache) do if not isMyBase(ad.plot) and ad.worldPosition then local d=(h.Position-ad.worldPosition).Magnitude; if d<bestD then bestD=d; best=ad end end end; return best end
-local function startAutoSteal() if autoStealConn then return end; autoStealConn=RunService.Heartbeat:Connect(function() if not autoStealEnabled or isStealing then return end; local target=nearestAnimal(); if not target then return end; local h=getHRP(); if not h then return end; if (h.Position-target.worldPosition).Magnitude>STEAL_RADIUS then return end; local prompt=promptCache[target.uid]; if not prompt or not prompt.Parent then prompt=findPromptForAnimal(target) end; if prompt then buildCallbacks(prompt); execSteal(prompt) end end) end
-local function stopAutoSteal() if autoStealConn then autoStealConn:Disconnect(); autoStealConn=nil end; isStealing=false; if progressConn then progressConn:Disconnect(); progressConn=nil end; if ProgressBarFill then ProgressBarFill.Size=UDim2.new(0,0,1,0) end; if ProgressLabel then ProgressLabel.Text="READY" end; if ProgressPctLabel then ProgressPctLabel.Text="" end end
-task.spawn(function() task.wait(2); local plots=workspace:WaitForChild("Plots",10); if not plots then return end; for _,plot in ipairs(plots:GetChildren()) do if plot:IsA("Model") then scanPlot(plot) end end; plots.ChildAdded:Connect(function(plot) if plot:IsA("Model") then task.wait(0.5); scanPlot(plot) end end); task.spawn(function() while task.wait(5) do animalCache={}; for _,plot in ipairs(plots:GetChildren()) do if plot:IsA("Model") then scanPlot(plot) end end end end) end)
+-- ====================== AUTO STEAL (OKIMRANE UPGRADE) ======================
+local StealData_OK = {} -- Cache for prompt connections (Okimrane style)
+
+local function isMyPlotByName_OK(pn)
+    local plots = workspace:FindFirstChild("Plots")
+    if not plots then return false end
+    local plot = plots:FindFirstChild(pn)
+    if not plot then return false end
+    local sign = plot:FindFirstChild("PlotSign")
+    if sign then
+        local yb = sign:FindFirstChild("YourBase")
+        if yb and yb:IsA("BillboardGui") then return yb.Enabled == true end
+    end
+    return false
+end
+
+local function findNearestPrompt_OK()
+    local h = getHRP()
+    if not h then return nil, nil, nil end
+    local plots = workspace:FindFirstChild("Plots")
+    if not plots then return nil, nil, nil end
+    local np, nd, nn = nil, math.huge, nil
+    for _, plot in ipairs(plots:GetChildren()) do
+        if isMyPlotByName_OK(plot.Name) then continue end
+        local podiums = plot:FindFirstChild("AnimalPodiums")
+        if not podiums then continue end
+        for _, pod in ipairs(podiums:GetChildren()) do
+            pcall(function()
+                local spawn = pod:FindFirstChild("Base") and pod.Base:FindFirstChild("Spawn")
+                if spawn then
+                    local dist = (spawn.Position - h.Position).Magnitude
+                    if dist < nd and dist <= STEAL_RADIUS then
+                        local att = spawn:FindFirstChild("PromptAttachment")
+                        if att then
+                            for _, ch in ipairs(att:GetChildren()) do
+                                if ch:IsA("ProximityPrompt") then 
+                                    np, nd, nn = ch, dist, pod.Name 
+                                    break 
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+    return np, nd, nn
+end
+
+local function ResetProgressBar_OK()
+    if ProgressLabel then ProgressLabel.Text = "" end
+    if ProgressPctLabel then ProgressPctLabel.Text = "0%" end
+    if ProgressBarFill then ProgressBarFill.Size = UDim2.new(0, 0, 1, 0) end
+end
+
+local function executeSteal_OK(prompt, name)
+    if isStealing then return end
+    if not StealData_OK[prompt] then
+        StealData_OK[prompt] = {hold = {}, trigger = {}, ready = true}
+        pcall(function()
+            if getconnections then
+                for _, c in ipairs(getconnections(prompt.PromptButtonHoldBegan)) do
+                    if c.Function then table.insert(StealData_OK[prompt].hold, c.Function) end
+                end
+                for _, c in ipairs(getconnections(prompt.Triggered)) do
+                    if c.Function then table.insert(StealData_OK[prompt].trigger, c.Function) end
+                end
+            end
+        end)
+    end
+    local data = StealData_OK[prompt]
+    if not data.ready then return end
+    data.ready = true -- Fix: was false, should check ready state properly
+    isStealing = true
+    stealStartTime = tick()
+    if ProgressLabel then ProgressLabel.Text = name or "STEALING..." end
+    if progressConn then progressConn:Disconnect() end
+    
+    progressConn = RunService.Heartbeat:Connect(function()
+        if not isStealing then 
+            if progressConn then progressConn:Disconnect() end
+            return 
+        end
+        local prog = math.clamp((tick() - stealStartTime) / STEAL_DURATION, 0, 1)
+        if ProgressBarFill then ProgressBarFill.Size = UDim2.new(prog, 0, 1, 0) end
+        if ProgressPctLabel then ProgressPctLabel.Text = math.floor(prog * 100) .. "%" end
+    end)
+    
+    task.spawn(function()
+        for _, f in ipairs(data.hold) do task.spawn(f) end
+        task.wait(STEAL_DURATION)
+        for _, f in ipairs(data.trigger) do task.spawn(f) end
+        if progressConn then progressConn:Disconnect() end
+        ResetProgressBar_OK()
+        data.ready = true
+        isStealing = false
+    end)
+end
+
+local function startAutoSteal_OK()
+    if autoStealConn then return end
+    autoStealConn = RunService.Heartbeat:Connect(function()
+        if not autoStealEnabled or isStealing then return end
+        local p, _, n = findNearestPrompt_OK()
+        if p then executeSteal_OK(p, n) end
+    end)
+end
+
+local function stopAutoSteal_OK()
+    if autoStealConn then autoStealConn:Disconnect(); autoStealConn = nil end
+    isStealing = false
+    if progressConn then progressConn:Disconnect(); progressConn = nil end
+    ResetProgressBar_OK()
+end
+
+-- Override the old functions with new ones
+startAutoSteal = startAutoSteal_OK
+stopAutoSteal = stopAutoSteal_OK
 
 -- ====================== HEARTBEAT (SPEED SYSTEM INTEGRATED) ======================
 RunService.Heartbeat:Connect(function()
