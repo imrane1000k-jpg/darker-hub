@@ -3743,8 +3743,6 @@ t2.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)  -- ✅ BLACK OUTLINE
         return btn, bs, t1, t2
     end
     
-local btnAAL, bsAAL, txtAAL1, txtAAL2 = makePBtn("AUTO", "L", 1)
-local btnAAR, bsAAR, txtAAR1, txtAAR2 = makePBtn("AUTO", "R", 2)
 local btnDR, bsDR, txtDR1, txtDR2 = makePBtn("DROP", "", 3)
 local btnTP, bsTP, txtTP1, txtTP2 = makePBtn("TP", "DOWN", 4)
 local btnLK, bsLK, txtLK1, txtLK2 = makePBtn("LOCK", "", 5)
@@ -4151,7 +4149,6 @@ end)
 
 print("[SomHub] ✅ Fixed! WHITE background when toggled ON!")
 local allButtons = {
-{btn=btnAAL, bs=bsAAL}, {btn=btnAAR, bs=bsAAR},
 {btn=btnDR, bs=bsDR}, {btn=btnTP, bs=bsTP}, {btn=btnLK, bs=bsLK},
 {btn=btnLAG, bs=bsLAG}
 }
@@ -4179,9 +4176,7 @@ local allButtons = {
         end)
     end
     
-    local pState = {AAL=false, AAR=false, LK=false}
-    mobBtnRefs["AUTO L"] = {btn=btnAAL, bs=bsAAL, state=false}
-    mobBtnRefs["AUTO R"] = {btn=btnAAR, bs=bsAAR, state=false}
+    local pState = {LK=false}
     mobBtnRefs["LOCK"] = {btn=btnLK, bs=bsLK, state=false}
     
     -- FIXED MOBILE BUTTON COLORS FUNCTION
@@ -4192,7 +4187,7 @@ local allButtons = {
     end
     
     local function mutualOff(keep)
-        local map = {AAL={btnAAL, bsAAL}, AAR={btnAAR, bsAAR}, LK={btnLK, bsLK}}
+        local map = {LK={btnLK, bsLK}}
         for k, v in pairs(map) do
             if k ~= keep and pState[k] then
                 pState[k] = false
@@ -4205,27 +4200,6 @@ local allButtons = {
         end
     end
     
-    btnAAL.MouseButton1Click:Connect(function()
-        if isSwapMode then return end
-        local ns = not pState.AAL
-        if ns then mutualOff("AAL") end
-        pState.AAL = ns
-        setPH(btnAAL, bsAAL, ns)
-        mobBtnRefs["AUTO L"].state = ns
-        if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](ns) end
-        if ns then autoLOn=true; startAutoL() else autoLOn=false; stopAutoL() end
-    end)
-    
-    btnAAR.MouseButton1Click:Connect(function()
-        if isSwapMode then return end
-        local ns = not pState.AAR
-        if ns then mutualOff("AAR") end
-        pState.AAR = ns
-        setPH(btnAAR, bsAAR, ns)
-        mobBtnRefs["AUTO R"].state = ns
-        if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](ns) end
-        if ns then autoROn=true; startAutoR() else autoROn=false; stopAutoR() end
-    end)
     
     btnDR.MouseButton1Click:Connect(function()
         setPH(btnDR, bsDR, true)
@@ -4269,48 +4243,121 @@ UserInputService.InputBegan:Connect(function(input, processed)
         local kc = input.KeyCode
         if kc == Enum.KeyCode.Unknown then return end
         
+        -- ✅ FIXED: AUTO LEFT (Q key) - PC KEYBIND WORKING
         if kc == Keybinds.AutoLeft then
-            local ns = not pState.AAL
-            if ns then mutualOff("AAL") end
-            pState.AAL = ns
-            setPH(btnAAL, bsAAL, ns)
-            mobBtnRefs["AUTO L"].state = ns
-            if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](ns) end
-            if ns then autoLOn=true; startAutoL() else autoLOn=false; stopAutoL() end
+            autoLOn = not autoLOn
+            if autoLOn then 
+                -- Stop conflicting systems
+                if batAimbotEnabled then
+                    batAimbotEnabled = false
+                    stopBatAimbot()
+                    if toggleSetters["Lock"] then toggleSetters["Lock"](false) end
+                end
+                if aprOn then
+                    aprOn = false
+                    stopAutoPlayRight()
+                    if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end
+                end
+                if autoROn then
+                    autoROn = false
+                    stopAutoR()
+                    if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](false) end
+                end
+                if aplOn then
+                    aplOn = false
+                    stopAutoPlayLeft()
+                    if toggleSetters["Play Left"] then toggleSetters["Play Left"](false) end
+                end
+                startAutoL()
+                if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](true) end
+            else
+                stopAutoL()
+                if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](false) end
+            end
+            
+        -- ✅ FIXED: AUTO RIGHT (E key) - PC KEYBIND WORKING
         elseif kc == Keybinds.AutoRight then
-            local ns = not pState.AAR
-            if ns then mutualOff("AAR") end
-            pState.AAR = ns
-            setPH(btnAAR, bsAAR, ns)
-            mobBtnRefs["AUTO R"].state = ns
-            if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](ns) end
-            if ns then autoROn=true; startAutoR() else autoROn=false; stopAutoR() end
+            autoROn = not autoROn
+            if autoROn then
+                if batAimbotEnabled then
+                    batAimbotEnabled = false
+                    stopBatAimbot()
+                    if toggleSetters["Lock"] then toggleSetters["Lock"](false) end
+                end
+                if aplOn then
+                    aplOn = false
+                    stopAutoPlayLeft()
+                    if toggleSetters["Play Left"] then toggleSetters["Play Left"](false) end
+                end
+                if autoLOn then
+                    autoLOn = false
+                    stopAutoL()
+                    if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](false) end
+                end
+                if aprOn then
+                    aprOn = false
+                    stopAutoPlayRight()
+                    if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end
+                end
+                startAutoR()
+                if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](true) end
+            else
+                stopAutoR()
+                if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](false) end
+            end
+            
+        -- LOCK (B key)
         elseif kc == Keybinds.Lock then
-            local ns = not pState.LK
-            if ns then mutualOff("LK") end
-            pState.LK = ns
-            setPH(btnLK, bsLK, ns)
-            mobBtnRefs["LOCK"].state = ns
-            if toggleSetters["Lock Target"] then toggleSetters["Lock Target"](ns) end
-            if ns then startBatAimbot() else stopBatAimbot() end
+            batAimbotEnabled = not batAimbotEnabled
+            if batAimbotEnabled then
+                if autoLOn then
+                    autoLOn = false
+                    stopAutoL()
+                    if toggleSetters["Auto Left"] then toggleSetters["Auto Left"](false) end
+                end
+                if autoROn then
+                    autoROn = false
+                    stopAutoR()
+                    if toggleSetters["Auto Right"] then toggleSetters["Auto Right"](false) end
+                end
+                if aplOn then
+                    aplOn = false
+                    stopAutoPlayLeft()
+                    if toggleSetters["Play Left"] then toggleSetters["Play Left"](false) end
+                end
+                if aprOn then
+                    aprOn = false
+                    stopAutoPlayRight()
+                    if toggleSetters["Play Right"] then toggleSetters["Play Right"](false) end
+                end
+                startBatAimbot()
+                if toggleSetters["Lock"] then toggleSetters["Lock"](true) end
+            else
+                stopBatAimbot()
+                if toggleSetters["Lock"] then toggleSetters["Lock"](false) end
+            end
+            
+        -- DROP (X key)
         elseif kc == Keybinds.Drop then
             task.spawn(doDrop)
-elseif kc == Keybinds.TPDown then
-task.spawn(doTPDown)
-elseif kc == Keybinds.LAGGER then
-if _G.SomHub then
-_G.SomHub.Enabled.Lagger = not _G.SomHub.Enabled.Lagger
-if _G.SomHub.Enabled.Lagger then 
-_G.SomHub.startLagger() 
-if toggleSetters["Lagger"] then toggleSetters["Lagger"](true) end
-setPH(btnLAG, bsLAG, true)
-else 
-_G.SomHub.stopLagger() 
-if toggleSetters["Lagger"] then toggleSetters["Lagger"](false) end
-setPH(btnLAG, bsLAG, false)
-end
-end
-end
+            
+        -- TP DOWN (G key)
+        elseif kc == Keybinds.TPDown then
+            task.spawn(doTPDown)
+            
+        -- LAGGER (L key)
+        elseif kc == Keybinds.LAGGER then
+            if _G.SomHub then
+                _G.SomHub.Enabled.Lagger = not _G.SomHub.Enabled.Lagger
+                if _G.SomHub.Enabled.Lagger then 
+                    _G.SomHub.startLagger() 
+                    if toggleSetters["Lagger"] then toggleSetters["Lagger"](true) end
+                else 
+                    _G.SomHub.stopLagger() 
+                    if toggleSetters["Lagger"] then toggleSetters["Lagger"](false) end
+                end
+            end
+        end
 end)
 -- Initialize
     
